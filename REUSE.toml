@@ -1,0 +1,11 @@
+version = 1
+
+[[annotations]]
+path = "go.mod"
+SPDX-FileCopyrightText = "Winni Neessen <wn@neessen.dev>"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "go.sum"
+SPDX-FileCopyrightText = "Winni Neessen <wn@neessen.dev>"
+SPDX-License-Identifier = "MIT"

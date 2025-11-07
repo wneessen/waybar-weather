@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: Winni Neessen <wn@neessen.dev>
+#
+# SPDX-License-Identifier: MIT
+
 ## Units used for weather data (allowed values "metric" or "imperial")
 units = "imperial"
 

@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: Winni Neessen <wn@neessen.dev>
+
+SPDX-License-Identifier: MIT
+-->
+
 # waybar-weather
 
 An Open-Meteo module implementation for [Waybar](https://github.com/Alexays/Waybar)
