@@ -20,7 +20,7 @@ builds:
       - amd64
     goamd64:
       - v1
-    main: app
+    main: .
     binary: waybar-weather
     ldflags:
       - -w -s -extldflags "-static"
@@ -50,9 +50,6 @@ universal_binaries:
   - replace: false
 
 report_sizes: true
-
-sboms:
-  - artifacts: archive
 
 github_urls:
 

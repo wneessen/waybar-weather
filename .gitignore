@@ -37,3 +37,6 @@ waybar-weather
 
 # Temporary files
 tmp/
+
+# Distribution files
+dist/
