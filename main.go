@@ -1,3 +1,10 @@
+// SPDX-FileCopyrightText: Winni Neessen <wn@neessen.dev>
+//
+// SPDX-License-Identifier: MIT
+
+//go:build linux
+
+// Package main implements the waybar-weather service.
 package main
 
 import (
