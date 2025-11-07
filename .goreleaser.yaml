@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: Winni Neessen <wn@neessen.dev>
+#
+# SPDX-License-Identifier: MIT
+
+version: 1
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+    - go mod verify
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+    - linux
+    goarch:
+      - arm64
+      - amd64
+    goamd64:
+      - v1
+    main: app
+    binary: waybar-weather
+    ldflags:
+      - -w -s -extldflags "-static"
+
+changelog:
+  use: github-native
+
+nfpms:
+  - vendor: Winni Neessen
+    homepage: https://github.com/wneessen/waybar-weather
+    maintainer: Winni Neessen <wn@neessen.dev>
+    description: |-
+      An Open-Meteo module for Waybar
+    license: MIT
+    formats:
+      - apk
+      - deb
+      - rpm
+      - termux.deb
+      - archlinux
+    file_name_template: >-
+      {{- trimsuffix .ConventionalFileName .ConventionalExtension -}}
+      {{- if not (eq .Amd64 "v1")}}{{ .Amd64 }}{{ end -}}
+      {{- .ConventionalExtension -}}
+
+universal_binaries:
+  - replace: false
+
+report_sizes: true
+
+sboms:
+  - artifacts: archive
+
+github_urls:
+
+gomod:
+  mod: mod
