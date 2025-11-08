@@ -6,7 +6,6 @@ package main
 
 import (
 	"context"
-	"time"
 
 	"github.com/hectormalot/omgo"
 )
@@ -85,10 +84,8 @@ func (s *Service) fetchWeather(ctx context.Context) {
 		return
 	}
 
-	now := time.Now()
-	tz, _ := now.Zone()
 	opts := &omgo.Options{
-		Timezone:      tz,
+		Timezone:      "auto",
 		HourlyMetrics: []string{"temperature_2m", "weather_code", "wind_speed_10m", "wind_direction_10m"},
 	}
 	switch s.config.Units {
