@@ -225,7 +225,7 @@ func (s *Service) fillDisplayData(target *DisplayData) {
 		target.SunriseTime, target.SunsetTime = sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude,
 			fcastTime.Year(), fcastTime.Month(), fcastTime.Day())
 		target.IsDaytime = false
-		if fcastTime.After(target.SunriseTime) && fcastTime.Before(target.SunsetTime) {
+		if s.weather.HourlyUnits["is_day"] == "1" {
 			target.IsDaytime = true
 		}
 
