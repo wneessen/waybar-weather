@@ -44,35 +44,35 @@ var WMOWeatherCodes = map[float64]string{
 }
 
 // WMOWeatherIcons maps WMO weather codes to single emoji icons for day and night
-var WMOWeatherIcons = map[float64]map[string]string{
-	0:  {"day": "☀️", "night": "🌕"},  // Clear sky
-	1:  {"day": "🌤️", "night": "🌤️"}, // Mainly clear
-	2:  {"day": "⛅", "night": "☁️"},  // Partly cloudy
-	3:  {"day": "☁️", "night": "☁️"}, // Overcast
-	45: {"day": "🌫️", "night": "🌫️"}, // Fog
-	48: {"day": "🌫️", "night": "🌫️"}, // Depositing rime fog
-	51: {"day": "🌦️", "night": "🌧️"}, // Light drizzle
-	53: {"day": "🌧️", "night": "🌧️"}, // Moderate drizzle
-	55: {"day": "🌧️", "night": "🌧️"}, // Dense drizzle
-	56: {"day": "🌨️", "night": "🌨️"}, // Light freezing drizzle
-	57: {"day": "🌨️", "night": "🌨️"}, // Dense freezing drizzle
-	61: {"day": "🌦️", "night": "🌧️"}, // Slight rain
-	63: {"day": "🌧️", "night": "🌧️"}, // Moderate rain
-	65: {"day": "🌧️", "night": "🌧️"}, // Heavy rain
-	66: {"day": "🌨️", "night": "🌨️"}, // Light freezing rain
-	67: {"day": "🌨️", "night": "🌨️"}, // Heavy freezing rain
-	71: {"day": "🌨️", "night": "🌨️"}, // Slight snow fall
-	73: {"day": "❄️", "night": "❄️"}, // Moderate snow fall
-	75: {"day": "❄️", "night": "❄️"}, // Heavy snow fall
-	77: {"day": "🌨️", "night": "🌨️"}, // Snow grains
-	80: {"day": "🌦️", "night": "🌧️"}, // Slight rain showers
-	81: {"day": "🌧️", "night": "🌧️"}, // Moderate rain showers
-	82: {"day": "🌧️", "night": "🌧️"}, // Violent rain showers
-	85: {"day": "🌨️", "night": "🌨️"}, // Slight snow showers
-	86: {"day": "🌨️", "night": "🌨️"}, // Heavy snow showers
-	95: {"day": "⛈️", "night": "⛈️"}, // Thunderstorm
-	96: {"day": "🌩️", "night": "🌩️"}, // Thunderstorm with slight hail
-	99: {"day": "🌩️", "night": "🌩️"}, // Thunderstorm with heavy hail
+var WMOWeatherIcons = map[float64]map[bool]string{
+	0:  {true: "☀️", false: "🌕"},  // Clear sky
+	1:  {true: "🌤️", false: "🌤️"}, // Mainly clear
+	2:  {true: "⛅", false: "☁️"},  // Partly cloudy
+	3:  {true: "☁️", false: "☁️"}, // Overcast
+	45: {true: "🌫️", false: "🌫️"}, // Fog
+	48: {true: "🌫️", false: "🌫️"}, // Depositing rime fog
+	51: {true: "🌦️", false: "🌧️"}, // Light drizzle
+	53: {true: "🌧️", false: "🌧️"}, // Moderate drizzle
+	55: {true: "🌧️", false: "🌧️"}, // Dense drizzle
+	56: {true: "🌨️", false: "🌨️"}, // Light freezing drizzle
+	57: {true: "🌨️", false: "🌨️"}, // Dense freezing drizzle
+	61: {true: "🌦️", false: "🌧️"}, // Slight rain
+	63: {true: "🌧️", false: "🌧️"}, // Moderate rain
+	65: {true: "🌧️", false: "🌧️"}, // Heavy rain
+	66: {true: "🌨️", false: "🌨️"}, // Light freezing rain
+	67: {true: "🌨️", false: "🌨️"}, // Heavy freezing rain
+	71: {true: "🌨️", false: "🌨️"}, // Slight snow fall
+	73: {true: "❄️", false: "❄️"}, // Moderate snow fall
+	75: {true: "❄️", false: "❄️"}, // Heavy snow fall
+	77: {true: "🌨️", false: "🌨️"}, // Snow grains
+	80: {true: "🌦️", false: "🌧️"}, // Slight rain showers
+	81: {true: "🌧️", false: "🌧️"}, // Moderate rain showers
+	82: {true: "🌧️", false: "🌧️"}, // Violent rain showers
+	85: {true: "🌨️", false: "🌨️"}, // Slight snow showers
+	86: {true: "🌨️", false: "🌨️"}, // Heavy snow showers
+	95: {true: "⛈️", false: "⛈️"}, // Thunderstorm
+	96: {true: "🌩️", false: "🌩️"}, // Thunderstorm with slight hail
+	99: {true: "🌩️", false: "🌩️"}, // Thunderstorm with heavy hail
 }
 
 func (s *Service) fetchWeather(ctx context.Context) {
@@ -85,8 +85,12 @@ func (s *Service) fetchWeather(ctx context.Context) {
 		return
 	}
 
-	tz, _ := time.Now().Zone()
-	opts := &omgo.Options{Timezone: tz}
+	now := time.Now()
+	tz, _ := now.Zone()
+	opts := &omgo.Options{
+		Timezone:      tz,
+		HourlyMetrics: []string{"temperature_2m", "weather_code", "wind_speed_10m", "wind_direction_10m"},
+	}
 	switch s.config.Units {
 	case "metric":
 		opts.TemperatureUnit = "celsius"
@@ -98,11 +102,11 @@ func (s *Service) fetchWeather(ctx context.Context) {
 		opts.WindspeedUnit = "mph"
 	}
 
-	current, err := s.omclient.CurrentWeather(ctx, s.location, opts)
+	forecast, err := s.omclient.Forecast(ctx, s.location, opts)
 	if err != nil {
-		s.logger.Error("failed to get current weather data", logError(err))
+		s.logger.Error("failed to get forecast data", logError(err))
 		return
 	}
-	s.weather = current
+	s.weather = forecast
 	s.weatherIsSet = true
 }

@@ -18,9 +18,14 @@ const configEnv = "WAYBARWEATHER"
 
 // config represents the application's configuration structure.
 type config struct {
+	// Allowed values: metric, imperial
 	Units    string     `fig:"units" default:"metric"`
 	Locale   string     `fig:"locale"`
 	LogLevel slog.Level `fig:"loglevel" default:"0"`
+	// Allowed values: current, forecast
+	WeatherMode string `fig:"weather_mode" default:"current"`
+	// Allowed value: 1 to 24
+	ForecastHours uint `fig:"forecast_hours" default:"3"`
 }
 
 func newConfigFromFile(path, file string) (*config, error) {
@@ -51,6 +56,12 @@ func (c *config) Validate() error {
 	}
 	if c.Locale == "" {
 		c.Locale = getLocale()
+	}
+	if c.WeatherMode != "current" && c.WeatherMode != "forecast" {
+		return fmt.Errorf("invalid weather mode: %s", c.WeatherMode)
+	}
+	if c.WeatherMode == "forecast" && c.ForecastHours < 1 || c.ForecastHours > 24 {
+		return fmt.Errorf("invalid forcast hours: %d", c.ForecastHours)
 	}
 
 	return nil

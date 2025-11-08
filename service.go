@@ -16,6 +16,7 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	"github.com/hectormalot/omgo"
 	"github.com/maltegrosse/go-geoclue2"
+	"github.com/nathan-osman/go-sunrise"
 )
 
 const (
@@ -34,6 +35,24 @@ type outputData struct {
 	Class   string `json:"class"`
 }
 
+type DisplayData struct {
+	Latitude           float64
+	Longitude          float64
+	Elevation          float64
+	UpdateTime         time.Time
+	WeatherDateForTime time.Time
+	Temperature        float64
+	WeatherCode        float64
+	WindDirection      float64
+	WindSpeed          float64
+	IsDaytime          bool
+	TempUnit           string
+	SunsetTime         time.Time
+	SunriseTime        time.Time
+	Icon               string
+	Condition          string
+}
+
 type Service struct {
 	config    *config
 	geoclient geoclue2.GeoclueClient
@@ -44,13 +63,10 @@ type Service struct {
 	locationLock sync.RWMutex
 	address      *shared.Address
 	location     omgo.Location
-	isDayTime    bool
-	sunriseTime  time.Time
-	sunsetTime   time.Time
 
 	weatherLock  sync.RWMutex
 	weatherIsSet bool
-	weather      omgo.CurrentWeather
+	weather      *omgo.Forecast
 }
 
 func New(config *config, log *logger) (*Service, error) {
@@ -123,42 +139,100 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func (s *Service) printWeather(context.Context) {
-	s.locationLock.RLock()
-	defer s.locationLock.RUnlock()
-	s.weatherLock.RLock()
-	defer s.weatherLock.RUnlock()
-
-	if s.address == nil || !s.weatherIsSet {
+	if !s.weatherIsSet {
 		return
 	}
 
-	dayOrNight := "day"
-	if !s.isDayTime {
-		dayOrNight = "night"
-	}
-
-	tempUnit := "°C"
-	if s.config.Units == "imperial" {
-		tempUnit = "°F"
-	}
+	displayData := new(DisplayData)
+	s.fillDisplayData(displayData)
 
 	output := outputData{
 		Text: fmt.Sprintf("%s %.1f%s",
-			WMOWeatherIcons[s.weather.WeatherCode][dayOrNight],
-			s.weather.Temperature,
-			tempUnit,
+			displayData.Icon,
+			displayData.Temperature,
+			displayData.TempUnit,
 		),
-		Tooltip: fmt.Sprintf("Condition: %s\nLocation: %s, %s\nSunrise: %s\nSunset: %s\nLast update: %s",
-			WMOWeatherCodes[s.weather.WeatherCode],
+		Tooltip: fmt.Sprintf("Condition: %s\nLocation: %s, %s\nSunrise: %s\nSunset: %s\nWeather data for: %s\nWeather data updated at: %s",
+			displayData.Condition,
 			s.address.City, s.address.Country,
-			s.sunriseTime.Format(TimeFormat),
-			s.sunsetTime.Format(TimeFormat),
-			s.weather.Time.Format(TimeFormat),
+			displayData.SunriseTime.Format(TimeFormat),
+			displayData.SunsetTime.Format(TimeFormat),
+			displayData.WeatherDateForTime.Format(TimeFormat),
+			displayData.UpdateTime.Format(TimeFormat),
 		),
 		Class: OutputClass,
 	}
 
 	if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
 		s.logger.Error("failed to encode weather data", logError(err))
+	}
+}
+
+func (s *Service) fillDisplayData(target *DisplayData) {
+	s.locationLock.RLock()
+	defer s.locationLock.RUnlock()
+	s.weatherLock.RLock()
+	defer s.weatherLock.RUnlock()
+
+	// We need valid weather data to fill the display data
+	if s.weather == nil {
+		return
+	}
+
+	// Coordinate data
+	target.Latitude = s.weather.Latitude
+	target.Longitude = s.weather.Longitude
+	target.Elevation = s.weather.Elevation
+
+	// Sunrise and sunset times
+
+	now := time.Now()
+	switch s.config.WeatherMode {
+	case "current":
+		target.SunriseTime, target.SunsetTime = sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude, now.Year(),
+			now.Month(), now.Day())
+		target.IsDaytime = false
+		if now.After(target.SunriseTime) && now.Before(target.SunsetTime) {
+			target.IsDaytime = true
+		}
+
+		target.UpdateTime = s.weather.CurrentWeather.Time.Time
+		target.Temperature = s.weather.CurrentWeather.Temperature
+		target.WeatherCode = s.weather.CurrentWeather.WeatherCode
+		target.WindDirection = s.weather.CurrentWeather.WindDirection
+		target.WindSpeed = s.weather.CurrentWeather.WindSpeed
+		target.TempUnit = s.weather.HourlyUnits["temperature_2m"]
+		target.WeatherDateForTime = s.weather.CurrentWeather.Time.Time
+		target.Icon = WMOWeatherIcons[target.WeatherCode][target.IsDaytime]
+		target.Condition = WMOWeatherCodes[target.WeatherCode]
+	case "forecast":
+		fcastTime := now.Add(time.Duration(s.config.ForecastHours) * time.Hour).Truncate(time.Hour)
+		idx := -1
+		for i, t := range s.weather.HourlyTimes {
+			if t.Equal(fcastTime) {
+				idx = i
+				break
+			}
+		}
+		if idx == -1 {
+			break
+		}
+
+		target.SunriseTime, target.SunsetTime = sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude,
+			fcastTime.Year(), fcastTime.Month(), fcastTime.Day())
+		target.IsDaytime = false
+		if fcastTime.After(target.SunriseTime) && fcastTime.Before(target.SunsetTime) {
+			target.IsDaytime = true
+		}
+
+		target.UpdateTime = s.weather.CurrentWeather.Time.Time
+		target.Temperature = s.weather.HourlyMetrics["temperature_2m"][idx]
+		target.WeatherCode = s.weather.HourlyMetrics["weather_code"][idx]
+		target.WindDirection = s.weather.HourlyMetrics["wind_direction_10m"][idx]
+		target.WindSpeed = s.weather.HourlyMetrics["wind_speed_10m"][idx]
+		target.TempUnit = s.weather.HourlyUnits["temperature_2m"]
+		target.WeatherDateForTime = fcastTime
+		target.Icon = WMOWeatherIcons[target.WeatherCode][target.IsDaytime]
+		target.Condition = WMOWeatherCodes[target.WeatherCode]
 	}
 }
