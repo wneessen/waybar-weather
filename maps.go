@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Winni Neessen <wn@neessen.dev>
+//
+// SPDX-License-Identifier: MIT
+
 package main
 
 // moonPhases is a map where moon phase names are keys and their corresponding emoji representations are values.
