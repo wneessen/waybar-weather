@@ -17,7 +17,11 @@ import (
 	"syscall"
 )
 
-const VERSION = "0.1.2"
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
 
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGKILL,
@@ -66,7 +70,8 @@ func main() {
 	}
 
 	// Start the service loop
-	log.Info("starting waybar-weather service", slog.String("version", VERSION))
+	log.Info("starting waybar-weather service", slog.String("version", version),
+		slog.String("commit", commit), slog.String("date", date))
 	if err = service.Run(ctx); err != nil {
 		log.Error("failed to start waybar-weather service", logError(err))
 	}

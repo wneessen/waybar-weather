@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-version: 1
+version: 2
 
 before:
   hooks:
@@ -23,7 +23,7 @@ builds:
     main: .
     binary: waybar-weather
     ldflags:
-      - -w -s -extldflags "-static"
+      - -w -s -extldflags "-static" -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser
 
 changelog:
   use: github-native
