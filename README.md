@@ -60,7 +60,7 @@ distribution's package manager. Make sure to configure the `/etc/geoclue/geoclue
 environment. For waybar-weather to properly work, it expects a minimum accuacy of "city".
 
 The demo agent is not started automatically, but you can run it locally using systemd's user 
-capabilities. There is an example systemd unit file (put it into `~/.config/systemd/user/geoclue-agent.service`):
+capabilities. Here is an example systemd unit file (put it into `~/.config/systemd/user/geoclue-agent.service`):
 ```systemd
 [Unit]
 Description=geoclue agent
@@ -103,9 +103,11 @@ Once you added that, add the module to your waybar module of choice, similar to 
 ],
 ```
 
-To style the module, add the following to your waybar config file (usually `.config/waybar/style.css`):
+waybar-weather always emits a custom CSS class to waybar, so you can apply your custom style to it. The class is
+always `waybar-weather`. Add the following to your waybar config file (usually `.config/waybar/style.css`) to adjust
+the style:
 ```css
-#waybar-weather {
+.waybar-weather {
     <your_style_rules>
 }
 ```
