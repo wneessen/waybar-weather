@@ -46,6 +46,18 @@ nfpms:
       {{- if not (eq .Amd64 "v1")}}{{ .Amd64 }}{{ end -}}
       {{- .ConventionalExtension -}}
 
+signs:
+  - artifacts: checksum
+    cmd: gpg2
+    args:
+      - "--batch"
+      - "-u"
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
+
 universal_binaries:
   - replace: false
 
