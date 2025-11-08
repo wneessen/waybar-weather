@@ -33,3 +33,19 @@ weather_mode = "forecast"
 #
 # Default: 3 hours
 forecast_hours = 5
+
+[intervals]
+## Weather update intervale
+# The interval in which the Open-Meteo API is checked for weather updates
+# If a geo location change is detected by Geoclue, a weather is triggered automatically
+#
+# Default: 15m
+weather_update = "30m"
+
+## Output interval
+# The interval in which waybar-weather outputs the JSON with the current information to
+# Waybar. If a geo location change is detected by Geoclue, a weather is triggered
+# automatically.
+#
+# Default: 30s
+output = "15s"

@@ -31,7 +31,7 @@ type config struct {
 	Intervals struct {
 		WeatherUpdate time.Duration `fig:"weather_update" default:"15m"`
 		Output        time.Duration `fig:"output" default:"30s"`
-	}
+	} `fig:"intervals"`
 }
 
 func newConfigFromFile(path, file string) (*config, error) {

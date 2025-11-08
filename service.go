@@ -96,7 +96,7 @@ func New(config *config, log *logger) (*Service, error) {
 
 func (s *Service) Run(ctx context.Context) error {
 	// Start scheduled jobs
-	_, err := s.scheduler.NewJob(gocron.DurationJob(s.config.Intervals.WeatherUpdate),
+	_, err := s.scheduler.NewJob(gocron.DurationJob(s.config.Intervals.Output),
 		gocron.NewTask(s.printWeather),
 		gocron.WithContext(ctx),
 		gocron.WithSingletonMode(gocron.LimitModeReschedule),
@@ -106,7 +106,7 @@ func (s *Service) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to create weather data output job: %w", err)
 	}
 
-	_, err = s.scheduler.NewJob(gocron.DurationJob(s.config.Intervals.Output),
+	_, err = s.scheduler.NewJob(gocron.DurationJob(s.config.Intervals.WeatherUpdate),
 		gocron.NewTask(s.fetchWeather),
 		gocron.WithContext(ctx),
 		gocron.WithSingletonMode(gocron.LimitModeReschedule),
