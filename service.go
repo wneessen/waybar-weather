@@ -20,6 +20,7 @@ import (
 
 const (
 	OutputClass = "waybar-weather"
+	TimeFormat  = "15:04"
 )
 
 var (
@@ -150,9 +151,9 @@ func (s *Service) printWeather(context.Context) {
 		Tooltip: fmt.Sprintf("Condition: %s\nLocation: %s, %s\nSunrise: %s\nSunset: %s\nLast update: %s",
 			WMOWeatherCodes[s.weather.WeatherCode],
 			s.address.City, s.address.Country,
-			s.sunriseTime.Format("2006-01-02 15:04"),
-			s.sunsetTime.Format("2006-01-02 15:04"),
-			s.weather.Time.Format("2006-01-02 15:04"),
+			s.sunriseTime.Format(TimeFormat),
+			s.sunsetTime.Format(TimeFormat),
+			s.weather.Time.Format(TimeFormat),
 		),
 		Class: OutputClass,
 	}
