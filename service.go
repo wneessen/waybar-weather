@@ -17,6 +17,7 @@ import (
 	"github.com/hectormalot/omgo"
 	"github.com/maltegrosse/go-geoclue2"
 	"github.com/nathan-osman/go-sunrise"
+	"github.com/wneessen/go-moonphase"
 )
 
 const (
@@ -50,8 +51,10 @@ type DisplayData struct {
 	TempUnit           string
 	SunsetTime         time.Time
 	SunriseTime        time.Time
-	Icon               string
+	ConditionIcon      string
 	Condition          string
+	Moonphase          string
+	MoonphaseIcon      string
 }
 
 type Service struct {
@@ -149,17 +152,18 @@ func (s *Service) printWeather(context.Context) {
 
 	output := outputData{
 		Text: fmt.Sprintf("%s %.1f%s",
-			displayData.Icon,
+			displayData.ConditionIcon,
 			displayData.Temperature,
 			displayData.TempUnit,
 		),
-		Tooltip: fmt.Sprintf("Condition: %s\nLocation: %s, %s\nSunrise: %s\nSunset: %s\nWeather data for: %s\nWeather data updated at: %s",
+		Tooltip: fmt.Sprintf("Condition: %s\nLocation: %s, %s\nSunrise: %s\nSunset: %s\nMoonphase: %s %s\nWeather information: %s\n",
 			displayData.Condition,
 			displayData.Address.City, displayData.Address.Country,
 			displayData.SunriseTime.Format(TimeFormat),
 			displayData.SunsetTime.Format(TimeFormat),
+			displayData.Moonphase,
+			displayData.MoonphaseIcon,
 			displayData.WeatherDateForTime.Format(TimeFormat),
-			displayData.UpdateTime.Format(TimeFormat),
 		),
 		Class: OutputClass,
 	}
@@ -188,6 +192,11 @@ func (s *Service) fillDisplayData(target *DisplayData) {
 		target.Address = *s.address
 	}
 
+	// Moon phase
+	m := moonphase.New(time.Now())
+	target.Moonphase = m.PhaseName()
+	target.MoonphaseIcon = moonPhases[target.Moonphase]
+
 	// Fill weather data
 	now := time.Now()
 	switch s.config.WeatherMode {
@@ -206,7 +215,7 @@ func (s *Service) fillDisplayData(target *DisplayData) {
 		target.WindSpeed = s.weather.CurrentWeather.WindSpeed
 		target.TempUnit = s.weather.HourlyUnits["temperature_2m"]
 		target.WeatherDateForTime = s.weather.CurrentWeather.Time.Time
-		target.Icon = WMOWeatherIcons[target.WeatherCode][target.IsDaytime]
+		target.ConditionIcon = wmoWeatherIcons[target.WeatherCode][target.IsDaytime]
 		target.Condition = WMOWeatherCodes[target.WeatherCode]
 	case "forecast":
 		fcastHours := time.Duration(s.config.ForecastHours) * time.Hour //nolint:gosec
@@ -236,7 +245,7 @@ func (s *Service) fillDisplayData(target *DisplayData) {
 		target.WindSpeed = s.weather.HourlyMetrics["wind_speed_10m"][idx]
 		target.TempUnit = s.weather.HourlyUnits["temperature_2m"]
 		target.WeatherDateForTime = fcastTime
-		target.Icon = WMOWeatherIcons[target.WeatherCode][target.IsDaytime]
+		target.ConditionIcon = wmoWeatherIcons[target.WeatherCode][target.IsDaytime]
 		target.Condition = WMOWeatherCodes[target.WeatherCode]
 	}
 }

@@ -10,6 +10,7 @@ require (
 	github.com/kkyr/fig v0.5.0
 	github.com/maltegrosse/go-geoclue2 v0.1.1
 	github.com/nathan-osman/go-sunrise v1.1.0
+	github.com/wneessen/go-moonphase v0.0.0-20251108174843-0043855bd40d
 )
 
 require (
