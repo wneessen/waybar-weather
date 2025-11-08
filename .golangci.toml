@@ -49,3 +49,11 @@ paths = [
   'builtin$',
   'examples$'
 ]
+
+## We validate this setting in the config validation, this can not overflow
+[[linters.exclusions.rules]]
+linters = [
+    'gosec'
+]
+path = 'service.go'
+text = 'G115:'
