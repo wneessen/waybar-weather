@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/kkyr/fig"
 )
@@ -26,6 +27,11 @@ type config struct {
 	WeatherMode string `fig:"weather_mode" default:"current"`
 	// Allowed value: 1 to 24
 	ForecastHours uint `fig:"forecast_hours" default:"3"`
+
+	Intervals struct {
+		WeatherUpdate time.Duration `fig:"weather_update" default:"15m"`
+		Output        time.Duration `fig:"output" default:"30s"`
+	}
 }
 
 func newConfigFromFile(path, file string) (*config, error) {
