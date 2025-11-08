@@ -26,15 +26,17 @@ to determine your current location and fetches weather data for that location.
 
 ## Requirements
 * A working Linux installation with Waybar.
-* Geoclue installed and running.
-* Geoclue-2 demo agent installed and running.
+* Geoclue-2 installed and running.
+* [Geoclue-2 demo agent installed and running.](#geoclue)
 * Network connectivity to call the Open-Meteo API.
 
 ## Installation
 
 ### Using Pre-Built Binary
 Pre-Built binaries are automatically built whenever a new release is created. Each release
-holds binaries for several different Linux distributions.
+holds binaries for several different Linux distributions. Each file is digitally signed via GPG. 
+After downloading the corresponding file, make sure that the file is verified with the GPG 
+signature. The public GPG key is: ["Winni Neessen" (Software signing key) <wn@neessen.dev>](https://keys.openpgp.org/vks/v1/by-fingerprint/10B5700F5ECCB06532CEC873C3D38948DA536E89)
 
 ### From Source
 To build from source, you require a working Go environment. Go 1.25+ is required.
@@ -49,6 +51,29 @@ go build -o waybar-weather app
 ```
 
 ## Configuration
+
+### GeoClue
+waybar-weather uses the [Geoclue-2](https://github.com/deepin-community/geoclue-2.0) to determine your current location. 
+By default, waybar-weather will use the [Geoclue-2 demo agent](https://github.com/deepin-community/geoclue-2.0/tree/master/demo)
+that is shipped with Geoclue-2. If your system doesn't have Geoclue-2 installed yet, you can do so using your 
+distribution's package manager. Make sure to configure the `/etc/geoclue/geoclue.conf` according to your needs and
+environment. For waybar-weather to properly work, it expects a minimum accuacy of "city".
+
+The demo agent is not started automatically, but you can run it locally using systemd's user 
+capabilities. There is an example systemd unit file (put it into `~/.config/systemd/user/geoclue-agent.service`):
+```systemd
+[Unit]
+Description=geoclue agent
+
+[Service]
+ExecStart=/usr/lib/geoclue-2.0/demos/agent
+
+[Install]
+WantedBy=default.target
+```
+You might have to adjust the path to the demo agent.
+
+Once you have the service configured, you can start it with: `systemctl --user start --now geoclue-agent.service`
 
 ### waybar-weather
 waybar-weather comes with defaults that should work out of the box for most users. You can however
