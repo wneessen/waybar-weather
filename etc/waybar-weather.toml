@@ -3,15 +3,33 @@
 # SPDX-License-Identifier: MIT
 
 ## Units used for weather data (allowed values "metric" or "imperial")
+#
+# Default: "metric"
 units = "imperial"
 
 ## Locale used for geo location services (if empty, tries to automatically get
 ## it from the LC_MESSAGES environment variable)
+#
 #locale = "en-US"
 
 ## Log level used for informational/error messages
-## DEBUG = -4
-## INFO = 0
-## WARN = 4
-## ERROR = 8
+# DEBUG = -4
+# INFO = 0
+# WARN = 4
+# ERROR = 8
+#
+# Default: "0" (for INFO)
 loglevel = 0
+
+## Weather data mode
+# Can be either "current" or "forecast"
+# In forecast mode it will show future weather data of up to 24h ahead (see forecast_hours)
+#
+# Default: "current"
+weather_mode = "forecast"
+
+## Forecast hours
+# The amount of hours that the forecast should reflect
+#
+# Default: 3 hours
+forecast_hours = 5
