@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -22,7 +23,6 @@ import (
 
 const (
 	OutputClass = "waybar-weather"
-	TimeFormat  = "15:04"
 )
 
 type outputData struct {
@@ -31,33 +31,13 @@ type outputData struct {
 	Class   string `json:"class"`
 }
 
-type DisplayData struct {
-	Latitude           float64
-	Longitude          float64
-	Elevation          float64
-	Address            shared.Address
-	UpdateTime         time.Time
-	WeatherDateForTime time.Time
-	Temperature        float64
-	WeatherCode        float64
-	WindDirection      float64
-	WindSpeed          float64
-	IsDaytime          bool
-	TempUnit           string
-	SunsetTime         time.Time
-	SunriseTime        time.Time
-	ConditionIcon      string
-	Condition          string
-	Moonphase          string
-	MoonphaseIcon      string
-}
-
 type Service struct {
 	config    *config
 	geoclient geoclue2.GeoclueClient
 	logger    *logger
 	omclient  omgo.Client
 	scheduler gocron.Scheduler
+	templates *Templates
 
 	locationLock sync.RWMutex
 	address      *shared.Address
@@ -68,7 +48,7 @@ type Service struct {
 	weather      *omgo.Forecast
 }
 
-func New(config *config, log *logger) (*Service, error) {
+func New(conf *config, log *logger) (*Service, error) {
 	geoclient, err := RegisterGeoClue()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "failed to register geoclue client: %s\n", err)
@@ -85,12 +65,18 @@ func New(config *config, log *logger) (*Service, error) {
 		return nil, fmt.Errorf("failed to create Open-Meteo client: %w", err)
 	}
 
+	tpls, err := NewTemplate(conf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse templates: %w", err)
+	}
+
 	return &Service{
-		config:    config,
+		config:    conf,
 		logger:    log,
 		geoclient: geoclient,
 		omclient:  omclient,
 		scheduler: scheduler,
+		templates: tpls,
 	}, nil
 }
 
@@ -145,22 +131,21 @@ func (s *Service) printWeather(context.Context) {
 	displayData := new(DisplayData)
 	s.fillDisplayData(displayData)
 
+	textBuf := bytes.NewBuffer(nil)
+	if err := s.templates.Text.Execute(textBuf, displayData); err != nil {
+		s.logger.Error("failed to render text template", logError(err))
+		return
+	}
+	tooltipBuf := bytes.NewBuffer(nil)
+	if err := s.templates.Tooltip.Execute(tooltipBuf, displayData); err != nil {
+		s.logger.Error("failed to render tooltip template", logError(err))
+		return
+	}
+
 	output := outputData{
-		Text: fmt.Sprintf("%s %.1f%s",
-			displayData.ConditionIcon,
-			displayData.Temperature,
-			displayData.TempUnit,
-		),
-		Tooltip: fmt.Sprintf("Condition: %s\nLocation: %s, %s\nSunrise: %s\nSunset: %s\nMoonphase: %s %s\nWeather information: %s\n",
-			displayData.Condition,
-			displayData.Address.City, displayData.Address.Country,
-			displayData.SunriseTime.Format(TimeFormat),
-			displayData.SunsetTime.Format(TimeFormat),
-			displayData.Moonphase,
-			displayData.MoonphaseIcon,
-			displayData.WeatherDateForTime.Format(TimeFormat),
-		),
-		Class: OutputClass,
+		Text:    textBuf.String(),
+		Tooltip: tooltipBuf.String(),
+		Class:   OutputClass,
 	}
 
 	if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {

@@ -15,7 +15,13 @@ import (
 	"github.com/kkyr/fig"
 )
 
-const configEnv = "WAYBARWEATHER"
+const (
+	configEnv         = "WAYBARWEATHER"
+	DefaultTextTpl    = "{{.ConditionIcon}} {{.Temperature}}{{.TempUnit}}"
+	DefaultTooltipTpl = "Condition: {{.Condition}}\nLocation: {{.Address.City}}, {{.Address.Country}}\n" +
+		"Sunrise: {{timeFormat .SunriseTime \"15:04\"}}\nSunset: {{timeFormat .SunsetTime \"15:04\"}}\n" +
+		"Moonphase: {{.MoonphaseIcon}} {{.Moonphase}}\nForcast for: {{timeFormat .WeatherDateForTime \"15:04\"}}"
+)
 
 // config represents the application's configuration structure.
 type config struct {
@@ -32,6 +38,11 @@ type config struct {
 		WeatherUpdate time.Duration `fig:"weather_update" default:"15m"`
 		Output        time.Duration `fig:"output" default:"30s"`
 	} `fig:"intervals"`
+
+	Templates struct {
+		Text    string `fig:"text"`
+		Tooltip string `fig:"tooltip"`
+	} `fig:"templates"`
 }
 
 func newConfigFromFile(path, file string) (*config, error) {
@@ -68,6 +79,12 @@ func (c *config) Validate() error {
 	}
 	if c.WeatherMode == "forecast" && c.ForecastHours < 1 || c.ForecastHours > 24 {
 		return fmt.Errorf("invalid forcast hours: %d", c.ForecastHours)
+	}
+	if c.Templates.Text == "" {
+		c.Templates.Text = DefaultTextTpl
+	}
+	if c.Templates.Tooltip == "" {
+		c.Templates.Tooltip = DefaultTooltipTpl
 	}
 
 	return nil

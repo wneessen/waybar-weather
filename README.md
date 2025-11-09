@@ -17,6 +17,7 @@ to determine your current location and fetches weather data for that location.
 * Fetch weather data from Open-Meteo (free, no API key required).
 * Integrates with Waybar as a custom module.
 * Display current weather conditions and temperature.
+* [Fully customizable.](#templating)
 * Configurable via TOML, JSON or YAML.
 * Lightweight, written in Go (single binary).
 
@@ -118,6 +119,72 @@ Once complete, restart Waybar and you should be good to go:
 ```bash
 killall waybar && waybar
 ```
+
+## Templating
+waybar-weather comes with a templating engine that allows you to customize the output of the module.
+The templating engine is based on [Go's text/template system](https://pkg.go.dev/text/template). You can
+set your own template in the configuration file in the `templates` section. There is a setting for 
+`text` and for `tooltip`. The `text` setting is used to display the weather data in the module. The
+`tooltip` setting is used to display the weather data in the tooltip when hovering over the module.
+
+### Variables
+The following variables are available for use in the templates:
+
+| Variable                   | Type        | Description                                         |
+|----------------------------|-------------|-----------------------------------------------------|
+| `{{.Latitude}}`            | `float64`   | The latitude of your current location.              |
+| `{{.Longitude}}`           | `float64`   | The longitude of your current location.             |
+| `{{.Elevation}}`           | `float64`   | The elevation of your current location.             |
+| `{{.Address.DisplayName}}` | `string`    | The the full display name of your current location. |
+| `{{.Address.Road}}`        | `string`    | The road name of your current location.             |
+| `{{.Address.Suburb}}`      | `string`    | The suburb name of your current location.           |
+| `{{.Address.City}}`        | `string`    | The city name of your current location.             |
+| `{{.Address.County}}`      | `string`    | The county name of your current location.           |
+| `{{.Address.State}}`       | `string`    | The state name of your current location.            |
+| `{{.Address.Postcode}}`    | `string`    | The postcode of your current location.              |
+| `{{.Address.Country}}`     | `string`    | The country name of your current location.          |
+| `{{.Address.CountryCode}}` | `string`    | The country code of your current location.          |
+| `{{.UpdateTime}}`          | `time.Time` | The last time the weather data was updated.         |
+| `{{.WeatherDateForTime}}`  | `time.Time` | The date for the current/forecasted weather data.   |
+| `{{.Temperature}}`         | `float64`   | The current temperature.                            |
+| `{{.WeatherCode}}`         | `float64`   | The current weather code.                           |
+| `{{.WindDirection}}`       | `float64`   | The current wind direction.                         |
+| `{{.WindSpeed}}`           | `float64`   | The current wind speed.                             |
+| `{{.IsDaytime}}`           | `bool`      | Is true if it is currently daytime.                 |
+| `{{.TempUnit}}`            | `string`    | The temperature unit.                               |
+| `{{.SunsetTime}}`          | `time.Time` | The time of sunset.                                 |
+| `{{.SunriseTime}}`         | `time.Time` | The time of sunrise.                                |
+| `{{.ConditionIcon}}`       | `string`    | The current weather condition icon.                 |
+| `{{.Condition}}`           | `string`    | The current weather condition.                      |
+| `{{.Moonphase}}`           | `string`    | The current moon phase.                             |
+| `{{.MoonphaseIcon}}`       | `string`    | The current moon phase icon.                        |
+
+## Formatting functions
+waybar-weather comes with a set of formatting functions that can be used to manipulate the output of
+specific variable types.
+
+### time.Time formatting
+waybar-weather comes with the `timeFormat` function as part of its templating system. It allows to
+change the default formatting of a `time.Time` value to your liking. It follows the Go [time format
+specifiers](https://pkg.go.dev/time#pkg-constants).
+
+For example the following template value `{{timeFormat .UpdateTime "15:04"}}` will display the time
+of the last update in the format `HH:MM`.
+
+### float64 formatting
+waybar-weather comes with the `floatFormat` function as part of its templating system. It allows to
+output a float64 value with a custom precision. 
+
+For example the following template value `{{floatFormat .Temperature 1}}` will display the current
+temperature with a precision of 1 decimal place (e.g. `23.1` instead of `23.10`).
+
+## Conditional formatting
+Since waybar-weather uses the Go templating system, you can use the `if` and `else` statements to
+display a value based on a boolean value. Let's assume you want to display a different icon for
+daytime and nighttime. You can do so using the following template: 
+`{{if .IsDaytime}}{{.ConditionIcon}}{{else}}{{.MoonphaseIcon}}{{end}}` (even though this example doesn't make 
+much sense, it's just an example)
+
 
 ## License
 

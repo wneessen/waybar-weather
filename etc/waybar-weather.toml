@@ -49,3 +49,16 @@ weather_update = "30m"
 #
 # Default: 30s
 output = "15s"
+
+## Templates allow the user to make their waybar-weather widget look the way the prefer
+## It uses the Go templating system and it highly customizable. Check the README.md for details
+[templates]
+## Text template that is displayed as main text in the waybar
+#
+# Default: {{.ConditionIcon}} {{.Temperature}}{{.TempUnit}}
+text = ""
+
+## Tooltip template that is displayed as waybar tooltip for the weather widget
+#
+# Default: Condition: {{.Condition}}\nLocation: {{.Address.City}}, {{.Address.Country}}\nSunrise: {{timeFormat .SunriseTime \"15:04\"}}\nSunset: {{timeFormat .SunsetTime \"15:04\"}}\nMoonphase: {{.MoonphaseIcon}} {{.Moonphase}}\nForcast for: {{timeFormat .WeatherDateForTime \"15:04\"}}
+tooltip = ""
