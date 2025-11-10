@@ -2,73 +2,94 @@
 #
 # SPDX-License-Identifier: MIT
 
-## Units used for weather data (allowed values "metric" or "imperial")
-#
-# Default: "metric"
+## -----------------------------------------------------------------------------
+## General Configuration
+## -----------------------------------------------------------------------------
+
+## Measurement units for weather data.
+## Accepted values: "metric" or "imperial"
+## Default: "metric"
 units = "imperial"
 
-## Locale used for geo location services (if empty, tries to automatically get
-## it from the LC_MESSAGES environment variable)
-#
-#locale = "en-US"
+## Locale setting for geolocation services.
+## If left empty, the application will attempt to detect it automatically
+## using the LC_MESSAGES environment variable.
+# locale = "en-US"
 
-## Log level used for informational/error messages
-# DEBUG = -4
-# INFO = 0
-# WARN = 4
-# ERROR = 8
-#
-# Default: "0" (for INFO)
+## Log level for informational and error messages.
+## Available levels:
+##   DEBUG = -4
+##   INFO  = 0
+##   WARN  = 4
+##   ERROR = 8
+## Default: 0 (INFO)
 loglevel = 0
 
-## Weather data mode
-# Can be either "current" or "forecast"
-# In forecast mode it will show future weather data of up to 24h ahead (see forecast_hours)
-#
-# Default: "current"
+## Weather data mode.
+## Determines whether to display current or forecast data.
+##   - "current": Show current weather conditions
+##   - "forecast": Show forecast data up to 24 hours ahead
+## Default: "current"
 weather_mode = "forecast"
 
-## Forecast hours
-# The amount of hours that the forecast should reflect
-#
-# Default: 3 hours
+## Forecast duration.
+## Specifies how many hours ahead to display forecast data.
+## Default: 3
 forecast_hours = 5
 
+
+## -----------------------------------------------------------------------------
+## Intervals
+## -----------------------------------------------------------------------------
 [intervals]
-## Weather update intervale
-# The interval in which the Open-Meteo API is checked for weather updates
-# If a geo location change is detected by Geoclue, a weather is triggered automatically
-#
-# Default: 15m
+
+## Weather update interval.
+## Defines how frequently the application queries the Open-Meteo API
+## for updated weather data.
+## If a geolocation change is detected by Geoclue, an update is triggered automatically.
+## Default: 15m
 weather_update = "30m"
 
-## Output interval
-# The interval in which waybar-weather outputs the JSON with the current information to
-# Waybar. If a geo location change is detected by Geoclue, a weather is triggered
-# automatically.
-#
-# Default: 30s
+## Output interval.
+## Specifies how often waybar-weather outputs JSON data to Waybar.
+## A geolocation change detected by Geoclue will also trigger an update automatically.
+## Default: 30s
 output = "15s"
 
-## Templates allow the user to make their waybar-weather widget look the way the prefer
-## It uses the Go templating system and it highly customizable. Check the README.md for details
+
+## -----------------------------------------------------------------------------
+## Templates
+## -----------------------------------------------------------------------------
 [templates]
-## Text template that is displayed as main text in the waybar
-#
-# Default: {{.ConditionIcon}} {{.Temperature}}{{.TempUnit}}
+
+## Text template.
+## Defines the primary text displayed in the Waybar weather widget.
+## Uses Go’s templating syntax for customization.
+## Refer to README.md for details.
+## Default: {{.ConditionIcon}} {{.Temperature}}{{.TempUnit}}
 text = ""
 
-## Tooltip template that is displayed as waybar tooltip for the weather widget
-#
-# Default: Condition: {{.Condition}}\nLocation: {{.Address.City}}, {{.Address.Country}}\nSunrise: {{timeFormat .SunriseTime \"15:04\"}}\nSunset: {{timeFormat .SunsetTime \"15:04\"}}\nMoonphase: {{.MoonphaseIcon}} {{.Moonphase}}\nForcast for: {{timeFormat .WeatherDateForTime \"15:04\"}}
+## Tooltip template.
+## Defines the tooltip content displayed for the weather widget in Waybar.
+## Supports Go templates and custom formatting.
+## Default:
+##   Condition: {{.Condition}}
+##   Location: {{.Address.City}}, {{.Address.Country}}
+##   Sunrise: {{timeFormat .SunriseTime "15:04"}}
+##   Sunset: {{timeFormat .SunsetTime "15:04"}}
+##   Moonphase: {{.MoonphaseIcon}} {{.Moonphase}}
+##   Forecast for: {{timeFormat .WeatherDateForTime "15:04"}}
 tooltip = ""
 
-## Geolocation lookup configuration
-## This section allows you to disable the various geolocation providers that are used to determine your
-## location for the weather data lookup
-#
-# Default: all are enabled by default
+
+## -----------------------------------------------------------------------------
+## Geolocation
+## -----------------------------------------------------------------------------
 [geolocation]
+
+## Geolocation provider configuration.
+## Disable specific providers used to determine location data.
+## All providers are enabled by default.
 disable_geoip = true
 disable_geoapi = true
 disable_geolocation_file = true
