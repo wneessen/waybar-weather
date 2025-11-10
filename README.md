@@ -13,7 +13,10 @@ and presents it in a format suitable to be used as custom Waybar module. It uses
 to determine your current location and fetches weather data for that location. 
 
 ## Features
-* Uses the Geoclue as local geolocation provider.
+* Uses different geolocation providers to find your current location.
+  * Geolocation file
+  * [GeoIP lookup](https://reallyfreegeoip.org)
+  * [ICHNAEA/Mozilla Location Service (MLS)](https://ichnaea.readthedocs.io/en/latest/index.html) using WiFi BSSIDs around you
 * Fetch weather data from Open-Meteo (free, no API key required).
 * Integrates with Waybar as a custom module.
 * Display current weather conditions and temperature.
@@ -27,9 +30,8 @@ to determine your current location and fetches weather data for that location.
 
 ## Requirements
 * A working Linux installation with Waybar.
-* Geoclue-2 installed and running.
-* [Geoclue-2 demo agent installed and running.](#geoclue)
-* Network connectivity to call the Open-Meteo API.
+* Network connectivity for API calls
+* (Optional) Ideally an active WiFi connectivity for ICHNAEA geolocation lookup (more precise location)
 
 ## Installation
 
@@ -54,29 +56,6 @@ go build -o waybar-weather app
 ```
 
 ## Configuration
-
-### GeoClue
-waybar-weather uses the [Geoclue-2](https://github.com/deepin-community/geoclue-2.0) to determine your current location. 
-By default, waybar-weather will use the [Geoclue-2 demo agent](https://github.com/deepin-community/geoclue-2.0/tree/master/demo)
-that is shipped with Geoclue-2. If your system doesn't have Geoclue-2 installed yet, you can do so using your 
-distribution's package manager. Make sure to configure the `/etc/geoclue/geoclue.conf` according to your needs and
-environment. For waybar-weather to properly work, it expects a minimum accuacy of "city".
-
-The demo agent is not started automatically, but you can run it locally using systemd's user 
-capabilities. Here is an example systemd unit file (put it into `~/.config/systemd/user/geoclue-agent.service`):
-```systemd
-[Unit]
-Description=geoclue agent
-
-[Service]
-ExecStart=/usr/lib/geoclue-2.0/demos/agent
-
-[Install]
-WantedBy=default.target
-```
-You might have to adjust the path to the demo agent.
-
-Once you have the service configured, you can start it with: `systemctl --user start --now geoclue-agent.service`
 
 ### waybar-weather
 waybar-weather comes with defaults that should work out of the box for most users. You can however
@@ -119,6 +98,30 @@ Once complete, restart Waybar and you should be good to go:
 ```bash
 killall waybar && waybar
 ```
+
+## Geo location lookup
+waybar-weather tries to automatically determine your location using its built-in geolocation lookup
+service (geobus). The geobus is a simple sub-pub service that utilizes different geolocation providers
+to find your location. The most accurate result will be taken for looking up the weather data. You can
+disable every geobus provider in your config file. By default all providers are enabled, to provide the
+best possible location lookup.
+
+### Geolocation file
+A geolocation file is a simple static file in the format `<latitude>,<logitude>` that you can place
+in you local home directory at `~/.config/waybar-weather/geolocation`. If the provider is enabled and
+the file is present, waybar-weather will consider the coordinates in this file as best possible result.
+
+### GeoIP lookup
+The GeoIP lookup provider uses  [https://reallyfreegeoip.org](https://reallyfreegeoip.org) to look up
+your IP and the resulting location based of that IP address. Depending on your ISP, the result might 
+be very inaccurate
+
+### ICHNAEA
+The ICHNAEA location provider uses the Mozilla Location Service protocol to look up your location at
+[beaconDB](https://beacondb.net/). To get your location it will look for WiFi interfaces on your computer
+and scan for local networks in the area. The hardware addresses of these networks will then be transmitted
+to beaconDB. The more WiFi networks waybar-weather is able to identify, the more accurate the results will
+be. For most users, this will be the most accurate location source.
 
 ## Templating
 waybar-weather comes with a templating engine that allows you to customize the output of the module.
