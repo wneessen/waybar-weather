@@ -9,26 +9,28 @@ SPDX-License-Identifier: MIT
 
 ## About
 waybar-weather is a simple programm written in Go that fetches weather data from Open-Meteo
-and presents it in a format suitable to be used as custom Waybar module. It uses the Geoclue 
-to determine your current location and fetches weather data for that location. 
+and presents it in a format suitable to be used as custom Waybar module. It uses different
+geolocation providers to determine your current location and fetches weather data for that 
+location. The geolocation is continuously monitored and updated if the location changes, 
+allowing you to always see the weather data for your current location.
 
 ## Features
 * [Uses different geolocation providers to find your current location.](#geolocation-lookup)
-* Fetch weather data from Open-Meteo (free, no API key required).
-* Integrates with Waybar as a custom module.
-* Display current weather conditions and temperature.
-* [Fully customizable.](#templating)
+* Fetch weather data from [Open-Meteo](https://open-meteo.com/) (free, no API key required).
+* Integrates with [Waybar](https://github.com/Alexays/Waybar) as a custom module.
+* Display conditions, temperature and moon phase for your current location.
+* [Fully customizable via its integrated template engine.](#templating)
 * Configurable via TOML, JSON or YAML.
 * Lightweight, written in Go (single binary).
+
+## Requirements
+* A working Linux installation with Waybar running.
+* Network connectivity for API calls.
+* (Optional) Ideally an active WiFi connectivity for ICHNAEA geolocation service (more precise location lookup).
 
 ## Screenshots
 ![Full desktop view](assets/full.png)
 ![Detailed tooltip view](assets/detail.png)
-
-## Requirements
-* A working Linux installation with Waybar.
-* Network connectivity for API calls
-* (Optional) Ideally an active WiFi connectivity for ICHNAEA geolocation lookup (more precise location)
 
 ## Installation
 
