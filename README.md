@@ -33,6 +33,10 @@ allowing you to always see the weather data for your current location.
 
 ## Installation
 
+### Linux distribution package manager
+waybar-weather can be found on the following linux distributions:
+- Arch Linux AUR: [https://aur.archlinux.org/packages/waybar-weather](https://aur.archlinux.org/packages/waybar-weather)
+
 ### Using Pre-Built Binary
 Pre-Built binaries are automatically built whenever a new release is created. Each release
 holds binaries for several different Linux distributions. A checksum of each file is created
