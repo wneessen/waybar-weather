@@ -23,7 +23,7 @@ builds:
     main: .
     binary: waybar-weather
     ldflags:
-      - -w -s -extldflags "-static" -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser -X app/internal/http.version={{.Version}}
+      - -w -s -extldflags "-static" -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser -X github.com/wneessen/waybar-weather/internal/http.version={{.Version}}
 changelog:
   use: github-native
 
