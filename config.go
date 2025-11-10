@@ -20,7 +20,7 @@ const (
 	DefaultTextTpl    = "{{.ConditionIcon}} {{.Temperature}}{{.TempUnit}}"
 	DefaultTooltipTpl = "Condition: {{.Condition}}\nLocation: {{.Address.City}}, {{.Address.Country}}\n" +
 		"Sunrise: {{timeFormat .SunriseTime \"15:04\"}}\nSunset: {{timeFormat .SunsetTime \"15:04\"}}\n" +
-		"Moonphase: {{.MoonphaseIcon}} {{.Moonphase}}\nForcast for: {{timeFormat .WeatherDateForTime \"15:04\"}}"
+		"Moonphase: {{.MoonphaseIcon}} {{.Moonphase}}\nForecast for: {{timeFormat .WeatherDateForTime \"15:04\"}}"
 )
 
 // config represents the application's configuration structure.

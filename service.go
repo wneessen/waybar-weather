@@ -181,8 +181,9 @@ func (s *Service) fillDisplayData(target *DisplayData) {
 	now := time.Now()
 	switch s.config.WeatherMode {
 	case "current":
-		target.SunriseTime, target.SunsetTime = sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude, now.Year(),
+		sunriseTimeUTC, sunsetTimeUTC := sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude, now.Year(),
 			now.Month(), now.Day())
+		target.SunriseTime, target.SunsetTime = sunriseTimeUTC.In(now.Location()), sunsetTimeUTC.In(now.Location())
 		target.IsDaytime = false
 		if now.After(target.SunriseTime) && now.Before(target.SunsetTime) {
 			target.IsDaytime = true
@@ -211,8 +212,9 @@ func (s *Service) fillDisplayData(target *DisplayData) {
 			break
 		}
 
-		target.SunriseTime, target.SunsetTime = sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude,
+		sunriseTimeUTC, sunsetTimeUTC := sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude,
 			fcastTime.Year(), fcastTime.Month(), fcastTime.Day())
+		target.SunriseTime, target.SunsetTime = sunriseTimeUTC.In(fcastTime.Location()), sunsetTimeUTC.In(fcastTime.Location())
 		target.IsDaytime = false
 		if s.weather.HourlyUnits["is_day"] == "1" {
 			target.IsDaytime = true
