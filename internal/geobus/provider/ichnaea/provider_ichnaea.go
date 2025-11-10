@@ -48,11 +48,11 @@ func NewGeolocationICHNAEAProvider(http *http.Client) (*GeolocationICHNAEAProvid
 		return nil, fmt.Errorf("failed to create wifi client: %w", err)
 	}
 	return &GeolocationICHNAEAProvider{
-		name:   "geoip",
+		name:   "ichnaea",
 		http:   http,
 		wlan:   wlan,
-		period: 30 * time.Minute,
-		ttl:    60 * time.Minute,
+		period: 5 * time.Minute,
+		ttl:    10 * time.Minute,
 	}, nil
 }
 
@@ -161,14 +161,25 @@ func (p *GeolocationICHNAEAProvider) locate(ctx context.Context) (lat, lon, alt,
 	if err != nil {
 		return 0, 0, 0, 0, 0, fmt.Errorf("failed to retrieve wifi list: %w", err)
 	}
+	if len(wifiList) == 0 {
+		return 0, 0, 0, 0, 0, nil
+	}
+
+	type request struct {
+		ConsiderIP   bool              `json:"considerIp"`
+		Accesspoints []WirelessNetwork `json:"wifiAccessPoints"`
+	}
+	req := request{
+		ConsiderIP:   true,
+		Accesspoints: wifiList,
+	}
 	bodyBuffer := bytes.NewBuffer(nil)
-	if err = json.NewEncoder(bodyBuffer).Encode(wifiList); err != nil {
+	if err = json.NewEncoder(bodyBuffer).Encode(req); err != nil {
 		return 0, 0, 0, 0, 0, fmt.Errorf("failed to encode wifi list to JSON: %w", err)
 	}
 
 	ctxHttp, cancelHttp := context.WithTimeout(ctx, LookupTimeout)
 	defer cancelHttp()
-
 	result := new(APIResult)
 	if _, err = p.http.Post(ctxHttp, APIEndpoint, result, bodyBuffer,
 		map[string]string{"Content-Type": "application/json"}); err != nil {
