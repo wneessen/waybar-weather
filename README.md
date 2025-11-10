@@ -13,10 +13,7 @@ and presents it in a format suitable to be used as custom Waybar module. It uses
 to determine your current location and fetches weather data for that location. 
 
 ## Features
-* Uses different geolocation providers to find your current location.
-  * Geolocation file
-  * [GeoIP lookup](https://reallyfreegeoip.org)
-  * [ICHNAEA/Mozilla Location Service (MLS)](https://ichnaea.readthedocs.io/en/latest/index.html) using WiFi BSSIDs around you
+* [Uses different geolocation providers to find your current location.](#geolocation-lookup)
 * Fetch weather data from Open-Meteo (free, no API key required).
 * Integrates with Waybar as a custom module.
 * Display current weather conditions and temperature.
@@ -99,7 +96,7 @@ Once complete, restart Waybar and you should be good to go:
 killall waybar && waybar
 ```
 
-## Geo location lookup
+## Geolocation lookup
 waybar-weather tries to automatically determine your location using its built-in geolocation lookup
 service (geobus). The geobus is a simple sub-pub service that utilizes different geolocation providers
 to find your location. The most accurate result will be taken for looking up the weather data. You can
