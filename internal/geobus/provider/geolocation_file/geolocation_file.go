@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Winni Neessen <wn@neessen.dev>
+//
+// SPDX-License-Identifier: MIT
+
 package geolocation_file
 
 import (
@@ -21,7 +25,6 @@ const Accuracy = 5
 // Results are subject to a time-to-live (TTL) duration, ensuring outdated data is discarded.
 type GeolocationFileProvider struct {
 	name   string
-	result geobus.Result
 	path   string
 	period time.Duration
 	ttl    time.Duration

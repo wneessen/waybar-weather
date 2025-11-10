@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Winni Neessen <wn@neessen.dev>
+//
+// SPDX-License-Identifier: MIT
+
 package geobus
 
 // GeolocationState tracks the last known geolocation coordinates and accuracy values.

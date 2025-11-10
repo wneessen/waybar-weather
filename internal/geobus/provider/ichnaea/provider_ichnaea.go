@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Winni Neessen <wn@neessen.dev>
+//
+// SPDX-License-Identifier: MIT
+
 package ichnaea
 
 import (
@@ -21,7 +25,6 @@ const (
 
 type GeolocationICHNAEAProvider struct {
 	name   string
-	result geobus.Result
 	http   *http.Client
 	wlan   *wifi.Client
 	period time.Duration

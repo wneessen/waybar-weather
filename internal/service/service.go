@@ -145,7 +145,8 @@ func (s *Service) createOrchestrator() *geobus.Orchestrator {
 }
 
 func (s *Service) createScheduledJob(ctx context.Context, interval time.Duration, task func(context.Context),
-	jobName string) error {
+	jobName string,
+) error {
 	_, err := s.scheduler.NewJob(
 		gocron.DurationJob(interval),
 		gocron.NewTask(task),

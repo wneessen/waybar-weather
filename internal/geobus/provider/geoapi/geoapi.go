@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Winni Neessen <wn@neessen.dev>
+//
+// SPDX-License-Identifier: MIT
+
 package geoapi
 
 import (
@@ -31,7 +35,6 @@ const (
 
 type GeolocationGeoAPIProvider struct {
 	name   string
-	result geobus.Result
 	http   *http.Client
 	period time.Duration
 	ttl    time.Duration
