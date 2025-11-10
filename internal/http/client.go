@@ -46,7 +46,6 @@ func New(logger *logger.Logger) *Client {
 		Timeout:   DefaultTimeout,
 		Transport: httpTransport,
 	}
-	fmt.Printf("HTTP Client version: %s\n", version)
 	return &Client{httpClient, logger}
 }
 

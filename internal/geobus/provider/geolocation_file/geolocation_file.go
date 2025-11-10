@@ -1,16 +1,19 @@
 package geolocation_file
 
 import (
-	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"app/internal/geobus"
 )
+
+// Accuracy is the default accuracy value for geolocation data. We consider geolocation file data as
+// the most accurate data available.
+const Accuracy = 5
 
 // GeolocationFileProvider reads geolocation data from a file and emits updates via a stream.
 // It periodically reads a specified file, parses its data, and updates geolocation results based on changes.
@@ -55,7 +58,7 @@ func (p *GeolocationFileProvider) LookupStream(ctx context.Context, key string) 
 			default:
 			}
 
-			lat, lon, alt, acc, err := p.readFile()
+			lat, lon, err := p.readFile()
 			if err != nil {
 				// File missing or malformed — just retry later
 				time.Sleep(p.period)
@@ -63,9 +66,9 @@ func (p *GeolocationFileProvider) LookupStream(ctx context.Context, key string) 
 			}
 
 			// Only emit if values changed or it's the first read
-			if state.HasChanged(lat, lon, alt, acc) {
-				state.Update(lat, lon, alt, acc)
-				r := p.createResult(key, lat, lon, alt, acc)
+			if state.HasChanged(lat, lon, 0, Accuracy) {
+				state.Update(lat, lon, 0, Accuracy)
+				r := p.createResult(key, lat, lon)
 
 				select {
 				case <-ctx.Done():
@@ -85,13 +88,12 @@ func (p *GeolocationFileProvider) LookupStream(ctx context.Context, key string) 
 }
 
 // createResult composes and returns a Result using provided geolocation data and metadata.
-func (p *GeolocationFileProvider) createResult(key string, lat, lon, alt, acc float64) geobus.Result {
+func (p *GeolocationFileProvider) createResult(key string, lat, lon float64) geobus.Result {
 	return geobus.Result{
 		Key:            key,
 		Lat:            lat,
 		Lon:            lon,
-		Alt:            alt,
-		AccuracyMeters: acc,
+		AccuracyMeters: Accuracy,
 		Confidence:     1.0,
 		Source:         p.name,
 		At:             time.Now(),
@@ -102,32 +104,22 @@ func (p *GeolocationFileProvider) createResult(key string, lat, lon, alt, acc fl
 // readFile reads geolocation data from the file at the configured path.
 // Returns latitude, longitude, altitude, accuracy, or an error if the file cannot be
 // read or parsed correctly.
-func (p *GeolocationFileProvider) readFile() (lat, lon, alt, acc float64, err error) {
-	f, err := os.Open(p.path)
+func (p *GeolocationFileProvider) readFile() (lat, lon float64, err error) {
+	data, err := os.ReadFile(p.path)
 	if err != nil {
-		return 0, 0, 0, 0, fmt.Errorf("open %s: %w", p.path, err)
+		return 0, 0, fmt.Errorf("failed to read geolocation file %q: %w", p.path, err)
 	}
-	defer func() {
-		if closeErr := f.Close(); closeErr != nil {
-			err = errors.Join(err, fmt.Errorf("failed to close geolocation file: %w", closeErr))
-		}
-	}()
-
-	scanner := bufio.NewScanner(f)
-	var values []float64
-	for scanner.Scan() {
-		line := scanner.Text()
-		if line == "" {
-			continue
-		}
-		v, parseErr := strconv.ParseFloat(line, 64)
-		if parseErr != nil {
-			return 0, 0, 0, 0, fmt.Errorf("invalid number in %s: %w", p.path, parseErr)
-		}
-		values = append(values, v)
+	coords := strings.Split(strings.TrimSpace(string(data)), ",")
+	if len(coords) != 2 {
+		return 0, 0, fmt.Errorf("geolocation file %q contains invalid coordinates", p.path)
 	}
-	if len(values) < 4 {
-		return 0, 0, 0, 0, errors.New("geolocation file missing required lines (need 4)")
+	lat, err = strconv.ParseFloat(coords[0], 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to parse latitude from geolocation file %q: %w", p.path, err)
 	}
-	return values[0], values[1], values[2], values[3], nil
+	lon, err = strconv.ParseFloat(coords[1], 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to parse longitude from geolocation file %q: %w", p.path, err)
+	}
+	return lat, lon, nil
 }

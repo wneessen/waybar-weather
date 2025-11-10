@@ -20,6 +20,12 @@ const (
 	AccuracyCity    = 15000
 	AccuracyZip     = 3000
 	AccuarcyUnknown = 1000000
+
+	ConvidenceCountry = 0.2
+	ConvidenceRegion  = 0.5
+	ConvidenceCity    = 0.7
+	ConvidenceZip     = 0.85
+	ConvidenceUnknown = 0.1
 )
 
 type GeolocationGeoIPProvider struct {
@@ -72,16 +78,16 @@ func (p *GeolocationGeoIPProvider) LookupStream(ctx context.Context, key string)
 			default:
 			}
 
-			lat, lon, alt, acc, con, err := p.locate(ctx)
+			lat, lon, acc, con, err := p.locate(ctx)
 			if err != nil {
 				time.Sleep(p.period)
 				continue
 			}
 
 			// Only emit if values changed or it's the first read
-			if state.HasChanged(lat, lon, alt, acc) {
-				state.Update(lat, lon, alt, acc)
-				r := p.createResult(key, lat, lon, alt, acc, con)
+			if state.HasChanged(lat, lon, 0, acc) {
+				state.Update(lat, lon, 0, acc)
+				r := p.createResult(key, lat, lon, acc, con)
 
 				select {
 				case <-ctx.Done():
@@ -101,12 +107,11 @@ func (p *GeolocationGeoIPProvider) LookupStream(ctx context.Context, key string)
 }
 
 // createResult composes and returns a Result using provided geolocation data and metadata.
-func (p *GeolocationGeoIPProvider) createResult(key string, lat, lon, alt, acc, con float64) geobus.Result {
+func (p *GeolocationGeoIPProvider) createResult(key string, lat, lon, acc, con float64) geobus.Result {
 	return geobus.Result{
 		Key:            key,
 		Lat:            lat,
 		Lon:            lon,
-		Alt:            alt,
 		AccuracyMeters: acc,
 		Confidence:     con,
 		Source:         p.name,
@@ -115,33 +120,33 @@ func (p *GeolocationGeoIPProvider) createResult(key string, lat, lon, alt, acc, 
 	}
 }
 
-func (p *GeolocationGeoIPProvider) locate(ctx context.Context) (lat, lon, alt, acc, con float64, err error) {
+func (p *GeolocationGeoIPProvider) locate(ctx context.Context) (lat, lon, acc, con float64, err error) {
 	ctxHttp, cancelHttp := context.WithTimeout(ctx, LookupTimeout)
 	defer cancelHttp()
 
 	result := new(APIResult)
 	if _, err = p.http.Get(ctxHttp, APIEndpoint, result, nil); err != nil {
-		return 0, 0, 0, 0, 0, fmt.Errorf("failed to get geolocation data from API: %w", err)
+		return 0, 0, 0, 0, fmt.Errorf("failed to get geolocation data from API: %w", err)
 	}
 
 	acc = AccuarcyUnknown
-	con = 0.1
+	con = ConvidenceUnknown
 	if result.ZipCode != "" {
 		acc = AccuracyZip
-		con = 0.85
+		con = ConvidenceZip
 	}
 	if result.City != "" {
 		acc = AccuracyCity
-		con = 0.7
+		con = ConvidenceCity
 	}
 	if result.RegionCode != "" {
 		acc = AccuracyRegion
-		con = 0.5
+		con = ConvidenceRegion
 	}
 	if result.CountryCode != "" {
 		acc = AccuracyCountry
-		con = 0.3
+		con = ConvidenceCountry
 	}
 
-	return result.Latitude, result.Longitude, 0, acc, con, nil
+	return result.Latitude, result.Longitude, acc, con, nil
 }
