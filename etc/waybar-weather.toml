@@ -25,12 +25,10 @@ units = "imperial"
 ## Default: 0 (INFO)
 loglevel = 0
 
-## Weather data mode.
-## Determines whether to display current or forecast data.
-##   - "current": Show current weather conditions
-##   - "forecast": Show forecast data up to 24 hours ahead
-## Default: "current"
-weather_mode = "forecast"
+## -----------------------------------------------------------------------------
+## Weather
+## -----------------------------------------------------------------------------
+[weather]
 
 ## Forecast duration.
 ## Specifies how many hours ahead to display forecast data.
