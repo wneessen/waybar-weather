@@ -100,6 +100,14 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 	s.scheduler.Start()
 
+	// Validate that the templates can be rendered
+	if err := s.templates.Text.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
+		return fmt.Errorf("failed to render text template: %w", err)
+	}
+	if err := s.templates.Tooltip.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
+		return fmt.Errorf("failed to render tooltip template: %w", err)
+	}
+
 	// Create the orchestrator
 	s.orchestrator = s.createOrchestrator()
 
@@ -219,60 +227,51 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 	target.Moonphase = m.PhaseName()
 	target.MoonphaseIcon = MoonPhases[target.Moonphase]
 
-	// Fill weather data
+	// Generel weather data
 	now := time.Now()
-	switch s.config.WeatherMode {
-	case "current":
-		sunriseTimeUTC, sunsetTimeUTC := sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude, now.Year(),
-			now.Month(), now.Day())
-		target.SunriseTime, target.SunsetTime = sunriseTimeUTC.In(now.Location()), sunsetTimeUTC.In(now.Location())
-		target.IsDaytime = false
-		if now.After(target.SunriseTime) && now.Before(target.SunsetTime) {
-			target.IsDaytime = true
-		}
+	target.UpdateTime = s.weather.CurrentWeather.Time.Time
+	target.TempUnit = s.weather.HourlyUnits["temperature_2m"]
+	sunriseTimeUTC, sunsetTimeUTC := sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude, now.Year(),
+		now.Month(), now.Day())
+	target.SunriseTime, target.SunsetTime = sunriseTimeUTC.In(now.Location()), sunsetTimeUTC.In(now.Location())
+	target.Current.IsDaytime = false
+	if now.After(target.SunriseTime) && now.Before(target.SunsetTime) {
+		target.Current.IsDaytime = true
+	}
 
-		target.UpdateTime = s.weather.CurrentWeather.Time.Time
-		target.Temperature = s.weather.CurrentWeather.Temperature
-		target.WeatherCode = s.weather.CurrentWeather.WeatherCode
-		target.WindDirection = s.weather.CurrentWeather.WindDirection
-		target.WindSpeed = s.weather.CurrentWeather.WindSpeed
-		target.TempUnit = s.weather.HourlyUnits["temperature_2m"]
-		target.WeatherDateForTime = s.weather.CurrentWeather.Time.Time
-		target.ConditionIcon = WMOWeatherIcons[target.WeatherCode][target.IsDaytime]
-		target.Condition = WMOWeatherCodes[target.WeatherCode]
-	case "forecast":
-		fcastHours := time.Duration(s.config.ForecastHours) * time.Hour //nolint:gosec
-		fcastTime := now.Add(fcastHours).Truncate(time.Hour)
-		idx := -1
-		for i, t := range s.weather.HourlyTimes {
-			if t.Equal(fcastTime) {
-				idx = i
-				break
-			}
-		}
-		if idx == -1 {
+	// Current weather data
+	target.Current.Temperature = s.weather.CurrentWeather.Temperature
+	target.Current.WeatherCode = s.weather.CurrentWeather.WeatherCode
+	target.Current.WindDirection = s.weather.CurrentWeather.WindDirection
+	target.Current.WindSpeed = s.weather.CurrentWeather.WindSpeed
+	target.Current.WeatherDateForTime = s.weather.CurrentWeather.Time.Time
+	target.Current.ConditionIcon = WMOWeatherIcons[target.Current.WeatherCode][target.Current.IsDaytime]
+	target.Current.Condition = WMOWeatherCodes[target.Current.WeatherCode]
+
+	// Forecast weather data
+	fcastHours := time.Duration(s.config.Weather.ForecastHours) * time.Hour //nolint:gosec
+	fcastTime := now.Add(fcastHours).Truncate(time.Hour)
+	idx := -1
+	for i, t := range s.weather.HourlyTimes {
+		if t.Equal(fcastTime) {
+			idx = i
 			break
 		}
-
-		sunriseTimeUTC, sunsetTimeUTC := sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude,
-			fcastTime.Year(), fcastTime.Month(), fcastTime.Day())
-		target.SunriseTime, target.SunsetTime = sunriseTimeUTC.In(fcastTime.Location()),
-			sunsetTimeUTC.In(fcastTime.Location())
-		target.IsDaytime = false
-		if s.weather.HourlyUnits["is_day"] == "1" {
-			target.IsDaytime = true
-		}
-
-		target.UpdateTime = s.weather.CurrentWeather.Time.Time
-		target.Temperature = s.weather.HourlyMetrics["temperature_2m"][idx]
-		target.WeatherCode = s.weather.HourlyMetrics["weather_code"][idx]
-		target.WindDirection = s.weather.HourlyMetrics["wind_direction_10m"][idx]
-		target.WindSpeed = s.weather.HourlyMetrics["wind_speed_10m"][idx]
-		target.TempUnit = s.weather.HourlyUnits["temperature_2m"]
-		target.WeatherDateForTime = fcastTime
-		target.ConditionIcon = WMOWeatherIcons[target.WeatherCode][target.IsDaytime]
-		target.Condition = WMOWeatherCodes[target.WeatherCode]
 	}
+	if idx == -1 {
+		return
+	}
+	target.Forecast.IsDaytime = false
+	if s.weather.HourlyUnits["is_day"] == "1" {
+		target.Forecast.IsDaytime = true
+	}
+	target.Forecast.Temperature = s.weather.HourlyMetrics["temperature_2m"][idx]
+	target.Forecast.WeatherCode = s.weather.HourlyMetrics["weather_code"][idx]
+	target.Forecast.WindDirection = s.weather.HourlyMetrics["wind_direction_10m"][idx]
+	target.Forecast.WindSpeed = s.weather.HourlyMetrics["wind_speed_10m"][idx]
+	target.Forecast.WeatherDateForTime = fcastTime
+	target.Forecast.ConditionIcon = WMOWeatherIcons[target.Forecast.WeatherCode][target.Forecast.IsDaytime]
+	target.Forecast.Condition = WMOWeatherCodes[target.Forecast.WeatherCode]
 }
 
 // updateLocation updates the service's location and address based on provided latitude and longitude.

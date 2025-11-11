@@ -15,24 +15,34 @@ import (
 )
 
 type DisplayData struct {
-	Latitude           float64
-	Longitude          float64
-	Elevation          float64
-	Address            shared.Address
-	UpdateTime         time.Time
+	// Location data
+	Latitude  float64
+	Longitude float64
+	Elevation float64
+	Address   shared.Address
+
+	// General weather and moon phase data
+	UpdateTime    time.Time
+	TempUnit      string
+	SunsetTime    time.Time
+	SunriseTime   time.Time
+	Moonphase     string
+	MoonphaseIcon string
+
+	// Current weather and forecast data
+	Current  WeatherData
+	Forecast WeatherData
+}
+
+type WeatherData struct {
 	WeatherDateForTime time.Time
 	Temperature        float64
 	WeatherCode        float64
 	WindDirection      float64
 	WindSpeed          float64
-	IsDaytime          bool
-	TempUnit           string
-	SunsetTime         time.Time
-	SunriseTime        time.Time
 	ConditionIcon      string
 	Condition          string
-	Moonphase          string
-	MoonphaseIcon      string
+	IsDaytime          bool
 }
 
 type Templates struct {

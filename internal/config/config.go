@@ -17,10 +17,10 @@ import (
 
 const (
 	configEnv         = "WAYBARWEATHER"
-	DefaultTextTpl    = "{{.ConditionIcon}} {{.Temperature}}{{.TempUnit}}"
-	DefaultTooltipTpl = "Condition: {{.Condition}}\nLocation: {{.Address.City}}, {{.Address.Country}}\n" +
+	DefaultTextTpl    = "{{.Current.ConditionIcon}} {{.Current.Temperature}}{{.TempUnit}}"
+	DefaultTooltipTpl = "Condition: {{.Current.Condition}}\nLocation: {{.Address.City}}, {{.Address.Country}}\n" +
 		"Sunrise: {{timeFormat .SunriseTime \"15:04\"}}\nSunset: {{timeFormat .SunsetTime \"15:04\"}}\n" +
-		"Moonphase: {{.MoonphaseIcon}} {{.Moonphase}}\nForecast for: {{timeFormat .WeatherDateForTime \"15:04\"}}"
+		"Moonphase: {{.MoonphaseIcon}} {{.Moonphase}}\nForecast for: {{timeFormat .Current.WeatherDateForTime \"15:04\"}}"
 )
 
 // Config represents the application's configuration structure.
