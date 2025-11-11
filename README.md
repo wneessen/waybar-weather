@@ -130,6 +130,11 @@ and scan for local networks in the area. The hardware addresses of these network
 to beaconDB. The more WiFi networks waybar-weather is able to identify, the more accurate the results will
 be. For most users, this will be the most accurate location source.
 
+## Sleep/suspend and resume detection
+waybar-weather will automatically detect when your computer goes to sleep and resumes from sleep
+by subscribing to the D-Bus of your linux system. If your computer wakes up from sleep, 
+waybar-weather will then update the weather data accordingly.
+
 ## Templating
 waybar-weather comes with a templating engine that allows you to customize the output of the module.
 The templating engine is based on [Go's text/template system](https://pkg.go.dev/text/template). You can
