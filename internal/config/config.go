@@ -25,7 +25,9 @@ const (
 	*/
 	DefaultTooltipTpl = "{{.Address.City}}, {{.Address.Country}}\n" +
 		"{{.Current.Condition}} {{.Current.ConditionIcon}}\n" +
-		"Feels like: {{.Current.ApparentTemperature}}{{.TempUnit}}\n" + ""
+		"Feels like: {{.Current.ApparentTemperature}}{{.TempUnit}}\n" +
+		"Humidity: {{.Current.Humidity}}%\n" +
+		"Pressure: {{.Current.PressureMSL}} {{.PressureUnit}}\n" + ""
 )
 
 // Config represents the application's configuration structure.

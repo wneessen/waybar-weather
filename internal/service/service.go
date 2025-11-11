@@ -242,6 +242,7 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 	nowIdx := s.weatherIndexByTime(nowHour)
 	target.UpdateTime = s.weather.CurrentWeather.Time.Time
 	target.TempUnit = s.weather.HourlyUnits["temperature_2m"]
+	target.PressureUnit = s.weather.HourlyUnits["pressure_msl"]
 	sunriseTimeUTC, sunsetTimeUTC := sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude, now.Year(),
 		now.Month(), now.Day())
 	target.SunriseTime, target.SunsetTime = sunriseTimeUTC.In(now.Location()), sunsetTimeUTC.In(now.Location())
@@ -260,6 +261,8 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 	target.Current.Condition = WMOWeatherCodes[target.Current.WeatherCode]
 	if nowIdx != -1 {
 		target.Current.ApparentTemperature = s.weather.HourlyMetrics["apparent_temperature"][nowIdx]
+		target.Current.Humidity = s.weather.HourlyMetrics["relative_humidity_2m"][nowIdx]
+		target.Current.PressureMSL = s.weather.HourlyMetrics["pressure_msl"][nowIdx]
 	}
 
 	// Forecast weather data
@@ -276,6 +279,8 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 	if fcastIdx == -1 {
 		target.Forecast.Temperature = s.weather.HourlyMetrics["temperature_2m"][fcastIdx]
 		target.Forecast.ApparentTemperature = s.weather.HourlyMetrics["apparent_temperature"][fcastIdx]
+		target.Forecast.Humidity = s.weather.HourlyMetrics["relative_humidity_2m"][fcastIdx]
+		target.Forecast.PressureMSL = s.weather.HourlyMetrics["pressure_msl"][fcastIdx]
 		target.Forecast.WeatherCode = s.weather.HourlyMetrics["weather_code"][fcastIdx]
 		target.Forecast.WindDirection = s.weather.HourlyMetrics["wind_direction_10m"][fcastIdx]
 		target.Forecast.WindSpeed = s.weather.HourlyMetrics["wind_speed_10m"][fcastIdx]

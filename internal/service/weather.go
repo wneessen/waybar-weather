@@ -27,7 +27,7 @@ func (s *Service) fetchWeather(ctx context.Context) {
 		Timezone: "auto",
 		HourlyMetrics: []string{
 			"temperature_2m", "apparent_temperature", "weather_code", "wind_speed_10m", "is_day",
-			"wind_direction_10m",
+			"wind_direction_10m", "relative_humidity_2m", "pressure_msl",
 		},
 	}
 	switch s.config.Units {

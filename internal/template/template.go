@@ -24,6 +24,7 @@ type DisplayData struct {
 	// General weather and moon phase data
 	UpdateTime    time.Time
 	TempUnit      string
+	PressureUnit  string
 	SunsetTime    time.Time
 	SunriseTime   time.Time
 	Moonphase     string
@@ -38,6 +39,8 @@ type WeatherData struct {
 	WeatherDateForTime  time.Time
 	Temperature         float64
 	ApparentTemperature float64
+	Humidity            float64
+	PressureMSL         float64
 	WeatherCode         float64
 	WindDirection       float64
 	WindSpeed           float64
