@@ -242,8 +242,8 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 
 	// Generel weather data
 	now := time.Now()
-	nowHour := now.Truncate(time.Hour)
-	nowIdx := s.weatherIndexByTime(nowHour)
+	nowHourUTC := now.UTC().Truncate(time.Hour)
+	nowIdx := s.weatherIndexByTime(nowHourUTC)
 	target.UpdateTime = s.weather.CurrentWeather.Time.Time
 	target.TempUnit = s.weather.HourlyUnits["temperature_2m"]
 	target.PressureUnit = s.weather.HourlyUnits["pressure_msl"]
@@ -273,7 +273,8 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 	// Forecast weather data
 	fcastHours := time.Duration(s.config.Weather.ForecastHours) * time.Hour //nolint:gosec
 	fcastTime := now.Add(fcastHours).Truncate(time.Hour)
-	fcastIdx := s.weatherIndexByTime(fcastTime)
+	fcastTimeUTC := now.Add(fcastHours).UTC().Truncate(time.Hour)
+	fcastIdx := s.weatherIndexByTime(fcastTimeUTC)
 	target.Forecast.IsDaytime = false
 	if s.weather.HourlyUnits["is_day"] == "1" {
 		target.Forecast.IsDaytime = true
