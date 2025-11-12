@@ -55,6 +55,7 @@ type WeatherData struct {
 
 type Templates struct {
 	Text    *template.Template
+	AltText *template.Template
 	Tooltip *template.Template
 }
 
@@ -65,6 +66,12 @@ func NewTemplate(conf *config.Config) (*Templates, error) {
 		return tpls, fmt.Errorf("failed to parse text template: %w", err)
 	}
 	tpls.Text = tpl
+
+	tpl, err = template.New("alt_text").Funcs(templateFuncMap()).Parse(conf.Templates.AltText)
+	if err != nil {
+		return tpls, fmt.Errorf("failed to parse alt text template: %w", err)
+	}
+	tpls.AltText = tpl
 
 	tpl, err = template.New("tooltip").Funcs(templateFuncMap()).Parse(conf.Templates.Tooltip)
 	if err != nil {

@@ -18,6 +18,7 @@ import (
 const (
 	configEnv         = "WAYBARWEATHER"
 	DefaultTextTpl    = "{{.Current.ConditionIcon}} {{.Current.Temperature}}{{.TempUnit}}"
+	DefaultAltTextTpl = "{{.Forecast.ConditionIcon}} {{.Forecast.Temperature}}{{.TempUnit}}"
 	DefaultTooltipTpl = "{{.Address.City}}, {{.Address.Country}}\n" +
 		"{{.Current.Condition}}\n" +
 		"Feels like: {{.Current.ApparentTemperature}}{{.TempUnit}}\n" +
@@ -46,6 +47,7 @@ type Config struct {
 
 	Templates struct {
 		Text    string `fig:"text"`
+		AltText string `fig:"alt_text"`
 		Tooltip string `fig:"tooltip"`
 	} `fig:"templates"`
 
@@ -92,6 +94,9 @@ func (c *Config) Validate() error {
 	}
 	if c.Templates.Text == "" {
 		c.Templates.Text = DefaultTextTpl
+	}
+	if c.Templates.AltText == "" {
+		c.Templates.AltText = DefaultAltTextTpl
 	}
 	if c.Templates.Tooltip == "" {
 		c.Templates.Tooltip = DefaultTooltipTpl
