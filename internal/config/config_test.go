@@ -13,6 +13,7 @@ func TestNew(t *testing.T) {
 		expectWeatherForecastHours  = 3
 		expectIntervalWeatherUpdate = time.Minute * 15
 		expectIntervalOutput        = time.Second * 30
+		expectLocale                = "en-US"
 	)
 	t.Run("new config with all defaults set", func(t *testing.T) {
 		conf, err := New()
@@ -62,5 +63,23 @@ func TestNew(t *testing.T) {
 		if err == nil {
 			t.Error("expected config to fail, but didn't")
 		}
+	})
+	t.Run("correct locale should be set", func(t *testing.T) {
+		t.Setenv("LC_MESSAGES", "en_US.UTF-8")
+		conf, err := New()
+		if err != nil {
+			t.Errorf("failed to load config: %s", err)
+		}
+		if conf.Locale != expectLocale {
+			t.Errorf("expected locale to be: %s, got %s", expectLocale, conf.Locale)
+		}
+	})
+	t.Run("invalid locale should be ignored", func(t *testing.T) {
+		t.Setenv("LC_MESSAGES", "invalid")
+		conf, err := New()
+		if err != nil {
+			t.Errorf("failed to load config: %s", err)
+		}
+		t.Logf("locale: %s", conf.Locale)
 	})
 }
