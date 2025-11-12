@@ -24,6 +24,7 @@ func (s *Service) fetchWeather(ctx context.Context) {
 	}
 
 	opts := &omgo.Options{
+		PastDays: 1,
 		Timezone: "auto",
 		HourlyMetrics: []string{
 			"temperature_2m", "apparent_temperature", "weather_code", "wind_speed_10m", "is_day",
