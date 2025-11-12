@@ -54,7 +54,7 @@ cd waybar-weather
 go mod tidy
 go mod download
 go mod verify
-go build -o waybar-weather .
+go build -o waybar-weather ./cmd/waybar-weather
 ```
 
 ## Configuration
