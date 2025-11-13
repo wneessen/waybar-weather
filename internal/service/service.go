@@ -307,15 +307,12 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 	fcastTime := now.Add(fcastHours).Truncate(time.Hour)
 	fcastTimeUTC := now.Add(fcastHours).UTC().Truncate(time.Hour)
 	fcastIdx := s.weatherIndexByTime(fcastTimeUTC)
-	target.Forecast.IsDaytime = false
-	if s.weather.HourlyUnits["is_day"] == "1" {
-		target.Forecast.IsDaytime = true
-	}
-	target.Forecast.WeatherDateForTime = fcastTime
-	target.Forecast.ConditionIcon = WMOWeatherIcons[target.Forecast.WeatherCode][target.Forecast.IsDaytime]
-	target.Forecast.ConditionIconWithSpace = template.EmojiWithSpace(target.Forecast.ConditionIcon)
-	target.Forecast.Condition = WMOWeatherCodes[target.Forecast.WeatherCode]
 	if fcastIdx != -1 {
+		target.Forecast.WeatherDateForTime = fcastTime
+		target.Forecast.IsDaytime = false
+		if s.weather.HourlyMetrics["is_day"][fcastIdx] == 1 {
+			target.Forecast.IsDaytime = true
+		}
 		target.Forecast.Temperature = s.weather.HourlyMetrics["temperature_2m"][fcastIdx]
 		target.Forecast.ApparentTemperature = s.weather.HourlyMetrics["apparent_temperature"][fcastIdx]
 		target.Forecast.Humidity = s.weather.HourlyMetrics["relative_humidity_2m"][fcastIdx]
@@ -323,6 +320,11 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 		target.Forecast.WeatherCode = s.weather.HourlyMetrics["weather_code"][fcastIdx]
 		target.Forecast.WindDirection = s.weather.HourlyMetrics["wind_direction_10m"][fcastIdx]
 		target.Forecast.WindSpeed = s.weather.HourlyMetrics["wind_speed_10m"][fcastIdx]
+		target.Forecast.ConditionIcon = WMOWeatherIcons[target.Forecast.WeatherCode][target.Forecast.IsDaytime]
+		target.Forecast.ConditionIconWithSpace = template.EmojiWithSpace(target.Forecast.ConditionIcon)
+		target.Forecast.Condition = WMOWeatherCodes[target.Forecast.WeatherCode]
+	} else {
+		target.Forecast = target.Current
 	}
 }
 
