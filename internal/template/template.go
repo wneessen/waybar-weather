@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/wneessen/waybar-weather/internal/config"
+	"github.com/wneessen/waybar-weather/internal/nominatim"
 
-	"github.com/doppiogancio/go-nominatim/shared"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -21,7 +21,7 @@ type DisplayData struct {
 	Latitude  float64
 	Longitude float64
 	Elevation float64
-	Address   shared.Address
+	Address   nominatim.Address
 
 	// General weather and moon phase data
 	UpdateTime             time.Time
@@ -55,6 +55,7 @@ type WeatherData struct {
 
 type Templates struct {
 	Text    *template.Template
+	AltText *template.Template
 	Tooltip *template.Template
 }
 
@@ -65,6 +66,12 @@ func NewTemplate(conf *config.Config) (*Templates, error) {
 		return tpls, fmt.Errorf("failed to parse text template: %w", err)
 	}
 	tpls.Text = tpl
+
+	tpl, err = template.New("alt_text").Funcs(templateFuncMap()).Parse(conf.Templates.AltText)
+	if err != nil {
+		return tpls, fmt.Errorf("failed to parse alt text template: %w", err)
+	}
+	tpls.AltText = tpl
 
 	tpl, err = template.New("tooltip").Funcs(templateFuncMap()).Parse(conf.Templates.Tooltip)
 	if err != nil {

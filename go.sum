@@ -5,8 +5,6 @@ github.com/clipperhouse/uax29/v2 v2.3.0/go.mod h1:Wn1g7MK6OoeDT0vL+Q0SQLDz/KpfsV
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/doppiogancio/go-nominatim v2.0.1+incompatible h1:S0PYXIVKwV6vF+JNBSO6T7BdvH4Ktuaf5HVL51i0lyQ=
-github.com/doppiogancio/go-nominatim v2.0.1+incompatible/go.mod h1:lePiHgediF5zQ6qRyynsDoilUOBVFSpOpsWiDd21Dic=
 github.com/go-co-op/gocron/v2 v2.18.0 h1:DS3Uhru66q1jy/5f9V0itmi3cLXcn2b7N+duGfgT7gU=
 github.com/go-co-op/gocron/v2 v2.18.0/go.mod h1:Zii6he+Zfgy5W9B+JKk/KwejFOW0kZTFvHtwIpR4aBI=
 github.com/godbus/dbus/v5 v5.1.0 h1:4KLkAxT3aOY8Li4FRJe/KvhoNFFxo0m6fNuFUO8QJUk=

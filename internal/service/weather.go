@@ -19,7 +19,10 @@ func (s *Service) fetchWeather(ctx context.Context) {
 	ctxFetch, cancelFetch := context.WithTimeout(ctx, FetchTimeout)
 	defer cancelFetch()
 
-	if s.address == nil {
+	// Skip fetching weather data if no location is set
+	s.locationLock.RLock()
+	defer s.locationLock.RUnlock()
+	if !s.locationIsSet {
 		return
 	}
 
@@ -42,8 +45,6 @@ func (s *Service) fetchWeather(ctx context.Context) {
 		opts.WindspeedUnit = "mph"
 	}
 
-	s.locationLock.RLock()
-	defer s.locationLock.RUnlock()
 	forecast, err := s.omclient.Forecast(ctxFetch, s.location, opts)
 	if err != nil {
 		s.logger.Error("failed to get forecast data", logger.Err(err))

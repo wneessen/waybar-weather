@@ -64,8 +64,14 @@ output = "15s"
 ## Defines the primary text displayed in the Waybar weather widget.
 ## Uses Go’s templating syntax for customization.
 ## Refer to README.md for details.
-## Default: {{.ConditionIcon}} {{.Temperature}}{{.TempUnit}}
+## Default: {{.Current.ConditionIcon}} {{.Current.Temperature}}{{.TempUnit}}
 text = ""
+
+## Alt text template
+## Defines the alternate text displayed when the widget is clicked
+## Uses Go's templating syntax for customization
+## Default: {{.Forecast.ConditionIcon}} {{.Forecast.Temperature}}{{.TempUnit}}
+alt_text = ""
 
 ## Tooltip template.
 ## Defines the tooltip content displayed for the weather widget in Waybar.

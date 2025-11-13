@@ -73,7 +73,8 @@ Add the following to your waybar config file (usually `.config/waybar/config.jso
     "exec": "<path_to_your>/waybar-weather",
     "restart-interval": 60,
     "return-type": "json",
-    "hide-empty-text": true
+    "hide-empty-text": true,
+    "on-click": "pkill -USR1 waybar-weather"
 }
 ```
 
@@ -139,7 +140,7 @@ waybar-weather will then update the weather data accordingly.
 waybar-weather comes with a templating engine that allows you to customize the output of the module.
 The templating engine is based on [Go's text/template system](https://pkg.go.dev/text/template). You can
 set your own template in the configuration file in the `templates` section. There is a setting for 
-`text` and for `tooltip`. The `text` setting is used to display the weather data in the module. The
+`text`, `alt_text` and `tooltip`. The `text` setting is used to display the weather data in the module. The `alt_text` setting is used to display alternate weather data when the module is clicked. The
 `tooltip` setting is used to display the weather data in the tooltip when hovering over the module.
 
 ### Variables

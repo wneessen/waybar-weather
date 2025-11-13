@@ -3,7 +3,6 @@ module github.com/wneessen/waybar-weather
 go 1.25.3
 
 require (
-	github.com/doppiogancio/go-nominatim v2.0.1+incompatible
 	github.com/go-co-op/gocron/v2 v2.18.0
 	github.com/godbus/dbus/v5 v5.1.0
 	github.com/hectormalot/omgo v0.1.3

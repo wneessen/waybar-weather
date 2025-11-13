@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/wneessen/waybar-weather/internal/config"
@@ -22,10 +24,9 @@ import (
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/ichnaea"
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/logger"
+	"github.com/wneessen/waybar-weather/internal/nominatim"
 	"github.com/wneessen/waybar-weather/internal/template"
 
-	nominatim "github.com/doppiogancio/go-nominatim"
-	"github.com/doppiogancio/go-nominatim/shared"
 	"github.com/go-co-op/gocron/v2"
 	"github.com/hectormalot/omgo"
 	"github.com/nathan-osman/go-sunrise"
@@ -47,18 +48,23 @@ type Service struct {
 	config       *config.Config
 	geobus       *geobus.GeoBus
 	logger       *logger.Logger
+	nominatim    *nominatim.Nominatim
 	omclient     omgo.Client
 	orchestrator *geobus.Orchestrator
 	scheduler    gocron.Scheduler
 	templates    *template.Templates
 
-	locationLock sync.RWMutex
-	address      *shared.Address
-	location     omgo.Location
+	locationLock  sync.RWMutex
+	address       nominatim.Address
+	locationIsSet bool
+	location      omgo.Location
 
 	weatherLock  sync.RWMutex
 	weatherIsSet bool
 	weather      *omgo.Forecast
+
+	displayAltLock sync.RWMutex
+	displayAltText bool
 }
 
 func New(conf *config.Config, log *logger.Logger) (*Service, error) {
@@ -78,12 +84,14 @@ func New(conf *config.Config, log *logger.Logger) (*Service, error) {
 	}
 
 	service := &Service{
-		config:    conf,
-		geobus:    geobus.New(log),
-		logger:    log,
-		omclient:  omclient,
-		scheduler: scheduler,
-		templates: tpls,
+		config:         conf,
+		geobus:         geobus.New(log),
+		logger:         log,
+		nominatim:      nominatim.New(http.New(log), conf),
+		omclient:       omclient,
+		scheduler:      scheduler,
+		templates:      tpls,
+		displayAltText: false,
 	}
 	return service, nil
 }
@@ -104,6 +112,9 @@ func (s *Service) Run(ctx context.Context) error {
 	if err := s.templates.Text.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
 		return fmt.Errorf("failed to render text template: %w", err)
 	}
+	if err := s.templates.AltText.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
+		return fmt.Errorf("failed to render alt text template: %w", err)
+	}
 	if err := s.templates.Tooltip.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
 		return fmt.Errorf("failed to render tooltip template: %w", err)
 	}
@@ -115,6 +126,11 @@ func (s *Service) Run(ctx context.Context) error {
 	sub, unsub := s.geobus.Subscribe(DesktopID, 32)
 	go s.processLocationUpdates(ctx, sub)
 	go s.orchestrator.Track(ctx, DesktopID)
+
+	// Set up signal handler for SIGUSR1 to toggle alt text display
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGUSR1)
+	go s.handleAltTextToggleSignal(ctx, sigChan)
 
 	// Detect sleep/wake events and update the weather
 	go s.monitorSleepResume(ctx)
@@ -181,6 +197,10 @@ func (s *Service) printWeather(context.Context) {
 		return
 	}
 
+	s.displayAltLock.RLock()
+	displayAltText := s.displayAltText
+	s.displayAltLock.RUnlock()
+
 	displayData := new(template.DisplayData)
 	s.fillDisplayData(displayData)
 
@@ -189,14 +209,28 @@ func (s *Service) printWeather(context.Context) {
 		s.logger.Error("failed to render text template", logger.Err(err))
 		return
 	}
+
+	altTextBuf := bytes.NewBuffer(nil)
+	if err := s.templates.AltText.Execute(altTextBuf, displayData); err != nil {
+		s.logger.Error("failed to render alt text template", logger.Err(err))
+		return
+	}
+
 	tooltipBuf := bytes.NewBuffer(nil)
 	if err := s.templates.Tooltip.Execute(tooltipBuf, displayData); err != nil {
 		s.logger.Error("failed to render tooltip template", logger.Err(err))
 		return
 	}
 
+	var displayText string
+	if displayAltText {
+		displayText = altTextBuf.String()
+	} else {
+		displayText = textBuf.String()
+	}
+
 	output := outputData{
-		Text:    textBuf.String(),
+		Text:    displayText,
 		Tooltip: tooltipBuf.String(),
 		Class:   OutputClass,
 	}
@@ -230,9 +264,7 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 	target.Latitude = s.weather.Latitude
 	target.Longitude = s.weather.Longitude
 	target.Elevation = s.weather.Elevation
-	if s.address != nil {
-		target.Address = *s.address
-	}
+	target.Address = s.address
 
 	// Moon phase
 	m := moonphase.New(time.Now())
@@ -275,15 +307,12 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 	fcastTime := now.Add(fcastHours).Truncate(time.Hour)
 	fcastTimeUTC := now.Add(fcastHours).UTC().Truncate(time.Hour)
 	fcastIdx := s.weatherIndexByTime(fcastTimeUTC)
-	target.Forecast.IsDaytime = false
-	if s.weather.HourlyUnits["is_day"] == "1" {
-		target.Forecast.IsDaytime = true
-	}
-	target.Forecast.WeatherDateForTime = fcastTime
-	target.Forecast.ConditionIcon = WMOWeatherIcons[target.Forecast.WeatherCode][target.Forecast.IsDaytime]
-	target.Forecast.ConditionIconWithSpace = template.EmojiWithSpace(target.Forecast.ConditionIcon)
-	target.Forecast.Condition = WMOWeatherCodes[target.Forecast.WeatherCode]
 	if fcastIdx != -1 {
+		target.Forecast.WeatherDateForTime = fcastTime
+		target.Forecast.IsDaytime = false
+		if s.weather.HourlyMetrics["is_day"][fcastIdx] == 1 {
+			target.Forecast.IsDaytime = true
+		}
 		target.Forecast.Temperature = s.weather.HourlyMetrics["temperature_2m"][fcastIdx]
 		target.Forecast.ApparentTemperature = s.weather.HourlyMetrics["apparent_temperature"][fcastIdx]
 		target.Forecast.Humidity = s.weather.HourlyMetrics["relative_humidity_2m"][fcastIdx]
@@ -291,6 +320,11 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 		target.Forecast.WeatherCode = s.weather.HourlyMetrics["weather_code"][fcastIdx]
 		target.Forecast.WindDirection = s.weather.HourlyMetrics["wind_direction_10m"][fcastIdx]
 		target.Forecast.WindSpeed = s.weather.HourlyMetrics["wind_speed_10m"][fcastIdx]
+		target.Forecast.ConditionIcon = WMOWeatherIcons[target.Forecast.WeatherCode][target.Forecast.IsDaytime]
+		target.Forecast.ConditionIconWithSpace = template.EmojiWithSpace(target.Forecast.ConditionIcon)
+		target.Forecast.Condition = WMOWeatherCodes[target.Forecast.WeatherCode]
+	} else {
+		target.Forecast = target.Current
 	}
 }
 
@@ -303,7 +337,7 @@ func (s *Service) updateLocation(ctx context.Context, latitude, longitude float6
 		return nil
 	}
 
-	address, err := nominatim.ReverseGeocode(latitude, longitude, s.config.Locale)
+	address, err := s.nominatim.Reverse(ctx, latitude, longitude)
 	if err != nil {
 		return fmt.Errorf("failed reverse geocode coordinates: %w", err)
 	}
@@ -313,8 +347,11 @@ func (s *Service) updateLocation(ctx context.Context, latitude, longitude float6
 	}
 
 	s.locationLock.Lock()
-	s.address = address
 	s.location = location
+	if address.Address != nil {
+		s.address = *address.Address
+	}
+	s.locationIsSet = true
 	s.locationLock.Unlock()
 	s.logger.Debug("address successfully resolved", slog.Any("address", s.address.DisplayName),
 		slog.Any("location", s.location))
@@ -352,4 +389,19 @@ func (s *Service) weatherIndexByTime(atTime time.Time) int {
 		}
 	}
 	return -1
+}
+
+// handleAltTextToggleSignal toggles the module text display when a signal is received
+func (s *Service) handleAltTextToggleSignal(ctx context.Context, sigChan chan os.Signal) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-sigChan:
+			s.displayAltLock.Lock()
+			s.displayAltText = !s.displayAltText
+			s.displayAltLock.Unlock()
+			s.printWeather(ctx)
+		}
+	}
 }
