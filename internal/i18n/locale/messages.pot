@@ -1,0 +1,37 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Winni Neessen <wn@neessen.dev>
+# This file is distributed under the same license as the
+# github.com/wneessen/waybar-weather package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: github.com/wneessen/waybar-weather\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-14 13:19+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../../../cmd/waybar-weather/main.go:72
+msgid "starting waybar-weather service"
+msgstr ""
+
+#: ../../../cmd/waybar-weather/main.go:75
+msgid "failed to start waybar-weather service"
+msgstr ""
+
+#: ../../../cmd/waybar-weather/main.go:77
+msgid "shutting down waybar-weather service"
+msgstr ""
+
+#: ../../service/service.go:176
+msgid ""
+"no geolocation providers enabled, will not be able to fetch weather data due to "
+"missing location"
+msgstr ""
