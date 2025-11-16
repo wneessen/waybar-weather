@@ -24,7 +24,6 @@ type GeolocationGPSDProvider struct {
 	name   string
 	period time.Duration
 	ttl    time.Duration
-	last   geobus.Coordinate
 }
 
 func NewGeolocationGPSDProvider() *GeolocationGPSDProvider {
