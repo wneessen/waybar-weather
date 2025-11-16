@@ -67,11 +67,12 @@ func (p *GeolocationFileProvider) LookupStream(ctx context.Context, key string) 
 				time.Sleep(p.period)
 				continue
 			}
+			coord := geobus.Coordinate{Lat: lat, Lon: lon, Acc: Accuracy}
 
 			// Only emit if values changed or it's the first read
-			if state.HasChanged(lat, lon, 0, Accuracy) {
-				state.Update(lat, lon, 0, Accuracy)
-				r := p.createResult(key, lat, lon)
+			if state.HasChanged(coord) {
+				state.Update(coord)
+				r := p.createResult(key, coord)
 
 				select {
 				case <-ctx.Done():
@@ -91,12 +92,12 @@ func (p *GeolocationFileProvider) LookupStream(ctx context.Context, key string) 
 }
 
 // createResult composes and returns a Result using provided geolocation data and metadata.
-func (p *GeolocationFileProvider) createResult(key string, lat, lon float64) geobus.Result {
+func (p *GeolocationFileProvider) createResult(key string, coord geobus.Coordinate) geobus.Result {
 	return geobus.Result{
 		Key:            key,
-		Lat:            lat,
-		Lon:            lon,
-		AccuracyMeters: Accuracy,
+		Lat:            coord.Lat,
+		Lon:            coord.Lon,
+		AccuracyMeters: coord.Acc,
 		Source:         p.name,
 		At:             time.Now(),
 		TTL:            p.ttl,
