@@ -97,7 +97,6 @@ func (p *GeolocationFileProvider) createResult(key string, lat, lon float64) geo
 		Lat:            lat,
 		Lon:            lon,
 		AccuracyMeters: Accuracy,
-		Confidence:     1.0,
 		Source:         p.name,
 		At:             time.Now(),
 		TTL:            p.ttl,

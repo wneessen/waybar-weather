@@ -23,6 +23,7 @@ import (
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/geoapi"
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/geoip"
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/geolocation_file"
+	"github.com/wneessen/waybar-weather/internal/geobus/provider/gpsd"
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/ichnaea"
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/logger"
@@ -153,6 +154,10 @@ func (s *Service) createOrchestrator() *geobus.Orchestrator {
 
 	if !s.config.GeoLocation.DisableGeolocationFile {
 		provider = append(provider, geolocation_file.NewGeolocationFileProvider(s.config.GeoLocation.File))
+	}
+
+	if !s.config.GeoLocation.DisableGPSD {
+		provider = append(provider, gpsd.NewGeolocationGPSDProvider())
 	}
 
 	if !s.config.GeoLocation.DisableGeoIP {

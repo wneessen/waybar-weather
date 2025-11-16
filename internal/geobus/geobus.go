@@ -6,6 +6,7 @@ package geobus
 
 import (
 	"context"
+	"math"
 	"sync"
 	"time"
 
@@ -13,10 +14,18 @@ import (
 )
 
 const (
-	accuracyEpsilon   = 1e-6
-	confidenceEpsilon = 1e-9
-	initialBackoff    = time.Second
-	maxBackoff        = 30 * time.Second
+	accuracyEpsilon = 1e-6
+	initialBackoff  = time.Second
+	maxBackoff      = 30 * time.Second
+)
+
+const (
+	AccuracyCountry = 300000
+	AccuracyRegion  = 100000
+	AccuracyCity    = 15000
+	AccuracyZip     = 3000
+	AccuarcyUnknown = 1000000
+	TruncPrecision  = 4
 )
 
 // Provider defines an interface for geolocation service providers.
@@ -41,7 +50,6 @@ type Result struct {
 	Lat, Lon       float64
 	Alt            float64
 	AccuracyMeters float64
-	Confidence     float64
 	Source         string
 	At             time.Time
 	TTL            time.Duration
@@ -54,19 +62,16 @@ func (r Result) BetterThan(other Result) bool {
 	if other.Key == "" {
 		return true
 	}
+	if r.At.Before(other.At) {
+		return false
+	}
 	if r.AccuracyMeters < other.AccuracyMeters-accuracyEpsilon {
 		return true
 	}
 	if other.AccuracyMeters < r.AccuracyMeters-accuracyEpsilon {
 		return false
 	}
-	if r.Confidence > other.Confidence+confidenceEpsilon {
-		return true
-	}
-	if other.Confidence > r.Confidence+confidenceEpsilon {
-		return false
-	}
-	return r.At.After(other.At)
+	return false
 }
 
 // IsExpired checks if the Result has exceeded its time-to-live (TTL) based on the current time and the timestamp.
@@ -193,4 +198,9 @@ func nextBackoff(d time.Duration) time.Duration {
 		return maxBackoff
 	}
 	return d
+}
+
+func Truncate(x float64, precision int) float64 {
+	p := math.Pow(10, float64(precision))
+	return math.Trunc(x*p) / p
 }
