@@ -4,6 +4,8 @@
 
 package service
 
+import "github.com/vorlif/spreak/localize"
+
 // MoonPhases is a map where moon phase names are keys and their corresponding emoji representations are values.
 var MoonPhases = map[string]string{
 	"New Moon":        "🌑",
@@ -17,7 +19,7 @@ var MoonPhases = map[string]string{
 }
 
 // WMOWeatherCodes maps WMO weather code integers to their descriptions
-var WMOWeatherCodes = map[float64]string{
+var WMOWeatherCodes = map[float64]localize.MsgID{
 	0:  "Clear sky",
 	1:  "Mainly clear",
 	2:  "Partly cloudy",

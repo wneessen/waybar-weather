@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: github.com/wneessen/waybar-weather\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-14 13:19+0100\n"
-"PO-Revision-Date: 2025-11-14 13:20+0100\n"
+"POT-Creation-Date: 2025-11-16 17:08+0100\n"
+"PO-Revision-Date: 2025-11-16 17:15+0100\n"
 "Last-Translator: Winni Neessen <wn@neessen.dev>\n"
 "Language-Team: \n"
 "Language: de\n"
@@ -31,7 +31,119 @@ msgstr "konnte waybar-weather Dienst nicht starten"
 msgid "shutting down waybar-weather service"
 msgstr "fahre waybar-weather Dienst herunter"
 
-#: ../../service/service.go:176
+#: ../../service/maps.go:23
+msgid "Clear sky"
+msgstr "Klarer Himmel"
+
+#: ../../service/maps.go:24
+msgid "Mainly clear"
+msgstr "Überwiegend klar"
+
+#: ../../service/maps.go:25
+msgid "Partly cloudy"
+msgstr "Teilweise bewölkt"
+
+#: ../../service/maps.go:26
+msgid "Overcast"
+msgstr "Bewölkt"
+
+#: ../../service/maps.go:27
+msgid "Fog"
+msgstr "Nebel"
+
+#: ../../service/maps.go:28
+msgid "Depositing rime fog"
+msgstr "Rauhreifnebel-Bildung"
+
+#: ../../service/maps.go:29
+msgid "Light drizzle"
+msgstr "Leichter Nieselregen"
+
+#: ../../service/maps.go:30
+msgid "Moderate drizzle"
+msgstr "Mäßiger Nieselregen"
+
+#: ../../service/maps.go:31
+msgid "Dense drizzle"
+msgstr "Dichter Nieselregen"
+
+#: ../../service/maps.go:32
+msgid "Light freezing drizzle"
+msgstr "Leichter gefrierender Nieselregen"
+
+#: ../../service/maps.go:33
+msgid "Dense freezing drizzle"
+msgstr "Dichter, eisiger Nieselregen"
+
+#: ../../service/maps.go:34
+msgid "Slight rain"
+msgstr "Leichter Regen"
+
+#: ../../service/maps.go:35
+msgid "Moderate rain"
+msgstr "Mäßiger Regen"
+
+#: ../../service/maps.go:36
+msgid "Heavy rain"
+msgstr "Starker Regen"
+
+#: ../../service/maps.go:37
+msgid "Light freezing rain"
+msgstr "Leichter Eisregen"
+
+#: ../../service/maps.go:38
+msgid "Heavy freezing rain"
+msgstr "Starker Eisregen"
+
+#: ../../service/maps.go:39
+msgid "Slight snow fall"
+msgstr "Leichter Schneefall"
+
+#: ../../service/maps.go:40
+msgid "Moderate snow fall"
+msgstr "Mäßiger Schneefall"
+
+#: ../../service/maps.go:41
+msgid "Heavy snow fall"
+msgstr "Starker Schneefall"
+
+#: ../../service/maps.go:42
+msgid "Snow grains"
+msgstr "Schneekörner"
+
+#: ../../service/maps.go:43
+msgid "Slight rain showers"
+msgstr "Leichte Regenschauer"
+
+#: ../../service/maps.go:44
+msgid "Moderate rain showers"
+msgstr "Mäßige Regenschauer"
+
+#: ../../service/maps.go:45
+msgid "Violent rain showers"
+msgstr "Heftige Regenschauer"
+
+#: ../../service/maps.go:46
+msgid "Slight snow showers"
+msgstr "Leichte Schneeschauer"
+
+#: ../../service/maps.go:47
+msgid "Heavy snow showers"
+msgstr "Starke Schneeschauer"
+
+#: ../../service/maps.go:48
+msgid "Thunderstorm"
+msgstr "Gewitter"
+
+#: ../../service/maps.go:49
+msgid "Thunderstorm with slight hail"
+msgstr "Gewitter mit leichtem Hagel"
+
+#: ../../service/maps.go:50
+msgid "Thunderstorm with heavy hail"
+msgstr "Gewitter mit starkem Hagel"
+
+#: ../../service/service.go:181
 msgid ""
 "no geolocation providers enabled, will not be able to fetch weather data due "
 "to missing location"
