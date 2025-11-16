@@ -24,6 +24,7 @@ type GeolocationGPSDProvider struct {
 	name   string
 	period time.Duration
 	ttl    time.Duration
+	last   geobus.Coordinate
 }
 
 func NewGeolocationGPSDProvider() *GeolocationGPSDProvider {
@@ -85,14 +86,14 @@ func (p *GeolocationGPSDProvider) LookupStream(ctx context.Context, key string) 
 					geobus.Truncate(tpv.Lon, geobus.TruncPrecision),
 					geobus.Truncate(tpv.Alt, geobus.TruncPrecision),
 					geobus.Truncate((tpv.Lat+tpv.Lon)/2, geobus.TruncPrecision)
+				coord := geobus.Coordinate{Lat: lat, Lon: lon, Alt: alt, Acc: acc}
 
 				// Only emit if values changed or it's the first fix
-				if !state.HasChanged(lat, lon, 0, acc) {
+				if !state.HasChanged(coord) {
 					return
 				}
-				state.Update(lat, lon, alt, acc)
-
-				res := p.createResult(key, lat, lon, acc)
+				state.Update(coord)
+				res := p.createResult(key, coord)
 
 				select {
 				case <-ctx.Done():
@@ -127,12 +128,12 @@ func (p *GeolocationGPSDProvider) LookupStream(ctx context.Context, key string) 
 }
 
 // createResult composes and returns a Result using provided geolocation data and metadata.
-func (p *GeolocationGPSDProvider) createResult(key string, lat, lon, acc float64) geobus.Result {
+func (p *GeolocationGPSDProvider) createResult(key string, coord geobus.Coordinate) geobus.Result {
 	return geobus.Result{
 		Key:            key,
-		Lat:            lat,
-		Lon:            lon,
-		AccuracyMeters: acc,
+		Lat:            coord.Lat,
+		Lon:            coord.Lon,
+		AccuracyMeters: coord.Acc,
 		Source:         p.name,
 		At:             time.Now(),
 		TTL:            p.ttl,
