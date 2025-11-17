@@ -64,12 +64,18 @@ type Templates struct {
 	localizer *spreak.Localizer
 }
 
-var MeteoVars map[string]localize.MsgID = map[string]localize.MsgID{
-	"temp":     "Temperature",
-	"humidity": "Humidity",
-	"wind":     "Wind",
-	"pressure": "Pressure",
-	"apparent": "Feels like",
+var MeteoVars = map[string]localize.MsgID{
+	"temp":           "Temperature",
+	"humidity":       "Humidity",
+	"winddir":        "Wind direction",
+	"windspeed":      "Wind speed",
+	"pressure":       "Pressure",
+	"apparent":       "Feels like",
+	"weathercode":    "Weather code",
+	"forecastfor":    "Forecast for",
+	"weatherdatafor": "Weather data for",
+	"sunrise":        "Sunrise",
+	"sunset":         "Sunset",
 }
 
 func NewTemplate(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
@@ -102,11 +108,16 @@ func (t *Templates) templateFuncMap() template.FuncMap {
 		"timeFormat":  timeFormat,
 		"floatFormat": floatFormat,
 		"loc":         t.loc,
+		"lc":          strings.ToLower,
+		"uc":          strings.ToUpper,
 	}
 }
 
 func (t *Templates) loc(val string) string {
-	return t.localizer.Get(val)
+	if raw, ok := MeteoVars[val]; ok {
+		return t.localizer.Get(raw)
+	}
+	return val
 }
 
 func timeFormat(val time.Time, fmt string) string {

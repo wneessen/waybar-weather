@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: github.com/wneessen/waybar-weather\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-17 10:09+0000\n"
-"PO-Revision-Date: 2025-11-17 11:10+0100\n"
+"POT-Creation-Date: 2025-11-17 10:18+0000\n"
+"PO-Revision-Date: 2025-11-17 11:19+0100\n"
 "Last-Translator: Winni Neessen <wn@neessen.dev>\n"
 "Language-Team: \n"
 "Language: de\n"
@@ -160,16 +160,43 @@ msgid "Humidity"
 msgstr "Luftfeuchtigkeit"
 
 #: ../../template/template.go:70
-msgid "Wind"
-msgstr "Wind"
+msgid "Wind direction"
+msgstr "Windrichtung"
 
 #: ../../template/template.go:71
+msgid "Wind speed"
+msgstr "Windgeschwindigkeit"
+
+#: ../../template/template.go:72
 msgid "Pressure"
 msgstr "Luftdruck"
 
-#: ../../template/template.go:72
+#: ../../template/template.go:73
 msgid "Feels like"
 msgstr "Gefühlt"
+
+#: ../../template/template.go:74
+msgid "Weather code"
+msgstr "Wettercode"
+
+#: ../../template/template.go:75
+msgid "Forecast for"
+msgstr "Vorhersage für"
+
+#: ../../template/template.go:76
+msgid "Weather data for"
+msgstr "Wetterdaten für"
+
+#: ../../template/template.go:77
+msgid "Sunrise"
+msgstr "Sonnenaufgang"
+
+#: ../../template/template.go:78
+msgid "Sunset"
+msgstr "Sonnenuntergang"
+
+#~ msgid "Wind"
+#~ msgstr "Wind"
 
 #~ msgid "version"
 #~ msgstr "Version"
