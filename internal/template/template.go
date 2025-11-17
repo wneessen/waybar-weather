@@ -10,10 +10,14 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/vorlif/spreak"
+
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/nominatim"
 
 	"github.com/mattn/go-runewidth"
+
+	"github.com/vorlif/spreak/localize"
 )
 
 type DisplayData struct {
@@ -54,26 +58,37 @@ type WeatherData struct {
 }
 
 type Templates struct {
-	Text    *template.Template
-	AltText *template.Template
-	Tooltip *template.Template
+	Text      *template.Template
+	AltText   *template.Template
+	Tooltip   *template.Template
+	localizer *spreak.Localizer
 }
 
-func NewTemplate(conf *config.Config) (*Templates, error) {
+var MeteoVars map[string]localize.MsgID = map[string]localize.MsgID{
+	"temp":     "Temperature",
+	"humidity": "Humidity",
+	"wind":     "Wind",
+	"pressure": "Pressure",
+	"apparent": "Feels like",
+}
+
+func NewTemplate(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
 	tpls := new(Templates)
-	tpl, err := template.New("text").Funcs(templateFuncMap()).Parse(conf.Templates.Text)
+	tpls.localizer = loc
+
+	tpl, err := template.New("text").Funcs(tpls.templateFuncMap()).Parse(conf.Templates.Text)
 	if err != nil {
 		return tpls, fmt.Errorf("failed to parse text template: %w", err)
 	}
 	tpls.Text = tpl
 
-	tpl, err = template.New("alt_text").Funcs(templateFuncMap()).Parse(conf.Templates.AltText)
+	tpl, err = template.New("alt_text").Funcs(tpls.templateFuncMap()).Parse(conf.Templates.AltText)
 	if err != nil {
 		return tpls, fmt.Errorf("failed to parse alt text template: %w", err)
 	}
 	tpls.AltText = tpl
 
-	tpl, err = template.New("tooltip").Funcs(templateFuncMap()).Parse(conf.Templates.Tooltip)
+	tpl, err = template.New("tooltip").Funcs(tpls.templateFuncMap()).Parse(conf.Templates.Tooltip)
 	if err != nil {
 		return tpls, fmt.Errorf("failed to parse tooltip template: %w", err)
 	}
@@ -82,11 +97,16 @@ func NewTemplate(conf *config.Config) (*Templates, error) {
 	return tpls, nil
 }
 
-func templateFuncMap() template.FuncMap {
+func (t *Templates) templateFuncMap() template.FuncMap {
 	return template.FuncMap{
 		"timeFormat":  timeFormat,
 		"floatFormat": floatFormat,
+		"loc":         t.loc,
 	}
+}
+
+func (t *Templates) loc(val string) string {
+	return t.localizer.Get(val)
 }
 
 func timeFormat(val time.Time, fmt string) string {

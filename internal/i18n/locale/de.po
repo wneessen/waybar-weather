@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: github.com/wneessen/waybar-weather\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-16 17:08+0100\n"
-"PO-Revision-Date: 2025-11-16 17:15+0100\n"
+"POT-Creation-Date: 2025-11-17 10:09+0000\n"
+"PO-Revision-Date: 2025-11-17 11:10+0100\n"
 "Last-Translator: Winni Neessen <wn@neessen.dev>\n"
 "Language-Team: \n"
 "Language: de\n"
@@ -150,6 +150,26 @@ msgid ""
 msgstr ""
 "es sind keine Geolokalisierungsanbieter aktiviert, daher können aufgrund "
 "fehlender Standortdaten keine Wetterdaten abgerufen werden."
+
+#: ../../template/template.go:68
+msgid "Temperature"
+msgstr "Temperatur"
+
+#: ../../template/template.go:69
+msgid "Humidity"
+msgstr "Luftfeuchtigkeit"
+
+#: ../../template/template.go:70
+msgid "Wind"
+msgstr "Wind"
+
+#: ../../template/template.go:71
+msgid "Pressure"
+msgstr "Luftdruck"
+
+#: ../../template/template.go:72
+msgid "Feels like"
+msgstr "Gefühlt"
 
 #~ msgid "version"
 #~ msgstr "Version"

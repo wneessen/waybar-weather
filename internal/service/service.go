@@ -82,7 +82,7 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 		return nil, fmt.Errorf("failed to create Open-Meteo client: %w", err)
 	}
 
-	tpls, err := template.NewTemplate(conf)
+	tpls, err := template.NewTemplate(conf, t)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse templates: %w", err)
 	}
@@ -304,7 +304,7 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 	target.Current.WeatherDateForTime = s.weather.CurrentWeather.Time.Time
 	target.Current.ConditionIcon = WMOWeatherIcons[target.Current.WeatherCode][target.Current.IsDaytime]
 	target.Current.ConditionIconWithSpace = template.EmojiWithSpace(target.Current.ConditionIcon)
-	target.Current.Condition = WMOWeatherCodes[target.Current.WeatherCode]
+	target.Current.Condition = s.t.Get(WMOWeatherCodes[target.Current.WeatherCode])
 	if nowIdx != -1 {
 		target.Current.ApparentTemperature = s.weather.HourlyMetrics["apparent_temperature"][nowIdx]
 		target.Current.Humidity = s.weather.HourlyMetrics["relative_humidity_2m"][nowIdx]
@@ -331,7 +331,7 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 		target.Forecast.WindSpeed = s.weather.HourlyMetrics["wind_speed_10m"][fcastIdx]
 		target.Forecast.ConditionIcon = WMOWeatherIcons[target.Forecast.WeatherCode][target.Forecast.IsDaytime]
 		target.Forecast.ConditionIconWithSpace = template.EmojiWithSpace(target.Forecast.ConditionIcon)
-		target.Forecast.Condition = WMOWeatherCodes[target.Forecast.WeatherCode]
+		target.Forecast.Condition = s.t.Get(WMOWeatherCodes[target.Forecast.WeatherCode])
 	} else {
 		target.Forecast = target.Current
 	}

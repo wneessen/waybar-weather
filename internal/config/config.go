@@ -20,9 +20,9 @@ const (
 	DefaultAltTextTpl = "{{.Forecast.ConditionIcon}} {{.Forecast.Temperature}}{{.TempUnit}}"
 	DefaultTooltipTpl = "{{.Address.City}}, {{.Address.Country}}\n" +
 		"{{.Current.Condition}}\n" +
-		"Feels like: {{.Current.ApparentTemperature}}{{.TempUnit}}\n" +
-		"Humidity: {{.Current.Humidity}}%\n" +
-		"Pressure: {{.Current.PressureMSL}} {{.PressureUnit}}\n" +
+		"{{loc \"Feels like\"}}: {{.Current.ApparentTemperature}}{{.TempUnit}}\n" +
+		"{{loc \"Humidity\"}}: {{.Current.Humidity}}%\n" +
+		"{{loc \"Pressure\"}}: {{.Current.PressureMSL}} {{.PressureUnit}}\n" +
 		"\n" +
 		`🌅 {{timeFormat .SunriseTime "15:04"}} • 🌇 {{timeFormat .SunsetTime "15:04"}}`
 )

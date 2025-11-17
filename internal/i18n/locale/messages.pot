@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: github.com/wneessen/waybar-weather\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-16 17:08+0100\n"
+"POT-Creation-Date: 2025-11-17 10:09+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -147,3 +147,24 @@ msgid ""
 "no geolocation providers enabled, will not be able to fetch weather data due to "
 "missing location"
 msgstr ""
+
+#: ../../template/template.go:68
+msgid "Temperature"
+msgstr ""
+
+#: ../../template/template.go:69
+msgid "Humidity"
+msgstr ""
+
+#: ../../template/template.go:70
+msgid "Wind"
+msgstr ""
+
+#: ../../template/template.go:71
+msgid "Pressure"
+msgstr ""
+
+#: ../../template/template.go:72
+msgid "Feels like"
+msgstr ""
+
