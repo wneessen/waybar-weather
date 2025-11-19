@@ -64,18 +64,26 @@ type Templates struct {
 	localizer *spreak.Localizer
 }
 
-var MeteoVars = map[string]localize.MsgID{
-	"temp":           "Temperature",
-	"humidity":       "Humidity",
-	"winddir":        "Wind direction",
-	"windspeed":      "Wind speed",
-	"pressure":       "Pressure",
-	"apparent":       "Feels like",
-	"weathercode":    "Weather code",
-	"forecastfor":    "Forecast for",
-	"weatherdatafor": "Weather data for",
-	"sunrise":        "Sunrise",
-	"sunset":         "Sunset",
+var i18nVars = map[string]localize.MsgID{
+	"temp":            "Temperature",
+	"humidity":        "Humidity",
+	"winddir":         "Wind direction",
+	"windspeed":       "Wind speed",
+	"pressure":        "Pressure",
+	"apparent":        "Feels like",
+	"weathercode":     "Weather code",
+	"forecastfor":     "Forecast for",
+	"weatherdatafor":  "Weather data for",
+	"sunrise":         "Sunrise",
+	"sunset":          "Sunset",
+	"New Moon":        "New moon",
+	"Waxing Crescent": "Waxing crescent",
+	"First Quarter":   "First quarter",
+	"Waxing Gibbous":  "Waxing gibbous",
+	"Full Moon":       "Full moon",
+	"Waning Gibbous":  "Waning gibbous",
+	"Third Quarter":   "Third quarter",
+	"Waning Crescent": "Waning crescent",
 }
 
 func NewTemplate(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
@@ -114,7 +122,7 @@ func (t *Templates) templateFuncMap() template.FuncMap {
 }
 
 func (t *Templates) loc(val string) string {
-	if raw, ok := MeteoVars[val]; ok {
+	if raw, ok := i18nVars[val]; ok {
 		return t.localizer.Get(raw)
 	}
 	return val

@@ -6,8 +6,8 @@ package service
 
 import "github.com/vorlif/spreak/localize"
 
-// MoonPhases is a map where moon phase names are keys and their corresponding emoji representations are values.
-var MoonPhases = map[string]string{
+// MoonPhaseIcon is a map where moon phase names are keys and their corresponding emoji representations are values.
+var MoonPhaseIcon = map[string]string{
 	"New Moon":        "🌑",
 	"Waxing Crescent": "🌒",
 	"First Quarter":   "🌓",

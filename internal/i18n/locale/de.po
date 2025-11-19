@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: github.com/wneessen/waybar-weather\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-17 10:18+0000\n"
-"PO-Revision-Date: 2025-11-17 11:19+0100\n"
+"POT-Creation-Date: 2025-11-19 20:38+0000\n"
+"PO-Revision-Date: 2025-11-19 21:40+0100\n"
 "Last-Translator: Winni Neessen <wn@neessen.dev>\n"
 "Language-Team: \n"
 "Language: de\n"
@@ -194,6 +194,38 @@ msgstr "Sonnenaufgang"
 #: ../../template/template.go:78
 msgid "Sunset"
 msgstr "Sonnenuntergang"
+
+#: ../../template/template.go:79
+msgid "New moon"
+msgstr "Neumond"
+
+#: ../../template/template.go:80
+msgid "Waxing crescent"
+msgstr "Zunehmender Halbmond"
+
+#: ../../template/template.go:81
+msgid "First quarter"
+msgstr "Erstes Quartal"
+
+#: ../../template/template.go:82
+msgid "Waxing gibbous"
+msgstr "Zunehmender Mond"
+
+#: ../../template/template.go:83
+msgid "Full moon"
+msgstr "Vollmond"
+
+#: ../../template/template.go:84
+msgid "Waning gibbous"
+msgstr "Abnehmender Mond"
+
+#: ../../template/template.go:85
+msgid "Third quarter"
+msgstr "Drittes Quartal"
+
+#: ../../template/template.go:86
+msgid "Waning crescent"
+msgstr "Abnehmender Halbmond"
 
 #~ msgid "Wind"
 #~ msgstr "Wind"
