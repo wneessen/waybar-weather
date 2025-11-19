@@ -134,6 +134,12 @@ and scan for local networks in the area. The hardware addresses of these network
 to beaconDB. The more WiFi networks waybar-weather is able to identify, the more accurate the results will
 be. For most users, this will be the most accurate location source.
 
+### GPSd
+The GPSd location provider uses the [GPSd](https://gpsd.gitlab.io/gpsd/index.html) daemon to look up your location. If your
+computer has a GPS device connected and GPSd is running, waybar-weather will use the data provided by GPSd to
+look up your location. Since GPS is generally more accurate than WiFi, this provider is usually the most accurate
+location source.
+
 ## Sleep/suspend and resume detection
 waybar-weather will automatically detect when your computer goes to sleep and resumes from sleep
 by subscribing to the D-Bus of your linux system. If your computer wakes up from sleep, 
