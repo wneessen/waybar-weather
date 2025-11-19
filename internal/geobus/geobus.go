@@ -146,6 +146,9 @@ func (b *GeoBus) SubscribeAll(buffer int) (<-chan Result, func()) {
 }
 
 func (b *GeoBus) Publish(r Result) {
+	if r.AccuracyMeters == 0 {
+		return
+	}
 	if r.At.IsZero() {
 		r.At = time.Now()
 	}
