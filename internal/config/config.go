@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/kkyr/fig"
@@ -21,11 +20,11 @@ const (
 	DefaultAltTextTpl = "{{.Forecast.ConditionIcon}} {{.Forecast.Temperature}}{{.TempUnit}}"
 	DefaultTooltipTpl = "{{.Address.City}}, {{.Address.Country}}\n" +
 		"{{.Current.Condition}}\n" +
-		"Feels like: {{.Current.ApparentTemperature}}{{.TempUnit}}\n" +
-		"Humidity: {{.Current.Humidity}}%\n" +
-		"Pressure: {{.Current.PressureMSL}} {{.PressureUnit}}\n" +
+		"{{loc \"apparent\"}}: {{.Current.ApparentTemperature}}{{.TempUnit}}\n" +
+		"{{loc \"humidity\"}}: {{.Current.Humidity}}%\n" +
+		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.PressureUnit}}\n" +
 		"\n" +
-		`🌅 {{timeFormat .SunriseTime "15:04"}} • 🌇 {{timeFormat .SunsetTime "15:04"}}`
+		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
 )
 
 // Config represents the application's configuration structure.
@@ -87,9 +86,6 @@ func (c *Config) Validate() error {
 	if c.Units != "metric" && c.Units != "imperial" {
 		return fmt.Errorf("invalid units: %s", c.Units)
 	}
-	if c.Locale == "" {
-		c.Locale = getLocale()
-	}
 	if c.Weather.ForecastHours < 1 || c.Weather.ForecastHours > 24 {
 		return fmt.Errorf("invalid forcast hours: %d", c.Weather.ForecastHours)
 	}
@@ -108,13 +104,4 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
-}
-
-func getLocale() string {
-	locale := os.Getenv("LC_MESSAGES")
-	if idx := strings.Index(locale, "."); idx != -1 {
-		lang := locale[:idx]
-		return strings.ReplaceAll(lang, "_", "-")
-	}
-	return locale
 }

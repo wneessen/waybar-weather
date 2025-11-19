@@ -3,6 +3,7 @@ module github.com/wneessen/waybar-weather
 go 1.25.3
 
 require (
+	github.com/Xuanwo/go-locale v1.1.3
 	github.com/go-co-op/gocron/v2 v2.18.0
 	github.com/godbus/dbus/v5 v5.1.0
 	github.com/hectormalot/omgo v0.1.3
@@ -11,7 +12,10 @@ require (
 	github.com/mdlayher/wifi v0.7.0
 	github.com/nathan-osman/go-sunrise v1.1.0
 	github.com/stratoberry/go-gpsd v1.3.0
+	github.com/vorlif/humanize v1.0.0
+	github.com/vorlif/spreak v1.0.0
 	github.com/wneessen/go-moonphase v0.0.0-20251108174843-0043855bd40d
+	golang.org/x/text v0.31.0
 )
 
 require (

@@ -1,0 +1,230 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Winni Neessen <wn@neessen.dev>
+# This file is distributed under the same license as the
+# github.com/wneessen/waybar-weather package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: github.com/wneessen/waybar-weather\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-19 20:47+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../../../cmd/waybar-weather/main.go:72
+msgid "starting waybar-weather service"
+msgstr ""
+
+#: ../../../cmd/waybar-weather/main.go:75
+msgid "failed to start waybar-weather service"
+msgstr ""
+
+#: ../../../cmd/waybar-weather/main.go:77
+msgid "shutting down waybar-weather service"
+msgstr ""
+
+#: ../../service/maps.go:23
+msgid "Clear sky"
+msgstr ""
+
+#: ../../service/maps.go:24
+msgid "Mainly clear"
+msgstr ""
+
+#: ../../service/maps.go:25
+msgid "Partly cloudy"
+msgstr ""
+
+#: ../../service/maps.go:26
+msgid "Overcast"
+msgstr ""
+
+#: ../../service/maps.go:27
+msgid "Fog"
+msgstr ""
+
+#: ../../service/maps.go:28
+msgid "Depositing rime fog"
+msgstr ""
+
+#: ../../service/maps.go:29
+msgid "Light drizzle"
+msgstr ""
+
+#: ../../service/maps.go:30
+msgid "Moderate drizzle"
+msgstr ""
+
+#: ../../service/maps.go:31
+msgid "Dense drizzle"
+msgstr ""
+
+#: ../../service/maps.go:32
+msgid "Light freezing drizzle"
+msgstr ""
+
+#: ../../service/maps.go:33
+msgid "Dense freezing drizzle"
+msgstr ""
+
+#: ../../service/maps.go:34
+msgid "Slight rain"
+msgstr ""
+
+#: ../../service/maps.go:35
+msgid "Moderate rain"
+msgstr ""
+
+#: ../../service/maps.go:36
+msgid "Heavy rain"
+msgstr ""
+
+#: ../../service/maps.go:37
+msgid "Light freezing rain"
+msgstr ""
+
+#: ../../service/maps.go:38
+msgid "Heavy freezing rain"
+msgstr ""
+
+#: ../../service/maps.go:39
+msgid "Slight snow fall"
+msgstr ""
+
+#: ../../service/maps.go:40
+msgid "Moderate snow fall"
+msgstr ""
+
+#: ../../service/maps.go:41
+msgid "Heavy snow fall"
+msgstr ""
+
+#: ../../service/maps.go:42
+msgid "Snow grains"
+msgstr ""
+
+#: ../../service/maps.go:43
+msgid "Slight rain showers"
+msgstr ""
+
+#: ../../service/maps.go:44
+msgid "Moderate rain showers"
+msgstr ""
+
+#: ../../service/maps.go:45
+msgid "Violent rain showers"
+msgstr ""
+
+#: ../../service/maps.go:46
+msgid "Slight snow showers"
+msgstr ""
+
+#: ../../service/maps.go:47
+msgid "Heavy snow showers"
+msgstr ""
+
+#: ../../service/maps.go:48
+msgid "Thunderstorm"
+msgstr ""
+
+#: ../../service/maps.go:49
+msgid "Thunderstorm with slight hail"
+msgstr ""
+
+#: ../../service/maps.go:50
+msgid "Thunderstorm with heavy hail"
+msgstr ""
+
+#: ../../service/service.go:181
+msgid ""
+"no geolocation providers enabled, will not be able to fetch weather data due to "
+"missing location"
+msgstr ""
+
+#: ../../template/template.go:68
+msgid "Temperature"
+msgstr ""
+
+#: ../../template/template.go:69
+msgid "Humidity"
+msgstr ""
+
+#: ../../template/template.go:70
+msgid "Wind direction"
+msgstr ""
+
+#: ../../template/template.go:71
+msgid "Wind speed"
+msgstr ""
+
+#: ../../template/template.go:72
+msgid "Pressure"
+msgstr ""
+
+#: ../../template/template.go:73
+msgid "Feels like"
+msgstr ""
+
+#: ../../template/template.go:74
+msgid "Weather code"
+msgstr ""
+
+#: ../../template/template.go:75
+msgid "Forecast for"
+msgstr ""
+
+#: ../../template/template.go:76
+msgid "Weather data for"
+msgstr ""
+
+#: ../../template/template.go:77
+msgid "Sunrise"
+msgstr ""
+
+#: ../../template/template.go:78
+msgid "Sunset"
+msgstr ""
+
+#: ../../template/template.go:79
+msgid "Moonphase"
+msgstr ""
+
+#: ../../template/template.go:80
+msgid "New moon"
+msgstr ""
+
+#: ../../template/template.go:81
+msgid "Waxing crescent"
+msgstr ""
+
+#: ../../template/template.go:82
+msgid "First quarter"
+msgstr ""
+
+#: ../../template/template.go:83
+msgid "Waxing gibbous"
+msgstr ""
+
+#: ../../template/template.go:84
+msgid "Full moon"
+msgstr ""
+
+#: ../../template/template.go:85
+msgid "Waning gibbous"
+msgstr ""
+
+#: ../../template/template.go:86
+msgid "Third quarter"
+msgstr ""
+
+#: ../../template/template.go:87
+msgid "Waning crescent"
+msgstr ""
+

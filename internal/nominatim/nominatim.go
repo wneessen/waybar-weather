@@ -11,7 +11,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/wneessen/waybar-weather/internal/config"
+	"golang.org/x/text/language"
+
 	"github.com/wneessen/waybar-weather/internal/http"
 )
 
@@ -21,8 +22,8 @@ const (
 )
 
 type Nominatim struct {
-	conf *config.Config
 	http *http.Client
+	lang language.Tag
 }
 
 type Result struct {
@@ -60,9 +61,9 @@ type Address struct {
 	Country      string `json:"country"`
 }
 
-func New(client *http.Client, conf *config.Config) *Nominatim {
+func New(client *http.Client, lang language.Tag) *Nominatim {
 	return &Nominatim{
-		conf: conf,
+		lang: lang,
 		http: client,
 	}
 }
@@ -77,7 +78,7 @@ func (n *Nominatim) Reverse(ctx context.Context, lat, lon float64) (Result, erro
 	query.Set("format", "jsonv2")
 	query.Set("lat", fmt.Sprintf("%f", lat))
 	query.Set("lon", fmt.Sprintf("%f", lon))
-	query.Set("accept-language", n.conf.Locale)
+	query.Set("accept-language", n.lang.String())
 	apiUrl.RawQuery = query.Encode()
 
 	if _, err = n.http.GetWithTimeout(ctx, apiUrl.String(), &result, nil, APITimeout); err != nil {

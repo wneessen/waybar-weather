@@ -16,6 +16,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/vorlif/spreak"
+
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/geobus"
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/geoapi"
@@ -54,6 +56,7 @@ type Service struct {
 	orchestrator *geobus.Orchestrator
 	scheduler    gocron.Scheduler
 	templates    *template.Templates
+	t            *spreak.Localizer
 
 	locationLock  sync.RWMutex
 	address       nominatim.Address
@@ -68,7 +71,7 @@ type Service struct {
 	displayAltText bool
 }
 
-func New(conf *config.Config, log *logger.Logger) (*Service, error) {
+func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service, error) {
 	scheduler, err := gocron.NewScheduler()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create scheduler: %w", err)
@@ -79,7 +82,7 @@ func New(conf *config.Config, log *logger.Logger) (*Service, error) {
 		return nil, fmt.Errorf("failed to create Open-Meteo client: %w", err)
 	}
 
-	tpls, err := template.NewTemplate(conf)
+	tpls, err := template.NewTemplate(conf, t)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse templates: %w", err)
 	}
@@ -88,10 +91,11 @@ func New(conf *config.Config, log *logger.Logger) (*Service, error) {
 		config:         conf,
 		geobus:         geobus.New(log),
 		logger:         log,
-		nominatim:      nominatim.New(http.New(log), conf),
+		nominatim:      nominatim.New(http.New(log), t.Language()),
 		omclient:       omclient,
 		scheduler:      scheduler,
 		templates:      tpls,
+		t:              t,
 		displayAltText: false,
 	}
 	return service, nil
@@ -173,8 +177,8 @@ func (s *Service) createOrchestrator() *geobus.Orchestrator {
 		}
 	}
 	if len(provider) == 0 {
-		s.logger.Error("no geolocation providers enabled, will not be able to fetch weather data " + "" +
-			"due to missing location")
+		s.logger.Error(s.t.Get("no geolocation providers enabled, will not be able to fetch weather data " + "" +
+			"due to missing location"))
 	}
 
 	return s.geobus.NewOrchestrator(provider)
@@ -274,8 +278,8 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 	// Moon phase
 	m := moonphase.New(time.Now())
 	target.Moonphase = m.PhaseName()
-	target.MoonphaseIcon = MoonPhases[target.Moonphase]
-	target.MoonphaseIconWithSpace = template.EmojiWithSpace(target.MoonphaseIcon)
+	target.MoonphaseIcon = MoonPhaseIcon[target.Moonphase]
+	target.MoonphaseIconWithSpace = s.templates.EmojiWithSpace(target.MoonphaseIcon)
 
 	// Generel weather data
 	now := time.Now()
@@ -299,8 +303,8 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 	target.Current.WindSpeed = s.weather.CurrentWeather.WindSpeed
 	target.Current.WeatherDateForTime = s.weather.CurrentWeather.Time.Time
 	target.Current.ConditionIcon = WMOWeatherIcons[target.Current.WeatherCode][target.Current.IsDaytime]
-	target.Current.ConditionIconWithSpace = template.EmojiWithSpace(target.Current.ConditionIcon)
-	target.Current.Condition = WMOWeatherCodes[target.Current.WeatherCode]
+	target.Current.ConditionIconWithSpace = s.templates.EmojiWithSpace(target.Current.ConditionIcon)
+	target.Current.Condition = s.t.Get(WMOWeatherCodes[target.Current.WeatherCode])
 	if nowIdx != -1 {
 		target.Current.ApparentTemperature = s.weather.HourlyMetrics["apparent_temperature"][nowIdx]
 		target.Current.Humidity = s.weather.HourlyMetrics["relative_humidity_2m"][nowIdx]
@@ -326,8 +330,8 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 		target.Forecast.WindDirection = s.weather.HourlyMetrics["wind_direction_10m"][fcastIdx]
 		target.Forecast.WindSpeed = s.weather.HourlyMetrics["wind_speed_10m"][fcastIdx]
 		target.Forecast.ConditionIcon = WMOWeatherIcons[target.Forecast.WeatherCode][target.Forecast.IsDaytime]
-		target.Forecast.ConditionIconWithSpace = template.EmojiWithSpace(target.Forecast.ConditionIcon)
-		target.Forecast.Condition = WMOWeatherCodes[target.Forecast.WeatherCode]
+		target.Forecast.ConditionIconWithSpace = s.templates.EmojiWithSpace(target.Forecast.ConditionIcon)
+		target.Forecast.Condition = s.t.Get(WMOWeatherCodes[target.Forecast.WeatherCode])
 	} else {
 		target.Forecast = target.Current
 	}

@@ -10,10 +10,16 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/vorlif/spreak"
+
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/nominatim"
 
 	"github.com/mattn/go-runewidth"
+
+	"github.com/vorlif/humanize"
+	"github.com/vorlif/humanize/locale/de"
+	"github.com/vorlif/spreak/localize"
 )
 
 type DisplayData struct {
@@ -54,50 +60,102 @@ type WeatherData struct {
 }
 
 type Templates struct {
-	Text    *template.Template
-	AltText *template.Template
-	Tooltip *template.Template
+	Text      *template.Template
+	AltText   *template.Template
+	Tooltip   *template.Template
+	localizer *spreak.Localizer
+	humanizer *humanize.Humanizer
 }
 
-func NewTemplate(conf *config.Config) (*Templates, error) {
+// Supported languages for humanize
+var supportedHumanizers = []*humanize.LocaleData{de.New()}
+
+var i18nVars = map[string]localize.MsgID{
+	"temp":            "Temperature",
+	"humidity":        "Humidity",
+	"winddir":         "Wind direction",
+	"windspeed":       "Wind speed",
+	"pressure":        "Pressure",
+	"apparent":        "Feels like",
+	"weathercode":     "Weather code",
+	"forecastfor":     "Forecast for",
+	"weatherdatafor":  "Weather data for",
+	"sunrise":         "Sunrise",
+	"sunset":          "Sunset",
+	"moonphase":       "Moonphase",
+	"new moon":        "New moon",
+	"waxing crescent": "Waxing crescent",
+	"first quarter":   "First quarter",
+	"waxing gibbous":  "Waxing gibbous",
+	"full moon":       "Full moon",
+	"waning gibbous":  "Waning gibbous",
+	"third quarter":   "Third quarter",
+	"waning crescent": "Waning crescent",
+}
+
+func NewTemplate(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
 	tpls := new(Templates)
-	tpl, err := template.New("text").Funcs(templateFuncMap()).Parse(conf.Templates.Text)
+	tpls.localizer = loc
+
+	tpl, err := template.New("text").Funcs(tpls.templateFuncMap()).Parse(conf.Templates.Text)
 	if err != nil {
 		return tpls, fmt.Errorf("failed to parse text template: %w", err)
 	}
 	tpls.Text = tpl
 
-	tpl, err = template.New("alt_text").Funcs(templateFuncMap()).Parse(conf.Templates.AltText)
+	tpl, err = template.New("alt_text").Funcs(tpls.templateFuncMap()).Parse(conf.Templates.AltText)
 	if err != nil {
 		return tpls, fmt.Errorf("failed to parse alt text template: %w", err)
 	}
 	tpls.AltText = tpl
 
-	tpl, err = template.New("tooltip").Funcs(templateFuncMap()).Parse(conf.Templates.Tooltip)
+	tpl, err = template.New("tooltip").Funcs(tpls.templateFuncMap()).Parse(conf.Templates.Tooltip)
 	if err != nil {
 		return tpls, fmt.Errorf("failed to parse tooltip template: %w", err)
 	}
 	tpls.Tooltip = tpl
 
+	collection, err := humanize.New(humanize.WithLocale(supportedHumanizers...))
+	if err != nil {
+		return tpls, fmt.Errorf("failed to create humanizer: %w", err)
+	}
+	tpls.humanizer = collection.CreateHumanizer(loc.Language())
+
 	return tpls, nil
 }
 
-func templateFuncMap() template.FuncMap {
+func (t *Templates) templateFuncMap() template.FuncMap {
 	return template.FuncMap{
-		"timeFormat":  timeFormat,
-		"floatFormat": floatFormat,
+		"timeFormat":    t.timeFormat,
+		"localizedTime": t.localizedTime,
+		"floatFormat":   t.floatFormat,
+		"loc":           t.loc,
+		"lc":            strings.ToLower,
+		"uc":            strings.ToUpper,
 	}
 }
 
-func timeFormat(val time.Time, fmt string) string {
+func (t *Templates) loc(val string) string {
+	val = strings.ToLower(val)
+	if raw, ok := i18nVars[val]; ok {
+		return t.localizer.Get(raw)
+	}
+	return val
+}
+
+func (t *Templates) localizedTime(val time.Time) string {
+	return t.humanizer.FormatTime(val, humanize.TimeFormat)
+}
+
+func (t *Templates) timeFormat(val time.Time, fmt string) string {
 	return val.Format(fmt)
 }
 
-func floatFormat(val float64, precision int) string {
+func (t *Templates) floatFormat(val float64, precision int) string {
 	return fmt.Sprintf("%.*f", precision, val)
 }
 
-func EmojiWithSpace(emoji string) string {
+func (t *Templates) EmojiWithSpace(emoji string) string {
 	width := runewidth.StringWidth(emoji)
 	return fmt.Sprintf("%s%s", emoji, strings.Repeat(" ", width+1))
 }

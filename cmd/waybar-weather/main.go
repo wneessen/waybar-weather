@@ -17,6 +17,7 @@ import (
 	"syscall"
 
 	"github.com/wneessen/waybar-weather/internal/config"
+	"github.com/wneessen/waybar-weather/internal/i18n"
 	"github.com/wneessen/waybar-weather/internal/logger"
 	"github.com/wneessen/waybar-weather/internal/service"
 )
@@ -54,18 +55,24 @@ func main() {
 	}
 	log = logger.NewLogger(conf.LogLevel)
 
+	t, err := i18n.New(conf.Locale)
+	if err != nil {
+		log.Error("failed to initialize localizer", logger.Err(err))
+		os.Exit(1)
+	}
+
 	// Initialize the service
-	serv, err := service.New(conf, log)
+	serv, err := service.New(conf, log, t)
 	if err != nil {
 		log.Error("failed to initialize waybar-weather service", logger.Err(err))
 		os.Exit(1)
 	}
 
 	// Start the service loop
-	log.Info("starting waybar-weather service", slog.String("VERSION", version),
+	log.Info(t.Get("starting waybar-weather service"), slog.String("version", version),
 		slog.String("commit", commit), slog.String("date", date))
 	if err = serv.Run(ctx); err != nil {
-		log.Error("failed to start waybar-weather service", logger.Err(err))
+		log.Error(t.Get("failed to start waybar-weather service"), logger.Err(err))
 	}
-	log.Info("shutting down waybar-weather service")
+	log.Info(t.Get("shutting down waybar-weather service"))
 }

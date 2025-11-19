@@ -20,6 +20,7 @@ allowing you to always see the weather data for your current location.
 * Integrates with [Waybar](https://github.com/Alexays/Waybar) as a custom module.
 * Display conditions, temperature and moon phase for your current location.
 * [Fully customizable via its integrated template engine.](#templating)
+* [Support for multiple languages](#internationalization--localization)
 * Configurable via TOML, JSON or YAML.
 * Lightweight, written in Go (single binary).
 
@@ -29,7 +30,9 @@ allowing you to always see the weather data for your current location.
 * (Optional) Ideally an active WiFi connectivity for ICHNAEA geolocation service (more precise location lookup).
 
 ## Screenshots
-![Detailed tooltip view](assets/detail.png)
+![waybar-weather in English](assets/waybar-weather_en.png) &nbsp;
+![waybar-weather in German](assets/waybar-weather_de.png)
+
 
 ## Installation
 
@@ -229,6 +232,60 @@ daytime and nighttime. You can do so using the following template:
 `{{if .IsDaytime}}{{.ConditionIcon}}{{else}}{{.MoonphaseIcon}}{{end}}` (even though this example doesn't make 
 much sense, it's just an example)
 
+### Localized time formatting
+waybar-weather comes with the `localizedTime` function as part of its templating system. It allows
+to output a `time.Time` value in the localized format of your system. For example the following
+template value `{{localizedTime .SunsetTime}}` will display the sunset time as `18:30` in German,
+while it will display `6:30 p.m.` in English.
+
+### Localized variables
+waybar-weather provides a list of pre-defined localized variables that can be used in the templates.
+The `loc` function followed by the name of the variable will return the localized value of the
+corresponding variable.
+
+The following variables are available:
+
+| Variable name      | Resulting value  | Usage                      | 
+|--------------------|------------------|----------------------------|
+| `"temp"`           | Temperature      | `{{loc "temp"}}`           |
+| `"humidity"`       | Humidity         | `{{loc "humidity"}}`       |
+| `"winddir"`        | Wind direction   | `{{loc "winddir"}}`        |
+| `"windspeed"`      | Wind speed       | `{{loc "windspeed"}}`      |
+| `"pressure"`       | Pressure         | `{{loc "pressure"}}`       |
+| `"apparent"`       | Feels like       | `{{loc "apparent"}}`       |
+| `"weathercode"`    | Weather code     | `{{loc "weathercode"}}`    |
+| `"forecastfor"`    | Forecast for     | `{{loc "forecastfor"}}`    |
+| `"weatherdatafor"` | Weather data for | `{{loc "weatherdatafor"}}` |
+| `"sunrise"`        | Sunrise          | `{{loc "sunrise"}}`        |
+| `"sunset"`         | Sunset           | `{{loc "sunset"}}`         |
+| `"moonphase"`      | Moonphase        | `{{loc "moonphase"}}`      |
+
+Some of the formatting variables are also supported by the `loc` function and will return the localized
+value of the corresponding variable at runtime. The following variables are also supported:
+
+| Variable name | Resulting value       | Usage                | 
+|---------------|-----------------------|----------------------|
+| `.Moonphase`  | The current moonphase | `{{loc .Moonphase}}` |
+
+## Internationalization / Localization
+waybar-weather has support for internationalization (i18n) of all displayable elements. waybar-weather
+tries to automatically detect your system's language and use that to display the correct language (if available)
+and the corresponding humanized elements (like the time format). If your system's language is not available,
+waybar-weather will fall back to English. If you like to override the detected language, you can set the `locale`
+setting in your configuration file.
+
+### Supported languages
+Currently the following languages are supported by waybar-weather:
+
+| Language | PO file                  | Percent translated | Contributor   |
+|----------|--------------------------|--------------------|---------------|
+| English  | `message.pot` (Template) | 100%               | Winni Neessen |
+| German   | `de.po`                  | 100%               | Winni Neessen |
+
+### Contributing new languages
+If you want to contribute a new language, please do so by adding a new translation file to the 
+[locale](internal/i18n/locale) directory and opening a pull request. Our translations are using
+the commonly used gettext format (PO files). Any contributions are welcome!
 
 ## License
 

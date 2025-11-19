@@ -14,3 +14,8 @@ SPDX-License-Identifier = "MIT"
 path = "assets/*"
 SPDX-FileCopyrightText = "Winni Neessen <wn@neessen.dev>"
 SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "internal/i18n/locale/*"
+SPDX-FileCopyrightText = "Winni Neessen <wn@neessen.dev>"
+SPDX-License-Identifier = "MIT"
