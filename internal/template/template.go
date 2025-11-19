@@ -76,14 +76,15 @@ var i18nVars = map[string]localize.MsgID{
 	"weatherdatafor":  "Weather data for",
 	"sunrise":         "Sunrise",
 	"sunset":          "Sunset",
-	"New Moon":        "New moon",
-	"Waxing Crescent": "Waxing crescent",
-	"First Quarter":   "First quarter",
-	"Waxing Gibbous":  "Waxing gibbous",
-	"Full Moon":       "Full moon",
-	"Waning Gibbous":  "Waning gibbous",
-	"Third Quarter":   "Third quarter",
-	"Waning Crescent": "Waning crescent",
+	"moonphase":       "Moonphase",
+	"new moon":        "New moon",
+	"waxing crescent": "Waxing crescent",
+	"first quarter":   "First quarter",
+	"waxing gibbous":  "Waxing gibbous",
+	"full moon":       "Full moon",
+	"waning gibbous":  "Waning gibbous",
+	"third quarter":   "Third quarter",
+	"waning crescent": "Waning crescent",
 }
 
 func NewTemplate(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
@@ -122,7 +123,10 @@ func (t *Templates) templateFuncMap() template.FuncMap {
 }
 
 func (t *Templates) loc(val string) string {
+	val = strings.ToLower(val)
+	fmt.Printf("lookup i18n: %s\n", val)
 	if raw, ok := i18nVars[val]; ok {
+		fmt.Printf("found i18n: %s\n", raw)
 		return t.localizer.Get(raw)
 	}
 	return val

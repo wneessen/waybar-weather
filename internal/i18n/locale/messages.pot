@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: github.com/wneessen/waybar-weather\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-19 20:38+0000\n"
+"POT-Creation-Date: 2025-11-19 20:47+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -193,34 +193,38 @@ msgid "Sunset"
 msgstr ""
 
 #: ../../template/template.go:79
-msgid "New moon"
+msgid "Moonphase"
 msgstr ""
 
 #: ../../template/template.go:80
-msgid "Waxing crescent"
+msgid "New moon"
 msgstr ""
 
 #: ../../template/template.go:81
-msgid "First quarter"
+msgid "Waxing crescent"
 msgstr ""
 
 #: ../../template/template.go:82
-msgid "Waxing gibbous"
+msgid "First quarter"
 msgstr ""
 
 #: ../../template/template.go:83
-msgid "Full moon"
+msgid "Waxing gibbous"
 msgstr ""
 
 #: ../../template/template.go:84
-msgid "Waning gibbous"
+msgid "Full moon"
 msgstr ""
 
 #: ../../template/template.go:85
-msgid "Third quarter"
+msgid "Waning gibbous"
 msgstr ""
 
 #: ../../template/template.go:86
+msgid "Third quarter"
+msgstr ""
+
+#: ../../template/template.go:87
 msgid "Waning crescent"
 msgstr ""
 

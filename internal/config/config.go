@@ -23,6 +23,7 @@ const (
 		"{{loc \"apparent\"}}: {{.Current.ApparentTemperature}}{{.TempUnit}}\n" +
 		"{{loc \"humidity\"}}: {{.Current.Humidity}}%\n" +
 		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.PressureUnit}}\n" +
+		"{{loc \"moonphase\"}}: {{.MoonphaseIcon}} {{loc .Moonphase}}\n" +
 		"\n" +
 		`🌅 {{timeFormat .SunriseTime "15:04"}} • 🌇 {{timeFormat .SunsetTime "15:04"}}`
 )
