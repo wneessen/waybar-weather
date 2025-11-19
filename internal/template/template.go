@@ -17,6 +17,8 @@ import (
 
 	"github.com/mattn/go-runewidth"
 
+	"github.com/vorlif/humanize"
+	"github.com/vorlif/humanize/locale/de"
 	"github.com/vorlif/spreak/localize"
 )
 
@@ -62,7 +64,11 @@ type Templates struct {
 	AltText   *template.Template
 	Tooltip   *template.Template
 	localizer *spreak.Localizer
+	humanizer *humanize.Humanizer
 }
+
+// Supported languages for humanize
+var supportedHumanizers = []*humanize.LocaleData{de.New()}
 
 var i18nVars = map[string]localize.MsgID{
 	"temp":            "Temperature",
@@ -109,38 +115,47 @@ func NewTemplate(conf *config.Config, loc *spreak.Localizer) (*Templates, error)
 	}
 	tpls.Tooltip = tpl
 
+	collection, err := humanize.New(humanize.WithLocale(supportedHumanizers...))
+	if err != nil {
+		return tpls, fmt.Errorf("failed to create humanizer: %w", err)
+	}
+	tpls.humanizer = collection.CreateHumanizer(loc.Language())
+
 	return tpls, nil
 }
 
 func (t *Templates) templateFuncMap() template.FuncMap {
 	return template.FuncMap{
-		"timeFormat":  timeFormat,
-		"floatFormat": floatFormat,
-		"loc":         t.loc,
-		"lc":          strings.ToLower,
-		"uc":          strings.ToUpper,
+		"timeFormat":    t.timeFormat,
+		"localizedTime": t.localizedTime,
+		"floatFormat":   t.floatFormat,
+		"loc":           t.loc,
+		"lc":            strings.ToLower,
+		"uc":            strings.ToUpper,
 	}
 }
 
 func (t *Templates) loc(val string) string {
 	val = strings.ToLower(val)
-	fmt.Printf("lookup i18n: %s\n", val)
 	if raw, ok := i18nVars[val]; ok {
-		fmt.Printf("found i18n: %s\n", raw)
 		return t.localizer.Get(raw)
 	}
 	return val
 }
 
-func timeFormat(val time.Time, fmt string) string {
+func (t *Templates) localizedTime(val time.Time) string {
+	return t.humanizer.FormatTime(val, humanize.TimeFormat)
+}
+
+func (t *Templates) timeFormat(val time.Time, fmt string) string {
 	return val.Format(fmt)
 }
 
-func floatFormat(val float64, precision int) string {
+func (t *Templates) floatFormat(val float64, precision int) string {
 	return fmt.Sprintf("%.*f", precision, val)
 }
 
-func EmojiWithSpace(emoji string) string {
+func (t *Templates) EmojiWithSpace(emoji string) string {
 	width := runewidth.StringWidth(emoji)
 	return fmt.Sprintf("%s%s", emoji, strings.Repeat(" ", width+1))
 }

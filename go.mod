@@ -11,8 +11,9 @@ require (
 	github.com/mattn/go-runewidth v0.0.19
 	github.com/mdlayher/wifi v0.7.0
 	github.com/nathan-osman/go-sunrise v1.1.0
-	github.com/vorlif/spreak v1.0.0
 	github.com/stratoberry/go-gpsd v1.3.0
+	github.com/vorlif/humanize v1.0.0
+	github.com/vorlif/spreak v1.0.0
 	github.com/wneessen/go-moonphase v0.0.0-20251108174843-0043855bd40d
 	golang.org/x/text v0.31.0
 )

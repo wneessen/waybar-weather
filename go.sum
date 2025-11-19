@@ -52,6 +52,8 @@ github.com/stratoberry/go-gpsd v1.3.0 h1:JxJOEC4SgD0QY65AE7B1CtJtweP73nqJghZeLNU
 github.com/stratoberry/go-gpsd v1.3.0/go.mod h1:nVf/vTgfYxOMxiQdy9BtJjojbFRtG8H3wNula++VgkU=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
+github.com/vorlif/humanize v1.0.0 h1:KqWA5AXLDFqbEpLhhwuU8jX1wtQD7Weswhj6T7DSAzY=
+github.com/vorlif/humanize v1.0.0/go.mod h1:4Kby5bMnBiNwZ77TPmXZZ2e8ofEkgaeFZmwCqlDHJTM=
 github.com/vorlif/spreak v1.0.0 h1:SUaD/p+cWcGgLAdHi73cTmBBejpPpztlgM5I4kPSewY=
 github.com/vorlif/spreak v1.0.0/go.mod h1:oJ0AuinQV2XPy8WkdkbGejGDHQ3dCoB9brQMj5dsEyc=
 github.com/wneessen/go-moonphase v0.0.0-20251108174843-0043855bd40d h1:DURVLjTC4cF8q+m8Vy2ixli+/vOSj7FTUexeFYgiYmM=

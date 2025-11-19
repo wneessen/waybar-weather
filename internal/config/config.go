@@ -24,7 +24,7 @@ const (
 		"{{loc \"humidity\"}}: {{.Current.Humidity}}%\n" +
 		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.PressureUnit}}\n" +
 		"\n" +
-		`🌅 {{timeFormat .SunriseTime "15:04"}} • 🌇 {{timeFormat .SunsetTime "15:04"}}`
+		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
 )
 
 // Config represents the application's configuration structure.
