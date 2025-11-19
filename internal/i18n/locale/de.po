@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: github.com/wneessen/waybar-weather\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-19 20:38+0000\n"
-"PO-Revision-Date: 2025-11-19 21:40+0100\n"
+"POT-Creation-Date: 2025-11-19 20:47+0000\n"
+"PO-Revision-Date: 2025-11-19 21:48+0100\n"
 "Last-Translator: Winni Neessen <wn@neessen.dev>\n"
 "Language-Team: \n"
 "Language: de\n"
@@ -196,34 +196,38 @@ msgid "Sunset"
 msgstr "Sonnenuntergang"
 
 #: ../../template/template.go:79
+msgid "Moonphase"
+msgstr "Mondphase"
+
+#: ../../template/template.go:80
 msgid "New moon"
 msgstr "Neumond"
 
-#: ../../template/template.go:80
+#: ../../template/template.go:81
 msgid "Waxing crescent"
 msgstr "Zunehmender Halbmond"
 
-#: ../../template/template.go:81
+#: ../../template/template.go:82
 msgid "First quarter"
 msgstr "Erstes Quartal"
 
-#: ../../template/template.go:82
+#: ../../template/template.go:83
 msgid "Waxing gibbous"
 msgstr "Zunehmender Mond"
 
-#: ../../template/template.go:83
+#: ../../template/template.go:84
 msgid "Full moon"
 msgstr "Vollmond"
 
-#: ../../template/template.go:84
+#: ../../template/template.go:85
 msgid "Waning gibbous"
 msgstr "Abnehmender Mond"
 
-#: ../../template/template.go:85
+#: ../../template/template.go:86
 msgid "Third quarter"
 msgstr "Drittes Quartal"
 
-#: ../../template/template.go:86
+#: ../../template/template.go:87
 msgid "Waning crescent"
 msgstr "Abnehmender Halbmond"
 
