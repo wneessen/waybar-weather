@@ -15,25 +15,25 @@ location. The geolocation is continuously monitored and updated if the location 
 allowing you to always see the weather data for your current location.
 
 ## Features
-* [Uses different geolocation providers to find your current location.](#geolocation-lookup)
-* Supports different geocoding providers for the reverse location lookup via coordinates.
-* Fetch weather data from [Open-Meteo](https://open-meteo.com/) (free, no API key required).
-* Integrates with [Waybar](https://github.com/Alexays/Waybar) as a custom module.
-* Display conditions, temperature and moon phase for your current location.
-* [Fully customizable via its integrated template engine.](#templating)
+* [Uses different geolocation providers to find your current location](#geolocation-lookup)
+* [Supports different geocoding providers for the reverse location lookup via coordinates](#geocoding-provider)
+* Fetch weather data from [Open-Meteo](https://open-meteo.com/) (free, no API key required)
+* Integrates with [Waybar](https://github.com/Alexays/Waybar) as a custom module
+* Display conditions, temperature and moon phase for your current location
+* [Fully customizable via its integrated template engine](#templating)
 * [Support for multiple languages](#internationalization--localization)
-* Configurable via TOML, JSON or YAML.
-* Lightweight, written in Go (single binary).
+* [Configurable via TOML, JSON or YAML](#configuration)
+* Lightweight single binary written in Go
 
 ## Requirements
 * A working Linux installation with Waybar running.
 * Network connectivity for API calls.
 * (Optional) Ideally an active WiFi connectivity for ICHNAEA geolocation service (more precise location lookup).
+* (Optional) For even better location lookup, you can use a GPS device connected to your computer.
 
 ## Screenshots
 ![waybar-weather in English](assets/waybar-weather_en.png) &nbsp;
 ![waybar-weather in German](assets/waybar-weather_de.png)
-
 
 ## Installation
 
@@ -63,13 +63,17 @@ go build -o waybar-weather ./cmd/waybar-weather
 
 ## Configuration
 
-### waybar-weather
-waybar-weather comes with defaults that should work out of the box for most users. You can however
-provide a customer configuration file by appending the `-config` flag, followed by the path to your
-configuration file. An example configuration file can be found in the [etc](etc) directory.
+### waybar-weather configuration
+waybar-weather comes with defaults that should work out of the box for most users. 
+You can however override these defaults by providing a configuration file. By default
+waybar-weather will look for a configuration file in the user's home config directory 
+at `~/.config/waybar-weather/`. If that directory holds a config file in either TOML, 
+JSON or YAML format, waybar-weather will use it. Alternatively, you can provide a path 
+to a configuration file via the `-config` flag. A example configuration file can be 
+found in the [etc](etc) directory.
 
-### Waybar integration
-waybar-weather integrates with Waybar effortlessly. 
+### Integration with Waybar
+waybar-weather integrates effortlessly with Waybar.
 
 Add the following to your waybar config file (usually `.config/waybar/config.jsonc`):
 ```json
