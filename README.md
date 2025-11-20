@@ -328,7 +328,7 @@ We thank the following companies for their support:
 
 |                                       | Company                                    | Sponsorship                                                              |
 |---------------------------------------|--------------------------------------------|--------------------------------------------------------------------------|
-| ![OpenCage Logo](assets/opencage.svg) | [OpenCage](https://opencagedata.com/)      | Thanks for providing a free API key for their reverse geocoding service. |
+| ![OpenCage Logo](assets/opencage.png) | [OpenCage](https://opencagedata.com/)      | Thanks for providing a free API key for their reverse geocoding service. |
 
 ## License
 
