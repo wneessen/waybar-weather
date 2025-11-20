@@ -37,13 +37,18 @@ func main() {
 	log := logger.NewLogger(slog.LevelError)
 
 	// Read config
+	confRead := false
 	confPath := flag.String("config", "", "path to the config file")
 	flag.Parse()
+
+	// Read default config
 	conf, err := config.New()
 	if err != nil {
 		log.Error("failed to load config", logger.Err(err))
 		os.Exit(1)
 	}
+
+	// If config file was specified, read it
 	if *confPath != "" {
 		file := filepath.Base(*confPath)
 		path := filepath.Dir(*confPath)
@@ -52,9 +57,19 @@ func main() {
 			log.Error("failed to load config from file", logger.Err(err))
 			os.Exit(1)
 		}
+		confRead = true
 	}
-	log = logger.NewLogger(conf.LogLevel)
 
+	// Check if we have a config file in the default location
+	if path, file := findConfigFile(); !confRead && (path != "" && file != "") {
+		conf, err = config.NewFromFile(path, file)
+		if err != nil {
+			log.Error("failed to load config from file", logger.Err(err))
+			os.Exit(1)
+		}
+	}
+
+	log = logger.NewLogger(conf.LogLevel)
 	t, err := i18n.New(conf.Locale)
 	if err != nil {
 		log.Error("failed to initialize localizer", logger.Err(err))
@@ -75,4 +90,19 @@ func main() {
 		log.Error(t.Get("failed to start waybar-weather service"), logger.Err(err))
 	}
 	log.Info(t.Get("shutting down waybar-weather service"))
+}
+
+func findConfigFile() (string, string) {
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		return "", ""
+	}
+	exts := []string{"toml", "yaml", "yml", "json"}
+	for _, ext := range exts {
+		path := filepath.Join(homedir, ".config", "waybar-weather", "config."+ext)
+		if _, err = os.Stat(path); err == nil {
+			return filepath.Dir(path), filepath.Base(path)
+		}
+	}
+	return "", ""
 }
