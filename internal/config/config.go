@@ -60,7 +60,8 @@ type Config struct {
 	} `fig:"geolocation"`
 
 	GeoCoder struct {
-		Type string `fig:"type" default:"nominatim"`
+		Type   string `fig:"type" default:"nominatim"`
+		APIKey string `fig:"apikey"`
 	} `fig:"geocoder"`
 }
 
