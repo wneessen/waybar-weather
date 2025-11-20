@@ -78,7 +78,7 @@ func TestNewFromFile(t *testing.T) {
 		expectIntervalOutput        = time.Second * 15
 	)
 	t.Run("reading config from valid file succeeds", func(t *testing.T) {
-		conf, err := NewFromFile("etc", "waybar-weather.toml")
+		conf, err := NewFromFile("../../etc", "waybar-weather.toml")
 		if err != nil {
 			t.Fatalf("failed to load config: %s", err)
 		}
@@ -101,14 +101,13 @@ func TestNewFromFile(t *testing.T) {
 		}
 	})
 	t.Run("reading config from non-existent file fails", func(t *testing.T) {
-		_, err := NewFromFile("etc", "non-existent.toml")
+		_, err := NewFromFile("../../etc", "non-existent.toml")
 		if err == nil {
 			t.Error("expected config to fail, but didn't")
 		}
 	})
 	t.Run("reading invalid config file fails", func(t *testing.T) {
-		_, err := NewFromFile("testdata", "invalid.toml")
-		t.Logf("error: %s", err)
+		_, err := NewFromFile("../../testdata", "invalid.toml")
 		if err == nil {
 			t.Error("expected config to fail, but didn't")
 		}
