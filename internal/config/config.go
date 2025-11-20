@@ -66,6 +66,7 @@ type Config struct {
 }
 
 func NewFromFile(path, file string) (*Config, error) {
+	fmt.Printf("Loading config from %s/%s\n", path, file)
 	conf := new(Config)
 	_, err := os.Stat(filepath.Join(path, file))
 	if err != nil {
