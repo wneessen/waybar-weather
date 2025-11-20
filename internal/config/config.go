@@ -58,9 +58,15 @@ type Config struct {
 		DisableICHNAEA         bool   `fig:"disable_ichnaea"`
 		DisableGPSD            bool   `fig:"disable_gpsd"`
 	} `fig:"geolocation"`
+
+	GeoCoder struct {
+		Provider string `fig:"provider" default:"nominatim"`
+		APIKey   string `fig:"apikey"`
+	} `fig:"geocoder"`
 }
 
 func NewFromFile(path, file string) (*Config, error) {
+	fmt.Printf("Loading config from %s/%s\n", path, file)
 	conf := new(Config)
 	_, err := os.Stat(filepath.Join(path, file))
 	if err != nil {

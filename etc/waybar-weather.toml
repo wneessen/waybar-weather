@@ -7,13 +7,13 @@
 ## -----------------------------------------------------------------------------
 
 ## Measurement units for weather data.
-## Accepted values: "metric" or "imperial"
+## Allowed values: "metric" or "imperial"
 ## Default: "metric"
 units = "imperial"
 
-## Locale setting for geolocation services.
-## If left empty, the application will attempt to detect it automatically
-## using the LC_MESSAGES environment variable.
+## Locale setting used for geolocation and formatting.
+## If left empty, the application will attempt automatic detection
+## via LC_MESSAGES.
 # locale = "en-US"
 
 ## Log level for informational and error messages.
@@ -25,6 +25,7 @@ units = "imperial"
 ## Default: 0 (INFO)
 loglevel = 0
 
+
 ## -----------------------------------------------------------------------------
 ## Weather
 ## -----------------------------------------------------------------------------
@@ -32,6 +33,7 @@ loglevel = 0
 
 ## Forecast duration.
 ## Specifies how many hours ahead to display forecast data.
+## Allowed range: 1–24
 ## Default: 3
 forecast_hours = 5
 
@@ -42,16 +44,15 @@ forecast_hours = 5
 [intervals]
 
 ## Weather update interval.
-## Defines how frequently the application queries the Open-Meteo API
-## for updated weather data.
-## If a geolocation change is detected by Geoclue, an update is triggered automatically.
-## Default: 15m
+## How often the application queries the weather API.
+## A geolocation change automatically triggers an update.
+## Default: "15m"
 weather_update = "30m"
 
 ## Output interval.
-## Specifies how often waybar-weather outputs JSON data to Waybar.
-## A geolocation change detected by Geoclue will also trigger an update automatically.
-## Default: 30s
+## How often the module outputs JSON data to Waybar.
+## Geolocation changes also trigger an update.
+## Default: "30s"
 output = "15s"
 
 
@@ -61,20 +62,18 @@ output = "15s"
 [templates]
 
 ## Text template.
-## Defines the primary text displayed in the Waybar weather widget.
-## Uses Go’s templating syntax for customization.
-## Refer to README.md for details.
+## Primary text displayed in the Waybar widget.
+## Uses Go's templating syntax.
 ## Default: {{.Current.ConditionIcon}} {{.Current.Temperature}}{{.TempUnit}}
 text = ""
 
-## Alt text template
-## Defines the alternate text displayed when the widget is clicked
-## Uses Go's templating syntax for customization
+## Alternate text template.
+## Displayed when the widget is clicked.
 ## Default: {{.Forecast.ConditionIcon}} {{.Forecast.Temperature}}{{.TempUnit}}
 alt_text = ""
 
 ## Tooltip template.
-## Defines the tooltip content displayed for the weather widget in Waybar.
+## Tooltip content for the weather widget.
 ## Supports Go templates and custom formatting.
 ## Default:
 ##   Condition: {{.Condition}}
@@ -91,10 +90,28 @@ tooltip = ""
 ## -----------------------------------------------------------------------------
 [geolocation]
 
-## Geolocation provider configuration.
-## Disable specific providers used to determine location data.
+## Path to a static geolocation file.
+## Used only if geolocation file provider is enabled.
+# file = "/path/to/location.json"
+
+## Disable specific geolocation providers.
 ## All providers are enabled by default.
 disable_geoip = true
 disable_geoapi = true
 disable_geolocation_file = true
 disable_ichnaea = true
+disable_gpsd = true
+
+
+## -----------------------------------------------------------------------------
+## Geocoder
+## -----------------------------------------------------------------------------
+[geocoder]
+
+## Geocoding provider.
+## Supported: "nominatim", "opencage"
+## Default: "nominatim"
+provider = "nominatim"
+
+## API key for geocoding services (if required).
+# apikey = ""

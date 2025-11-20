@@ -184,7 +184,7 @@ func (p *GeolocationICHNAEAProvider) locate(ctx context.Context) (lat, lon, acc 
 	defer cancelHttp()
 	result := new(APIResult)
 	if _, err = p.http.Post(ctxHttp, APIEndpoint, result, bodyBuffer,
-		map[string]string{"Content-Type": "application/json"}); err != nil {
+		map[string]string{"Content-Provider": "application/json"}); err != nil {
 		return 0, 0, 0, fmt.Errorf("failed to get geolocation data from API: %w", err)
 	}
 

@@ -12,14 +12,14 @@ import (
 
 	"github.com/vorlif/spreak"
 
-	"github.com/wneessen/waybar-weather/internal/config"
-	"github.com/wneessen/waybar-weather/internal/nominatim"
-
 	"github.com/mattn/go-runewidth"
 
 	"github.com/vorlif/humanize"
 	"github.com/vorlif/humanize/locale/de"
 	"github.com/vorlif/spreak/localize"
+
+	"github.com/wneessen/waybar-weather/internal/config"
+	"github.com/wneessen/waybar-weather/internal/geocode"
 )
 
 type DisplayData struct {
@@ -27,7 +27,7 @@ type DisplayData struct {
 	Latitude  float64
 	Longitude float64
 	Elevation float64
-	Address   nominatim.Address
+	Address   geocode.Address
 
 	// General weather and moon phase data
 	UpdateTime             time.Time

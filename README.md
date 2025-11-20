@@ -15,24 +15,25 @@ location. The geolocation is continuously monitored and updated if the location 
 allowing you to always see the weather data for your current location.
 
 ## Features
-* [Uses different geolocation providers to find your current location.](#geolocation-lookup)
-* Fetch weather data from [Open-Meteo](https://open-meteo.com/) (free, no API key required).
-* Integrates with [Waybar](https://github.com/Alexays/Waybar) as a custom module.
-* Display conditions, temperature and moon phase for your current location.
-* [Fully customizable via its integrated template engine.](#templating)
+* [Uses different geolocation providers to find your current location](#geolocation-lookup)
+* [Supports different geocoding providers for the reverse location lookup via coordinates](#geocoding-provider)
+* Fetch weather data from [Open-Meteo](https://open-meteo.com/) (free, no API key required)
+* Integrates with [Waybar](https://github.com/Alexays/Waybar) as a custom module
+* Display conditions, temperature and moon phase for your current location
+* [Fully customizable via its integrated template engine](#templating)
 * [Support for multiple languages](#internationalization--localization)
-* Configurable via TOML, JSON or YAML.
-* Lightweight, written in Go (single binary).
+* [Configurable via TOML, JSON or YAML](#configuration)
+* Lightweight single binary written in Go
 
 ## Requirements
 * A working Linux installation with Waybar running.
 * Network connectivity for API calls.
 * (Optional) Ideally an active WiFi connectivity for ICHNAEA geolocation service (more precise location lookup).
+* (Optional) For even better location lookup, you can use a GPS device connected to your computer.
 
 ## Screenshots
 ![waybar-weather in English](assets/waybar-weather_en.png) &nbsp;
 ![waybar-weather in German](assets/waybar-weather_de.png)
-
 
 ## Installation
 
@@ -62,13 +63,17 @@ go build -o waybar-weather ./cmd/waybar-weather
 
 ## Configuration
 
-### waybar-weather
-waybar-weather comes with defaults that should work out of the box for most users. You can however
-provide a customer configuration file by appending the `-config` flag, followed by the path to your
-configuration file. An example configuration file can be found in the [etc](etc) directory.
+### waybar-weather configuration
+waybar-weather comes with defaults that should work out of the box for most users. 
+You can however override these defaults by providing a configuration file. By default
+waybar-weather will look for a configuration file in the user's home config directory 
+at `~/.config/waybar-weather/`. If that directory holds a config file in either TOML, 
+JSON or YAML format, waybar-weather will use it. Alternatively, you can provide a path 
+to a configuration file via the `-config` flag. A example configuration file can be 
+found in the [etc](etc) directory.
 
-### Waybar integration
-waybar-weather integrates with Waybar effortlessly. 
+### Integration with Waybar
+waybar-weather integrates effortlessly with Waybar.
 
 Add the following to your waybar config file (usually `.config/waybar/config.jsonc`):
 ```json
@@ -133,6 +138,37 @@ The ICHNAEA location provider uses the Mozilla Location Service protocol to look
 and scan for local networks in the area. The hardware addresses of these networks will then be transmitted
 to beaconDB. The more WiFi networks waybar-weather is able to identify, the more accurate the results will
 be. For most users, this will be the most accurate location source.
+
+### GPSd
+The GPSd location provider uses the [GPSd](https://gpsd.gitlab.io/gpsd/index.html) daemon to look up your location. If your
+computer has a GPS device connected and GPSd is running, waybar-weather will use the data provided by GPSd to
+look up your location. Since GPS is generally more accurate than WiFi, this provider is usually the most accurate
+location source.
+
+## Geocoding provider
+waybar-weather uses geocoding providers to convert the coordinates of your location into a human readable
+address. By default waybar-weather makes use of the [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) 
+API. We do support other geocoding providers though, since they might provide more accurate results, 
+respond faster or provide higher focus on data privacy. The geocoding providers are configured in the 
+`geocoding` section of the configuration file using the `provider` key. Please keep in mind that some providers
+require an API key to function.
+
+### OpenStreetMap Nominatim
+OpenStreetMap Nominatim is the default reverse geocoding provider. It is a free and open source geocoding 
+service that provides geocoding results based on OpenStreetMap data. OSM Nominatim uses sensible rate limits 
+and might result in longer response times, which in turn might result delayed display of weather data.
+
+### OpenCage
+OpenCage is a commercial geocoding provider based in Germany. They offer a free API key that can be used 
+for up to 2500 requests per day (which should be more than enough for most users). OpenCage offers a dedicated
+privacy option, which will make sure that [no location data of the requests are stored in their logs.](https://blog.opencagedata.com/post/145602604628/more-privacy-with-norecord-parameter)
+waybar-weather makes use of this privacy option by default. Their API is also much faster than OpenStreetMap 
+Nominatim. OpenCage was nice enough to provide a free API key for the waybar-weather project, so that we can do 
+proper testing and development. Thank you OpenCage for your support!
+
+To use OpenCage with your waybar-weather installation first [obtain a free API key](https://opencagedata.com/users/sign_up), 
+then change the `provider` key in the `geocoding` section of your configuration file to `opencage` and add the 
+`apikey` key with your API key accordingly.
 
 ## Sleep/suspend and resume detection
 waybar-weather will automatically detect when your computer goes to sleep and resumes from sleep
@@ -286,6 +322,13 @@ Currently the following languages are supported by waybar-weather:
 If you want to contribute a new language, please do so by adding a new translation file to the 
 [locale](internal/i18n/locale) directory and opening a pull request. Our translations are using
 the commonly used gettext format (PO files). Any contributions are welcome!
+
+## Sponsors
+We thank the following companies for their support:
+
+|                                       | Company                                    | Sponsorship                                                              |
+|---------------------------------------|--------------------------------------------|--------------------------------------------------------------------------|
+| ![OpenCage Logo](assets/opencage.png) | [OpenCage](https://opencagedata.com/)      | Thanks for providing a free API key for their reverse geocoding service. |
 
 ## License
 

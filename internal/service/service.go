@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -25,9 +26,11 @@ import (
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/geolocation_file"
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/gpsd"
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/ichnaea"
+	"github.com/wneessen/waybar-weather/internal/geocode"
+	"github.com/wneessen/waybar-weather/internal/geocode/provider/opencage"
+	nominatim "github.com/wneessen/waybar-weather/internal/geocode/provider/osm-nominatim"
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/logger"
-	"github.com/wneessen/waybar-weather/internal/nominatim"
 	"github.com/wneessen/waybar-weather/internal/template"
 
 	"github.com/go-co-op/gocron/v2"
@@ -51,7 +54,7 @@ type Service struct {
 	config       *config.Config
 	geobus       *geobus.GeoBus
 	logger       *logger.Logger
-	nominatim    *nominatim.Nominatim
+	geocoder     geocode.Geocoder
 	omclient     omgo.Client
 	orchestrator *geobus.Orchestrator
 	scheduler    gocron.Scheduler
@@ -59,7 +62,7 @@ type Service struct {
 	t            *spreak.Localizer
 
 	locationLock  sync.RWMutex
-	address       nominatim.Address
+	address       geocode.Address
 	locationIsSet bool
 	location      omgo.Location
 
@@ -87,11 +90,24 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 		return nil, fmt.Errorf("failed to parse templates: %w", err)
 	}
 
+	var geocoder geocode.Geocoder
+	switch strings.ToLower(conf.GeoCoder.Provider) {
+	case "nominatim":
+		geocoder = nominatim.New(http.New(log), t.Language())
+	case "opencage":
+		if conf.GeoCoder.APIKey == "" {
+			return nil, fmt.Errorf("opencage geocoder requires an API key")
+		}
+		geocoder = opencage.New(http.New(log), t.Language(), conf.GeoCoder.APIKey)
+	default:
+		return nil, fmt.Errorf("unsupported geocoder type: %s", conf.GeoCoder.Provider)
+	}
+
 	service := &Service{
 		config:         conf,
+		geocoder:       geocoder,
 		geobus:         geobus.New(log),
 		logger:         log,
-		nominatim:      nominatim.New(http.New(log), t.Language()),
 		omclient:       omclient,
 		scheduler:      scheduler,
 		templates:      tpls,
@@ -346,7 +362,7 @@ func (s *Service) updateLocation(ctx context.Context, latitude, longitude float6
 		return nil
 	}
 
-	address, err := s.nominatim.Reverse(ctx, latitude, longitude)
+	address, err := s.geocoder.Reverse(ctx, latitude, longitude)
 	if err != nil {
 		return fmt.Errorf("failed reverse geocode coordinates: %w", err)
 	}
@@ -357,13 +373,13 @@ func (s *Service) updateLocation(ctx context.Context, latitude, longitude float6
 
 	s.locationLock.Lock()
 	s.location = location
-	if address.Address != nil {
-		s.address = *address.Address
+	if address.AddressFound {
+		s.address = address
 	}
 	s.locationIsSet = true
 	s.locationLock.Unlock()
 	s.logger.Debug("address successfully resolved", slog.Any("address", s.address.DisplayName),
-		slog.Any("location", s.location))
+		slog.Any("coordinates", s.location), slog.String("source", s.geocoder.Name()))
 
 	s.fetchWeather(ctx)
 	s.printWeather(ctx)
