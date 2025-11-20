@@ -58,6 +58,10 @@ type Config struct {
 		DisableICHNAEA         bool   `fig:"disable_ichnaea"`
 		DisableGPSD            bool   `fig:"disable_gpsd"`
 	} `fig:"geolocation"`
+
+	GeoCoder struct {
+		Type string `fig:"type" default:"nominatim"`
+	} `fig:"geocoder"`
 }
 
 func NewFromFile(path, file string) (*Config, error) {
