@@ -6,7 +6,6 @@ package geocode
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"sync"
 	"time"
@@ -56,7 +55,6 @@ func (c *CachedGeocoder) Reverse(ctx context.Context, lat, lon float64) (Address
 	if ok && time.Now().Before(entry.Expiry) {
 		addr := entry.Address
 		c.mu.RUnlock()
-		fmt.Printf("cache hit for %+v\n", addr)
 		return addr, nil
 	}
 	c.mu.RUnlock()
