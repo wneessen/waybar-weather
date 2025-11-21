@@ -118,6 +118,8 @@ jobs:
     codecov:
         name: Test with Codecov coverage (${{ matrix.os }} / ${{ matrix.go }})
         runs-on: ${{ matrix.os }}
+        env:
+          PERFORM_ONLINE_TEST: ${{ vars.PERFORM_ONLINE_TEST }}
         concurrency:
             group: ci-codecov-${{ matrix.os }}-${{ matrix.go }}
             cancel-in-progress: true
