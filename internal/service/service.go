@@ -40,8 +40,10 @@ import (
 )
 
 const (
-	OutputClass = "waybar-weather"
-	DesktopID   = "waybar-weather"
+	OutputClass  = "waybar-weather"
+	DesktopID    = "waybar-weather"
+	cacheHitTTL  = 1 * time.Hour
+	cacheMissTTL = 10 * time.Minute
 )
 
 type outputData struct {
@@ -93,12 +95,13 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 	var geocoder geocode.Geocoder
 	switch strings.ToLower(conf.GeoCoder.Provider) {
 	case "nominatim":
-		geocoder = nominatim.New(http.New(log), t.Language())
+		geocoder = geocode.NewCachedGeocoder(nominatim.New(http.New(log), t.Language()), cacheHitTTL, cacheMissTTL)
 	case "opencage":
 		if conf.GeoCoder.APIKey == "" {
 			return nil, fmt.Errorf("opencage geocoder requires an API key")
 		}
-		geocoder = opencage.New(http.New(log), t.Language(), conf.GeoCoder.APIKey)
+		geocoder = geocode.NewCachedGeocoder(opencage.New(http.New(log), t.Language(), conf.GeoCoder.APIKey),
+			cacheHitTTL, cacheMissTTL)
 	default:
 		return nil, fmt.Errorf("unsupported geocoder type: %s", conf.GeoCoder.Provider)
 	}
