@@ -54,6 +54,8 @@ type Components struct {
 	State          string `json:"state"`
 	StateCode      string `json:"state_code"`
 	Suburb         string `json:"suburb"`
+	Town           string `json:"town"`
+	Village        string `json:"village"`
 }
 
 type Geometry struct {
@@ -108,10 +110,16 @@ func (o *OpenCage) Reverse(ctx context.Context, lat, lon float64) (geocode.Addre
 		Municipality: result.Municipality,
 		CityDistrict: result.CityDistrict,
 		Postcode:     result.Postcode,
-		City:         result.City,
+		City:         result.NomalizedCity,
 		Suburb:       result.Suburb,
 		Street:       result.Road,
 		HouseNumber:  result.HouseNumber,
+	}
+	if result.Town != "" {
+		address.City = result.Town
+	}
+	if result.Village != "" {
+		address.City = result.Village
 	}
 
 	return address, nil
