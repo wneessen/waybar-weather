@@ -55,6 +55,7 @@ func (c *CachedGeocoder) Reverse(ctx context.Context, lat, lon float64) (Address
 	if ok && time.Now().Before(entry.Expiry) {
 		addr := entry.Address
 		c.mu.RUnlock()
+		addr.CacheHit = true
 		return addr, nil
 	}
 	c.mu.RUnlock()
@@ -79,8 +80,8 @@ func (c *CachedGeocoder) Reverse(ctx context.Context, lat, lon float64) (Address
 	return addr, nil
 }
 
-func quantizeCoord(v float64) int32 {
-	return int32(math.Round(v / coordPrecision))
+func quantizeCoord(val float64) int32 {
+	return int32(math.Round(val / coordPrecision))
 }
 
 func newKey(provider string, lat, lon float64) cacheKey {

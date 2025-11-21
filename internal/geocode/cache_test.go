@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	testHitTTL  = 100 * time.Millisecond
-	testMissTTL = 100 * time.Millisecond
+	testHitTTL  = 200 * time.Millisecond
+	testMissTTL = 200 * time.Millisecond
 	testLat     = 52.5129
 	testLon     = 13.3910
 )
@@ -66,12 +66,15 @@ func TestNewCachedGeocoder(t *testing.T) {
 func TestCachedGeocoder_Reverse(t *testing.T) {
 	coder := NewCachedGeocoder(&mockCache{}, testHitTTL, testMissTTL)
 	t.Run("a cached address should be returned", func(t *testing.T) {
-		addr, err := coder.Reverse(context.Background(), testLat, testLon)
+		addr, err := coder.Reverse(t.Context(), testLat, testLon)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if !addr.AddressFound {
 			t.Fatal("expected address to be found")
+		}
+		if addr.CacheHit {
+			t.Fatal("expected cache miss")
 		}
 		if !strings.EqualFold(addr.DisplayName, testAddress.DisplayName) {
 			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
@@ -84,47 +87,112 @@ func TestCachedGeocoder_Reverse(t *testing.T) {
 		}
 	})
 	t.Run("fetching results twice should hit the cache", func(t *testing.T) {
-		addr, err := coder.Reverse(context.Background(), testLat, testLon)
+		addr, err := coder.Reverse(t.Context(), testLat, testLon)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if !strings.EqualFold(addr.DisplayName, testAddress.DisplayName) {
 			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
 		}
-		addr, err = coder.Reverse(context.Background(), testLat, testLon)
+		addr, err = coder.Reverse(t.Context(), testLat, testLon)
 		if err != nil {
 			t.Fatal(err)
+		}
+		if !addr.CacheHit {
+			t.Error("expected cached result")
 		}
 		if !strings.EqualFold(addr.DisplayName, testAddress.DisplayName) {
 			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
 		}
 	})
 	t.Run("fetching a very close address should still hit the cache", func(t *testing.T) {
-		addr, err := coder.Reverse(context.Background(), testLat, testLon)
+		addr, err := coder.Reverse(t.Context(), testLat, testLon)
 		if err != nil {
 			t.Fatal(err)
 		}
-		addr, err = coder.Reverse(context.Background(), testLat+0.01, testLon-0.01)
+		addr, err = coder.Reverse(t.Context(), testLat+0.002, testLon-0.002)
 		if err != nil {
 			t.Fatal(err)
+		}
+		if !addr.CacheHit {
+			t.Error("expected cached result")
+		}
+		if !strings.EqualFold(addr.DisplayName, testAddress.DisplayName) {
+			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
+		}
+	})
+	t.Run("fetching a very close address but negative coordinates should still hit the cache", func(t *testing.T) {
+		addr, err := coder.Reverse(t.Context(), testLat, testLon)
+		if err != nil {
+			t.Fatal(err)
+		}
+		addr, err = coder.Reverse(t.Context(), testLat-0.004, testLon+0.003)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !addr.CacheHit {
+			t.Error("expected cached result")
 		}
 		if !strings.EqualFold(addr.DisplayName, testAddress.DisplayName) {
 			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
 		}
 	})
 	t.Run("fetching an unknow address causes a cache miss", func(t *testing.T) {
-		addr, err := coder.Reverse(context.Background(), 2, -2)
+		addr, err := coder.Reverse(t.Context(), 2, -2)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if addr.AddressFound {
 			t.Fatal("expected address to be not found")
 		}
+		if addr.CacheHit {
+			t.Error("expected cache miss")
+		}
 	})
 	t.Run("fetching failes during lookup should return an error", func(t *testing.T) {
-		_, err := coder.Reverse(context.Background(), 1, -1)
+		_, err := coder.Reverse(t.Context(), 1, -1)
 		if err == nil {
 			t.Fatal("expected an error")
+		}
+	})
+	t.Run("cache should not trigger on expired TTL", func(t *testing.T) {
+		addr, err := coder.Reverse(t.Context(), testLat, testLon)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.EqualFold(addr.DisplayName, testAddress.DisplayName) {
+			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
+		}
+		time.Sleep(testHitTTL * 2)
+		addr, err = coder.Reverse(t.Context(), testLat, testLon)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if addr.CacheHit {
+			t.Error("expected cache miss")
+		}
+		if !strings.EqualFold(addr.DisplayName, testAddress.DisplayName) {
+			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
+		}
+	})
+	t.Run("cache should hit on non-expired TTL", func(t *testing.T) {
+		addr, err := coder.Reverse(t.Context(), testLat, testLon)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.EqualFold(addr.DisplayName, testAddress.DisplayName) {
+			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
+		}
+		time.Sleep(testHitTTL - 5*time.Millisecond)
+		addr, err = coder.Reverse(t.Context(), testLat, testLon)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !addr.CacheHit {
+			t.Error("expected cache hit")
+		}
+		if !strings.EqualFold(addr.DisplayName, testAddress.DisplayName) {
+			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
 		}
 	})
 }
