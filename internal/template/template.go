@@ -93,7 +93,7 @@ var i18nVars = map[string]localize.MsgID{
 	"waning crescent": "Waning crescent",
 }
 
-func NewTemplate(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
+func New(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
 	tpls := new(Templates)
 	tpls.localizer = loc
 

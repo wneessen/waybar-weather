@@ -87,7 +87,7 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 		return nil, fmt.Errorf("failed to create Open-Meteo client: %w", err)
 	}
 
-	tpls, err := template.NewTemplate(conf, t)
+	tpls, err := template.New(conf, t)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse templates: %w", err)
 	}
