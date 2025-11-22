@@ -77,20 +77,15 @@ func (o *OpenCage) Name() string {
 
 func (o *OpenCage) Reverse(ctx context.Context, lat, lon float64) (geocode.Address, error) {
 	var response Response
-	apiUrl, err := url.Parse(APIEndpoint)
-	if err != nil {
-		return geocode.Address{}, fmt.Errorf("failed to parse API endpoint: %w", err)
-	}
 
-	query := apiUrl.Query()
+	query := url.Values{}
 	query.Set("key", o.apikey)
 	query.Set("q", fmt.Sprintf("%f,%f", lat, lon))
 	query.Set("no_annotations", "1")
 	query.Set("no_record", "1")
 	query.Set("language", o.lang.String())
-	apiUrl.RawQuery = query.Encode()
 
-	if _, err = o.http.GetWithTimeout(ctx, apiUrl.String(), &response, nil, APITimeout); err != nil {
+	if _, err := o.http.GetWithTimeout(ctx, APIEndpoint, &response, query, nil, APITimeout); err != nil {
 		return geocode.Address{}, fmt.Errorf("failed to retrieve address details from OpenCage API: %w", err)
 	}
 	if response.TotalResults != 1 {

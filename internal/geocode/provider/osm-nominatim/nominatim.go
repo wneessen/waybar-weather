@@ -65,18 +65,15 @@ func (n *Nominatim) Name() string {
 
 func (n *Nominatim) Reverse(ctx context.Context, lat, lon float64) (geocode.Address, error) {
 	var result Result
-	apiUrl, err := url.Parse(APIEndpoint)
-	if err != nil {
-		return geocode.Address{}, fmt.Errorf("failed to parse API endpoint: %w", err)
-	}
-	query := apiUrl.Query()
+	var err error
+
+	query := url.Values{}
 	query.Set("format", "jsonv2")
 	query.Set("lat", fmt.Sprintf("%f", lat))
 	query.Set("lon", fmt.Sprintf("%f", lon))
 	query.Set("accept-language", n.lang.String())
-	apiUrl.RawQuery = query.Encode()
 
-	if _, err = n.http.GetWithTimeout(ctx, apiUrl.String(), &result, nil, APITimeout); err != nil {
+	if _, err = n.http.GetWithTimeout(ctx, APIEndpoint, &result, query, nil, APITimeout); err != nil {
 		return geocode.Address{}, fmt.Errorf("failed to address details from Nominatim API: %w", err)
 	}
 
