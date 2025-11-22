@@ -211,7 +211,6 @@ The following variables are available for use in the templates:
 | `{{.SunriseTime}}`            | `time.Time` | The time of sunrise.                                   |
 | `{{.Moonphase}}`              | `string`    | The current moon phase.                                |
 | `{{.MoonphaseIcon}}`          | `string`    | The current moon phase icon.                           |
-| `{{.MoonphaseIconWithSpace}}` | `string`    | The current moon phase icon with leading Unicode space |
 
 #### Specific data points for current weather and forecasted weather
 | Variable                               | Type        | Description                                               |
@@ -226,7 +225,6 @@ The following variables are available for use in the templates:
 | `{{.Current.WindSpeed}}`               | `float64`   | The current wind speed.                                   |
 | `{{.Current.Condition}}`               | `string`    | The current weather condition as text.                    |
 | `{{.Current.ConditionIcon}}`           | `string`    | The current weather condition icon.                       |
-| `{{.Current.ConditionIconWithSpace}}`  | `string`    | The current weather condition icon with Unicode space.    |
 | `{{.Current.IsDaytime}}`               | `bool`      | Is true if it is currently daytime.                       |
 | `{{.Forecast.WeatherDateForTime}}`     | `time.Time` | The date for the current weather data.                    |
 | `{{.Forecast.Temperature}}`            | `float64`   | The forecasted temperature.                               |
@@ -238,7 +236,6 @@ The following variables are available for use in the templates:
 | `{{.Forecast.WindSpeed}}`              | `float64`   | The forecasted wind speed.                                |
 | `{{.Forecast.Condition}}`              | `string`    | The forecasted weather condition as text.                 |
 | `{{.Forecast.ConditionIcon}}`          | `string`    | The forecasted weather condition icon.                    |
-| `{{.Forecast.ConditionIconWithSpace}}` | `string`    | The forecasted weather condition icon with Unicode space. |
 | `{{.Forecast.IsDaytime}}`              | `bool`      | Is true if it is daytime at the forcasted time.           |
 
 
