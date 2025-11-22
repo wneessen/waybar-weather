@@ -379,7 +379,8 @@ func (s *Service) updateLocation(ctx context.Context, latitude, longitude float6
 	s.locationIsSet = true
 	s.locationLock.Unlock()
 	s.logger.Debug("address successfully resolved", slog.Any("address", s.address.DisplayName),
-		slog.Any("coordinates", s.location), slog.String("source", s.geocoder.Name()))
+		slog.Any("coordinates", s.location), slog.String("source", s.geocoder.Name()),
+		slog.Bool("cache_hit", address.CacheHit))
 
 	s.fetchWeather(ctx)
 	s.printWeather(ctx)
