@@ -171,16 +171,7 @@ func TestOpenCage_Reverse(t *testing.T) {
 	})
 	t.Run("reverse geocoding fails", func(t *testing.T) {
 		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
-			data, err := os.Open(cityFile)
-			if err != nil {
-				t.Fatalf("failed to open JSON response file: %s", err)
-			}
-
-			return &stdhttp.Response{
-				StatusCode: 200,
-				Body:       data,
-				Header:     make(stdhttp.Header),
-			}, errors.New("intentionally failing")
+			return nil, errors.New("intentionally failing")
 		}
 
 		coder := testCoderWithRoundtripFunc(t, rtFn)
