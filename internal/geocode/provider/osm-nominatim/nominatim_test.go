@@ -246,13 +246,13 @@ func TestOpenCage_Reverse_integration(t *testing.T) {
 }
 
 func testCoder(_ *testing.T) geocode.Geocoder {
-	testHttpClient := http.New(logger.NewLogger(slog.LevelDebug))
+	testHttpClient := http.New(logger.New(slog.LevelDebug))
 	testLang := language.English
 	return New(testHttpClient, testLang)
 }
 
 func testCoderWithRoundtripFunc(_ *testing.T, fn func(req *stdhttp.Request) (*stdhttp.Response, error)) geocode.Geocoder {
-	testHttpClient := http.New(logger.NewLogger(slog.LevelDebug))
+	testHttpClient := http.New(logger.New(slog.LevelDebug))
 	testHttpClient.Transport = testhelper.MockRoundTripper{Fn: fn}
 	testLang := language.English
 	return New(testHttpClient, testLang)

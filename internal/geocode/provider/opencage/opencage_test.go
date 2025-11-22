@@ -227,7 +227,7 @@ func TestOpenCage_Reverse_integration(t *testing.T) {
 }
 
 func testCoder(t *testing.T) geocode.Geocoder {
-	testHttpClient := http.New(logger.NewLogger(slog.LevelDebug))
+	testHttpClient := http.New(logger.New(slog.LevelDebug))
 	testLang := language.English
 	apikey := os.Getenv("OPENCAGE_APIKEY")
 	if apikey == "" {
@@ -237,7 +237,7 @@ func testCoder(t *testing.T) geocode.Geocoder {
 }
 
 func testCoderWithRoundtripFunc(t *testing.T, fn func(req *stdhttp.Request) (*stdhttp.Response, error)) geocode.Geocoder {
-	testHttpClient := http.New(logger.NewLogger(slog.LevelDebug))
+	testHttpClient := http.New(logger.New(slog.LevelDebug))
 	testHttpClient.Transport = testhelper.MockRoundTripper{Fn: fn}
 	testLang := language.English
 	apikey := os.Getenv("OPENCAGE_APIKEY")
