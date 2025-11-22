@@ -20,8 +20,10 @@ import (
 )
 
 const (
-	testLat = 52.5129
-	testLon = 13.3910
+	testLat     = 52.5129
+	testLon     = 13.3910
+	testHitTTL  = 1 * time.Second
+	testMissTTL = 1 * time.Second
 
 	villageExpected = "Marshfield"
 	villageLat      = 51.46292
@@ -108,6 +110,29 @@ func TestReverse(t *testing.T) {
 		}
 		if addr.City != villageExpected {
 			t.Errorf("expected city to be %q, got %q", villageExpected, addr.City)
+		}
+	})
+	t.Run("cached geocoder with osm-nominatim", func(t *testing.T) {
+		coder := geocode.NewCachedGeocoder(testCoder(), testHitTTL, testMissTTL)
+		if coder == nil {
+			t.Fatal("expected a non-nil geocoder")
+		}
+		addr, err := coder.Reverse(t.Context(), testLat, testLon)
+		if err != nil {
+			t.Fatalf("cached reverse geocoding via osm-nominatim failed: %s", err)
+		}
+		if !addr.AddressFound {
+			t.Error("expected address to be found")
+		}
+		if addr.City != testAddress.City {
+			t.Errorf("expected city to be %q, got %q", testAddress.City, addr.City)
+		}
+		addr, err = coder.Reverse(t.Context(), testLat, testLon)
+		if err != nil {
+			t.Fatalf("cached reverse geocoding via osm-nominatim failed: %s", err)
+		}
+		if !addr.CacheHit {
+			t.Error("expected cache hit from cached osm-nominatim")
 		}
 	})
 }
