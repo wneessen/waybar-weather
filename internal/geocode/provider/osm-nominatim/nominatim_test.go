@@ -199,6 +199,7 @@ func TestOpenCage_Reverse(t *testing.T) {
 			t.Fatal("expected API request to fail")
 		}
 		if !strings.Contains(err.Error(), "failed to parse latitude") {
+			t.Errorf("expected error to contain 'failed to parse latitude', got %s", err)
 		}
 	})
 	t.Run("reverse geocoding fails on NaN longitude response", func(t *testing.T) {
@@ -221,6 +222,7 @@ func TestOpenCage_Reverse(t *testing.T) {
 			t.Fatal("expected API request to fail")
 		}
 		if !strings.Contains(err.Error(), "failed to parse longitude") {
+			t.Errorf("expected error to contain 'failed to parse longitude', got %s", err)
 		}
 	})
 }
@@ -250,7 +252,7 @@ func testCoder(_ *testing.T) geocode.Geocoder {
 
 func testCoderWithRoundtripFunc(_ *testing.T, fn func(req *stdhttp.Request) (*stdhttp.Response, error)) geocode.Geocoder {
 	testHttpClient := http.New(logger.NewLogger(slog.LevelDebug))
-	testHttpClient.Client.Transport = mockRoundTripper{fn: fn}
+	testHttpClient.Transport = mockRoundTripper{fn: fn}
 	testLang := language.English
 	return New(testHttpClient, testLang)
 }

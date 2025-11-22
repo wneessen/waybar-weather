@@ -237,7 +237,7 @@ func testCoder(t *testing.T) geocode.Geocoder {
 
 func testCoderWithRoundtripFunc(t *testing.T, fn func(req *stdhttp.Request) (*stdhttp.Response, error)) geocode.Geocoder {
 	testHttpClient := http.New(logger.NewLogger(slog.LevelDebug))
-	testHttpClient.Client.Transport = mockRoundTripper{fn: fn}
+	testHttpClient.Transport = mockRoundTripper{fn: fn}
 	testLang := language.English
 	apikey := os.Getenv("OPENCAGE_APIKEY")
 	if apikey == "" {
