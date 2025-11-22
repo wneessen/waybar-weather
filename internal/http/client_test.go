@@ -116,20 +116,6 @@ func TestClient_Get(t *testing.T) {
 			t.Fatal("expected get request to fail")
 		}
 	})
-	t.Run("get request fails on context cancel", func(t *testing.T) {
-		client := New(logger.New(slog.LevelInfo))
-		ctx, cancel := context.WithTimeout(t.Context(), time.Millisecond)
-		defer cancel()
-
-		target := new(testType)
-		_, err := client.Get(ctx, testhelper.TestOnlineAPIURL, target, nil, nil)
-		if err == nil {
-			t.Fatal("expected get request to fail")
-		}
-		if !errors.Is(err, context.DeadlineExceeded) {
-			t.Errorf("expected error to be %s, got %s", context.DeadlineExceeded, err)
-		}
-	})
 	t.Run("getting a nil response", func(t *testing.T) {
 		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
 			return &stdhttp.Response{
@@ -146,6 +132,65 @@ func TestClient_Get(t *testing.T) {
 		_, err := client.Get(t.Context(), "https://example.com", target, nil, nil)
 		if err == nil {
 			t.Fatal("expected get request to fail")
+		}
+	})
+}
+
+func TestClient_GetWithTimeout(t *testing.T) {
+	t.Run("get request fails on context cancel", func(t *testing.T) {
+		testhelper.PerformIntegrationTests(t)
+		client := New(logger.New(slog.LevelInfo))
+		ctx, cancel := context.WithTimeout(t.Context(), time.Millisecond)
+		defer cancel()
+
+		target := new(testType)
+		_, err := client.GetWithTimeout(ctx, testhelper.TestOnlineAPIURL, target, nil, nil, time.Second*5)
+		if err == nil {
+			t.Fatal("expected get request to fail")
+		}
+		if !errors.Is(err, context.DeadlineExceeded) {
+			t.Errorf("expected error to be %s, got %s", context.DeadlineExceeded, err)
+		}
+	})
+}
+
+func TestClient_Post(t *testing.T) {
+	t.Run("post request succeeds", func(t *testing.T) {
+		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			data, err := os.Open(testFile)
+			if err != nil {
+				t.Fatalf("failed to open JSON response file: %s", err)
+			}
+
+			return &stdhttp.Response{
+				StatusCode: 200,
+				Body:       data,
+				Header:     make(stdhttp.Header),
+			}, nil
+		}
+
+		client := New(logger.New(slog.LevelInfo))
+		client.Transport = testhelper.MockRoundTripper{Fn: rtFn}
+
+		target := new(testType)
+		_, err := client.Post(t.Context(), testhelper.TestOnlineAPIURL, target, nil, nil)
+		if err != nil {
+			t.Fatalf("post request failed: %s", err)
+		}
+	})
+}
+
+func TestClient_PostWithTimeout(t *testing.T) {
+	t.Run("post request times out", func(t *testing.T) {
+		client := New(logger.New(slog.LevelInfo))
+
+		target := new(testType)
+		_, err := client.PostWithTimeout(t.Context(), testhelper.TestOnlineAPIURL, target, nil, nil, time.Nanosecond)
+		if err == nil {
+			t.Fatal("expected post request to timeout")
+		}
+		if !errors.Is(err, context.DeadlineExceeded) {
+			t.Errorf("expected error to be %s, got %s", context.DeadlineExceeded, err)
 		}
 	})
 }
