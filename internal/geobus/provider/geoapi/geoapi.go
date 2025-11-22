@@ -117,7 +117,7 @@ func (p *GeolocationGeoAPIProvider) locate(ctx context.Context) (lat, lon, acc f
 	defer cancelHttp()
 
 	result := new(APIResult)
-	if _, err = p.http.Get(ctxHttp, APIEndpoint, result, nil); err != nil {
+	if _, err = p.http.Get(ctxHttp, APIEndpoint, result, nil, nil); err != nil {
 		return 0, 0, 0, fmt.Errorf("failed to get geolocation data from API: %w", err)
 	}
 

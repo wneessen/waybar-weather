@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"runtime"
 	"time"
 
@@ -55,21 +56,30 @@ func New(logger *logger.Logger) *Client {
 
 // Get performs a HTTP GET request for the given URL and json-unmarshals the response
 // into target
-func (h *Client) Get(ctx context.Context, url string, target any, headers map[string]string) (int, error) {
-	return h.GetWithTimeout(ctx, url, target, headers, DefaultTimeout)
+func (h *Client) Get(ctx context.Context, endpoint string, target any, query url.Values, headers map[string]string) (int, error) {
+	return h.GetWithTimeout(ctx, endpoint, target, query, headers, DefaultTimeout)
 }
 
 // GetWithTimeout performs a HTTP GET request for the given URL and timeout and JSON-unmarshals
 // the response into target
-func (h *Client) GetWithTimeout(ctx context.Context, url string, target any, headers map[string]string, timeout time.Duration) (int, error) {
+func (h *Client) GetWithTimeout(ctx context.Context, endpoint string, target any, query url.Values, headers map[string]string, timeout time.Duration) (int, error) {
 	if target == nil {
 		return 0, errors.New("target must not be nil")
 	}
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
+	// Prepare URL and query parameters
+	reqURL, err := url.Parse(endpoint)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse URL: %w", err)
+	}
+	if len(query) > 0 {
+		reqURL.RawQuery = query.Encode()
+	}
+
 	// Prepare HTTP request
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL.String(), nil)
 	if err != nil {
 		return 0, fmt.Errorf("failed create new HTTP request with context: %w", err)
 	}
