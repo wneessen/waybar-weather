@@ -7,6 +7,10 @@ import (
 	"testing"
 )
 
+const (
+	TestOnlineAPIURL = "https://api.restful-api.dev/objects"
+)
+
 func PerformIntegrationTests(t *testing.T) {
 	t.Helper()
 	if val := os.Getenv("PERFORM_INTEGRATION_TEST"); !strings.EqualFold(val, "true") {

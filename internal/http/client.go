@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"reflect"
 	"runtime"
 	"time"
 
@@ -33,6 +34,8 @@ var (
 		runtime.GOARCH,
 		version,
 	)
+
+	ErrNonPointerTarget = errors.New("target must be a non-nil pointer")
 )
 
 // Client is a type wrapper for the Go stdlib http.Client and the Config
@@ -63,9 +66,11 @@ func (h *Client) Get(ctx context.Context, endpoint string, target any, query url
 // GetWithTimeout performs a HTTP GET request for the given URL and timeout and JSON-unmarshals
 // the response into target
 func (h *Client) GetWithTimeout(ctx context.Context, endpoint string, target any, query url.Values, headers map[string]string, timeout time.Duration) (int, error) {
-	if target == nil {
-		return 0, errors.New("target must not be nil")
+	rv := reflect.ValueOf(target)
+	if rv.Kind() != reflect.Pointer || rv.IsNil() {
+		return 0, ErrNonPointerTarget
 	}
+
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
@@ -121,9 +126,11 @@ func (h *Client) Post(ctx context.Context, url string, target any, body io.Reade
 // PostWithTimeout performs a HTTP POST request for the given URL and timeout and JSON-unmarshals
 // the response into target
 func (h *Client) PostWithTimeout(ctx context.Context, url string, target any, body io.Reader, headers map[string]string, timeout time.Duration) (int, error) {
-	if target == nil {
-		return 0, errors.New("target must not be nil")
+	rv := reflect.ValueOf(target)
+	if rv.Kind() != reflect.Pointer || rv.IsNil() {
+		return 0, ErrNonPointerTarget
 	}
+
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
