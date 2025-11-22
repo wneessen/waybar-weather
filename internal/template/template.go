@@ -6,6 +6,7 @@ package template
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"text/template"
 	"time"
@@ -148,5 +149,6 @@ func (t *Templates) timeFormat(val time.Time, fmt string) string {
 }
 
 func (t *Templates) floatFormat(val float64, precision int) string {
-	return fmt.Sprintf("%.*f", precision, val)
+	p := math.Pow(10, float64(precision))
+	return fmt.Sprintf("%.*f", precision, math.Trunc(val*p)/p)
 }
