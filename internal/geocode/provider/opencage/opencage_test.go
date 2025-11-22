@@ -21,6 +21,7 @@ import (
 	"github.com/wneessen/waybar-weather/internal/geocode"
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/logger"
+	"github.com/wneessen/waybar-weather/internal/testhelper"
 )
 
 const (
@@ -209,7 +210,7 @@ func TestOpenCage_Reverse(t *testing.T) {
 }
 
 func TestOpenCage_Reverse_integration(t *testing.T) {
-	performIntegrationTests(t)
+	testhelper.PerformIntegrationTests(t)
 	t.Run("reverse geocoding succeeds", func(t *testing.T) {
 		coder := testCoder(t)
 		addr, err := coder.Reverse(t.Context(), cityLat, cityLon)
@@ -237,25 +238,11 @@ func testCoder(t *testing.T) geocode.Geocoder {
 
 func testCoderWithRoundtripFunc(t *testing.T, fn func(req *stdhttp.Request) (*stdhttp.Response, error)) geocode.Geocoder {
 	testHttpClient := http.New(logger.NewLogger(slog.LevelDebug))
-	testHttpClient.Transport = mockRoundTripper{fn: fn}
+	testHttpClient.Transport = testhelper.MockRoundTripper{Fn: fn}
 	testLang := language.English
 	apikey := os.Getenv("OPENCAGE_APIKEY")
 	if apikey == "" {
 		t.Skip("no opencage API key set, skipping tests")
 	}
 	return New(testHttpClient, testLang, apikey)
-}
-
-func performIntegrationTests(t *testing.T) {
-	if val := os.Getenv("PERFORM_INTEGRATION_TEST"); !strings.EqualFold(val, "true") {
-		t.Skip("skipping integration test")
-	}
-}
-
-type mockRoundTripper struct {
-	fn func(req *stdhttp.Request) (*stdhttp.Response, error)
-}
-
-func (m mockRoundTripper) RoundTrip(req *stdhttp.Request) (*stdhttp.Response, error) {
-	return m.fn(req)
 }
