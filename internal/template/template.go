@@ -6,13 +6,12 @@ package template
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"text/template"
 	"time"
 
 	"github.com/vorlif/spreak"
-
-	"github.com/mattn/go-runewidth"
 
 	"github.com/vorlif/humanize"
 	"github.com/vorlif/humanize/locale/de"
@@ -30,14 +29,13 @@ type DisplayData struct {
 	Address   geocode.Address
 
 	// General weather and moon phase data
-	UpdateTime             time.Time
-	TempUnit               string
-	PressureUnit           string
-	SunsetTime             time.Time
-	SunriseTime            time.Time
-	Moonphase              string
-	MoonphaseIcon          string
-	MoonphaseIconWithSpace string
+	UpdateTime    time.Time
+	TempUnit      string
+	PressureUnit  string
+	SunsetTime    time.Time
+	SunriseTime   time.Time
+	Moonphase     string
+	MoonphaseIcon string
 
 	// Current weather and forecast data
 	Current  WeatherData
@@ -45,18 +43,17 @@ type DisplayData struct {
 }
 
 type WeatherData struct {
-	WeatherDateForTime     time.Time
-	Temperature            float64
-	ApparentTemperature    float64
-	Humidity               float64
-	PressureMSL            float64
-	WeatherCode            float64
-	WindDirection          float64
-	WindSpeed              float64
-	ConditionIcon          string
-	ConditionIconWithSpace string
-	Condition              string
-	IsDaytime              bool
+	WeatherDateForTime  time.Time
+	Temperature         float64
+	ApparentTemperature float64
+	Humidity            float64
+	PressureMSL         float64
+	WeatherCode         float64
+	WindDirection       float64
+	WindSpeed           float64
+	ConditionIcon       string
+	Condition           string
+	IsDaytime           bool
 }
 
 type Templates struct {
@@ -93,7 +90,7 @@ var i18nVars = map[string]localize.MsgID{
 	"waning crescent": "Waning crescent",
 }
 
-func NewTemplate(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
+func New(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
 	tpls := new(Templates)
 	tpls.localizer = loc
 
@@ -152,10 +149,6 @@ func (t *Templates) timeFormat(val time.Time, fmt string) string {
 }
 
 func (t *Templates) floatFormat(val float64, precision int) string {
-	return fmt.Sprintf("%.*f", precision, val)
-}
-
-func (t *Templates) EmojiWithSpace(emoji string) string {
-	width := runewidth.StringWidth(emoji)
-	return fmt.Sprintf("%s%s", emoji, strings.Repeat(" ", width+1))
+	p := math.Pow(10, float64(precision))
+	return fmt.Sprintf("%.*f", precision, math.Trunc(val*p)/p)
 }
