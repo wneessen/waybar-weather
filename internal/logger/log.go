@@ -5,6 +5,7 @@
 package logger
 
 import (
+	"io"
 	"log/slog"
 	"os"
 )
@@ -13,8 +14,11 @@ type Logger struct {
 	*slog.Logger
 }
 
-func NewLogger(level slog.Level) *Logger {
-	output := os.Stderr
+func New(level slog.Level) *Logger {
+	return NewLogger(level, os.Stderr)
+}
+
+func NewLogger(level slog.Level, output io.Writer) *Logger {
 	return &Logger{slog.New(slog.NewTextHandler(output, &slog.HandlerOptions{Level: level}))}
 }
 

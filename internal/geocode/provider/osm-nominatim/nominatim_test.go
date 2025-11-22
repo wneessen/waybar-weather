@@ -18,6 +18,7 @@ import (
 	"github.com/wneessen/waybar-weather/internal/geocode"
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/logger"
+	"github.com/wneessen/waybar-weather/internal/testhelper"
 )
 
 const (
@@ -228,7 +229,7 @@ func TestOpenCage_Reverse(t *testing.T) {
 }
 
 func TestOpenCage_Reverse_integration(t *testing.T) {
-	performIntegrationTests(t)
+	testhelper.PerformIntegrationTests(t)
 	t.Run("reverse geocoding succeeds", func(t *testing.T) {
 		coder := testCoder(t)
 		addr, err := coder.Reverse(t.Context(), cityLat, cityLon)
@@ -245,28 +246,14 @@ func TestOpenCage_Reverse_integration(t *testing.T) {
 }
 
 func testCoder(_ *testing.T) geocode.Geocoder {
-	testHttpClient := http.New(logger.NewLogger(slog.LevelDebug))
+	testHttpClient := http.New(logger.New(slog.LevelDebug))
 	testLang := language.English
 	return New(testHttpClient, testLang)
 }
 
 func testCoderWithRoundtripFunc(_ *testing.T, fn func(req *stdhttp.Request) (*stdhttp.Response, error)) geocode.Geocoder {
-	testHttpClient := http.New(logger.NewLogger(slog.LevelDebug))
-	testHttpClient.Transport = mockRoundTripper{fn: fn}
+	testHttpClient := http.New(logger.New(slog.LevelDebug))
+	testHttpClient.Transport = testhelper.MockRoundTripper{Fn: fn}
 	testLang := language.English
 	return New(testHttpClient, testLang)
-}
-
-func performIntegrationTests(t *testing.T) {
-	if val := os.Getenv("PERFORM_INTEGRATION_TEST"); !strings.EqualFold(val, "true") {
-		t.Skip("skipping integration test")
-	}
-}
-
-type mockRoundTripper struct {
-	fn func(req *stdhttp.Request) (*stdhttp.Response, error)
-}
-
-func (m mockRoundTripper) RoundTrip(req *stdhttp.Request) (*stdhttp.Response, error) {
-	return m.fn(req)
 }

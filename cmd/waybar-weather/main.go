@@ -34,7 +34,7 @@ func main() {
 	defer cancel()
 
 	// Initialize Logger
-	log := logger.NewLogger(slog.LevelError)
+	log := logger.New(slog.LevelError)
 
 	// Read config
 	confRead := false
@@ -69,7 +69,7 @@ func main() {
 		}
 	}
 
-	log = logger.NewLogger(conf.LogLevel)
+	log = logger.New(conf.LogLevel)
 	t, err := i18n.New(conf.Locale)
 	if err != nil {
 		log.Error("failed to initialize localizer", logger.Err(err))

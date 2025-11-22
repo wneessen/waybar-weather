@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"reflect"
 	"runtime"
 	"time"
 
@@ -33,6 +34,8 @@ var (
 		runtime.GOARCH,
 		version,
 	)
+
+	ErrNonPointerTarget = errors.New("target must be a non-nil pointer")
 )
 
 // Client is a type wrapper for the Go stdlib http.Client and the Config
@@ -57,15 +60,31 @@ func New(logger *logger.Logger) *Client {
 // Get performs a HTTP GET request for the given URL and json-unmarshals the response
 // into target
 func (h *Client) Get(ctx context.Context, endpoint string, target any, query url.Values, headers map[string]string) (int, error) {
-	return h.GetWithTimeout(ctx, endpoint, target, query, headers, DefaultTimeout)
+	return h.PerformReq(ctx, http.MethodGet, endpoint, target, query, headers, nil, DefaultTimeout)
 }
 
-// GetWithTimeout performs a HTTP GET request for the given URL and timeout and JSON-unmarshals
-// the response into target
 func (h *Client) GetWithTimeout(ctx context.Context, endpoint string, target any, query url.Values, headers map[string]string, timeout time.Duration) (int, error) {
-	if target == nil {
-		return 0, errors.New("target must not be nil")
+	return h.PerformReq(ctx, http.MethodGet, endpoint, target, query, headers, nil, timeout)
+}
+
+// Post performs a HTTP POST request for the given URL and json-unmarshals the response
+// into target
+func (h *Client) Post(ctx context.Context, endpoint string, target any, body io.Reader, headers map[string]string) (int, error) {
+	return h.PerformReq(ctx, http.MethodPost, endpoint, target, nil, headers, body, DefaultTimeout)
+}
+
+func (h *Client) PostWithTimeout(ctx context.Context, endpoint string, target any, body io.Reader, headers map[string]string, timeout time.Duration) (int, error) {
+	return h.PerformReq(ctx, http.MethodPost, endpoint, target, nil, headers, body, timeout)
+}
+
+// PerformReq performs a HTTP GET or POST request for the given URL and timeout and JSON-unmarshals the
+// response into target
+func (h *Client) PerformReq(ctx context.Context, method string, endpoint string, target any, query url.Values, headers map[string]string, body io.Reader, timeout time.Duration) (int, error) {
+	rv := reflect.ValueOf(target)
+	if rv.Kind() != reflect.Pointer || rv.IsNil() {
+		return 0, ErrNonPointerTarget
 	}
+
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
@@ -79,56 +98,7 @@ func (h *Client) GetWithTimeout(ctx context.Context, endpoint string, target any
 	}
 
 	// Prepare HTTP request
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL.String(), nil)
-	if err != nil {
-		return 0, fmt.Errorf("failed create new HTTP request with context: %w", err)
-	}
-	request.Header.Set("User-Agent", UserAgent)
-	for k, v := range headers {
-		request.Header.Set(k, v)
-	}
-	// Execute HTTP request
-	response, err := h.Do(request)
-	if err != nil {
-		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-			return 0, err
-		}
-		return 0, fmt.Errorf("failed to perform HTTP request: %w", err)
-	}
-	if response == nil {
-		return 0, errors.New("nil response received")
-	}
-	defer func(body io.ReadCloser) {
-		if err := body.Close(); err != nil {
-			h.logger.Error("failed to close HTTP request body", logger.Err(err))
-		}
-	}(response.Body)
-
-	// Unmarshal the JSON API response into target
-	if err = json.NewDecoder(response.Body).Decode(target); err != nil {
-		return response.StatusCode, fmt.Errorf("failed to decode JSON: %w", err)
-	}
-
-	return response.StatusCode, nil
-}
-
-// Post performs a HTTP POST request for the given URL and json-unmarshals the response
-// into target
-func (h *Client) Post(ctx context.Context, url string, target any, body io.Reader, headers map[string]string) (int, error) {
-	return h.PostWithTimeout(ctx, url, target, body, headers, DefaultTimeout)
-}
-
-// PostWithTimeout performs a HTTP POST request for the given URL and timeout and JSON-unmarshals
-// the response into target
-func (h *Client) PostWithTimeout(ctx context.Context, url string, target any, body io.Reader, headers map[string]string, timeout time.Duration) (int, error) {
-	if target == nil {
-		return 0, errors.New("target must not be nil")
-	}
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	// Prepare HTTP request
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
+	request, err := http.NewRequestWithContext(ctx, method, reqURL.String(), body)
 	if err != nil {
 		return 0, fmt.Errorf("failed create new HTTP request with context: %w", err)
 	}
