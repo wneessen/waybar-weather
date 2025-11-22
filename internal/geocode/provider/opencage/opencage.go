@@ -91,7 +91,7 @@ func (o *OpenCage) Reverse(ctx context.Context, lat, lon float64) (geocode.Addre
 	apiUrl.RawQuery = query.Encode()
 
 	if _, err = o.http.GetWithTimeout(ctx, apiUrl.String(), &response, nil, APITimeout); err != nil {
-		return geocode.Address{}, fmt.Errorf("failed to address details from OpenCage API: %w", err)
+		return geocode.Address{}, fmt.Errorf("failed to retrieve address details from OpenCage API: %w", err)
 	}
 	if response.TotalResults != 1 {
 		return geocode.Address{}, fmt.Errorf("unambigous amount of results returned for coordinates: %d",
