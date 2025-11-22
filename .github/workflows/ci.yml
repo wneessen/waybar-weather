@@ -83,9 +83,6 @@ jobs:
             matrix:
                 os: ['ubuntu-latest']
                 go: ['1.25']
-        env:
-            TEST_BASEPORT: ${{ vars.TEST_BASEPORT }}
-            TEST_BASEPORT_SMTP: ${{ vars.TEST_BASEPORT_SMTP }}
         steps:
             - name: Harden Runner
               uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
@@ -119,7 +116,8 @@ jobs:
         name: Test with Codecov coverage (${{ matrix.os }} / ${{ matrix.go }})
         runs-on: ${{ matrix.os }}
         env:
-          PERFORM_ONLINE_TEST: ${{ vars.PERFORM_ONLINE_TEST }}
+          PERFORM_INTEGRATION_TEST: ${{ vars.PERFORM_INTEGRATION_TEST }}
+          OPENCAGE_APIKEY: ${{ secrets.OPENCAGE_APIKEY }}
         concurrency:
             group: ci-codecov-${{ matrix.os }}-${{ matrix.go }}
             cancel-in-progress: true
