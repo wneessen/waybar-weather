@@ -6,6 +6,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/wneessen/waybar-weather/internal/logger"
@@ -50,6 +51,7 @@ func (s *Service) fetchWeather(ctx context.Context) {
 		s.logger.Error("failed to get forecast data", logger.Err(err))
 		return
 	}
+	s.logger.Debug("received forecast data", slog.Any("current_weather", forecast.CurrentWeather))
 
 	s.weatherLock.Lock()
 	defer s.weatherLock.Unlock()
