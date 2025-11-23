@@ -17,6 +17,7 @@ import (
 const (
 	APIEndpoint   = "https://geoapi.info/api/geo"
 	LookupTimeout = time.Second * 5
+	name          = "geoapi"
 )
 
 type GeolocationGeoAPIProvider struct {
@@ -31,7 +32,7 @@ type APIResult struct {
 	Location struct {
 		CountryCode string `json:"country,omitempty"`
 		Country     string `json:"countryName,omitempty"`
-		Region      string `json:"region_name,omitempty"`
+		Region      string `json:"region,omitempty"`
 		City        string `json:"city,omitempty"`
 		ZipCode     string `json:"postalCode,omitempty"`
 		TimeZone    string `json:"timezone"`
@@ -42,13 +43,16 @@ type APIResult struct {
 	} `json:"location"`
 }
 
-func NewGeolocationGeoAPIProvider(http *http.Client) *GeolocationGeoAPIProvider {
+func NewGeolocationGeoAPIProvider(http *http.Client) (*GeolocationGeoAPIProvider, error) {
+	if http == nil {
+		return nil, fmt.Errorf("http client is required")
+	}
 	return &GeolocationGeoAPIProvider{
-		name:   "geoapi",
+		name:   name,
 		http:   http,
 		period: 10 * time.Minute,
 		ttl:    20 * time.Minute,
-	}
+	}, nil
 }
 
 func (p *GeolocationGeoAPIProvider) Name() string {
@@ -121,7 +125,7 @@ func (p *GeolocationGeoAPIProvider) locate(ctx context.Context) (lat, lon, acc f
 		return 0, 0, 0, fmt.Errorf("failed to get geolocation data from API: %w", err)
 	}
 
-	acc = geobus.AccuarcyUnknown
+	acc = geobus.AccuracyUnknown
 	if result.Location.CountryCode != "" {
 		acc = geobus.AccuracyCountry
 	}
