@@ -1,0 +1,44 @@
+{
+  "ip": "123.123.123.123",
+  "location": {
+    "country": "US",
+    "countryName": "United States",
+    "region": "New York",
+    "city": "New York City",
+    "timezone": "America/New_York",
+    "coordinates": {
+      "latitude": "40.7185",
+      "longitude": "-74.0025"
+    }
+  },
+  "countryInfo": {
+    "name": "United States",
+    "continent": "North America",
+    "languages": [
+      "Chinese",
+      "English",
+      "French",
+      "German",
+      "Italian",
+      "Japanese",
+      "Korean",
+      "Polish",
+      "Portuguese",
+      "Spanish",
+      "Tagalog",
+      "Vietnamese"
+    ]
+  },
+  "todaysHolidays": [],
+  "network": {
+    "asn": 9009,
+    "colo": "EWR"
+  },
+  "timestamp": "2025-11-23T11:03:15.050Z",
+  "_cache": {
+    "type": "geo",
+    "timestamp": "2025-11-23T11:03:15.050Z",
+    "maxAge": 300,
+    "key": "geoapi:v2:/api/geo"
+  }
+}
