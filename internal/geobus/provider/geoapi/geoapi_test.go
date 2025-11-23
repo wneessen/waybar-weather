@@ -156,3 +156,41 @@ func TestNewGeolocationGeoAPIProvider_locate(t *testing.T) {
 		}
 	})
 }
+
+func TestGeolocationGeoAPIProvider_createResult(t *testing.T) {
+	provider, err := NewGeolocationGeoAPIProvider(http.New(logger.New(slog.LevelInfo)))
+	if err != nil {
+		t.Fatalf("failed to create GeoAPI provider: %s", err)
+	}
+	result := provider.createResult("test", geobus.Coordinate{Lat: testLat, Lon: testLon, Acc: geobus.AccuracyCity})
+	if result.Lat != testLat {
+		t.Errorf("expected latitude to be %f, got %f", testLat, result.Lat)
+	}
+	if result.Lon != testLon {
+		t.Errorf("expected longitude to be %f, got %f", testLon, result.Lon)
+	}
+	if result.Key != "test" {
+		t.Errorf("expected key to be %s, got %s", "test", result.Key)
+	}
+	if result.AccuracyMeters != geobus.AccuracyCity {
+		t.Errorf("expected accuracy to be %d, got %f", geobus.AccuracyCity, result.AccuracyMeters)
+	}
+	if result.Source != provider.Name() {
+		t.Errorf("expected source to be %s, got %s", provider.Name(), result.Source)
+	}
+	if result.TTL != provider.ttl {
+		t.Errorf("expected TTL to be %d, got %d", provider.ttl, result.TTL)
+	}
+}
+
+func TestGeolocationGeoAPIProvider_LookupStream(t *testing.T) {
+	provider, err := NewGeolocationGeoAPIProvider(http.New(logger.New(slog.LevelInfo)))
+	if err != nil {
+		t.Fatalf("failed to create GeoAPI provider: %s", err)
+	}
+	foo := provider.LookupStream(t.Context(), "test")
+	if foo == nil {
+		t.Fatal("expected stream to be non-nil")
+	}
+	t.Logf("foo: %+v", foo)
+}
