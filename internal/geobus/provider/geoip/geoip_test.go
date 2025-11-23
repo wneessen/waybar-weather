@@ -26,17 +26,17 @@ const (
 	testLon = -74.0025
 )
 
-func TestNewGeolocationGeoAPIProvider(t *testing.T) {
-	t.Run("new GeoAPI provider succeeds", func(t *testing.T) {
+func TestNewGeolocationGeoIPProvider(t *testing.T) {
+	t.Run("new GeoIP provider succeeds", func(t *testing.T) {
 		provider, err := NewGeolocationGeoIPProvider(http.New(logger.New(slog.LevelInfo)))
 		if err != nil {
-			t.Fatalf("failed to create GeoAPI provider: %s", err)
+			t.Fatalf("failed to create GeoIP provider: %s", err)
 		}
 		if provider == nil {
 			t.Fatal("expected provider to be non-nil")
 		}
 	})
-	t.Run("GeoAPI without http client fails ", func(t *testing.T) {
+	t.Run("GeoIP without http client fails ", func(t *testing.T) {
 		provider, err := NewGeolocationGeoIPProvider(nil)
 		if err == nil {
 			t.Fatal("expected provider to fail")
@@ -47,17 +47,17 @@ func TestNewGeolocationGeoAPIProvider(t *testing.T) {
 	})
 }
 
-func TestGeolocationGeoAPIProvider_Name(t *testing.T) {
+func TestGeolocationGeoIPProvider_Name(t *testing.T) {
 	provider, err := NewGeolocationGeoIPProvider(http.New(logger.New(slog.LevelInfo)))
 	if err != nil {
-		t.Fatalf("failed to create GeoAPI provider: %s", err)
+		t.Fatalf("failed to create GeoIP provider: %s", err)
 	}
 	if !strings.EqualFold(provider.Name(), name) {
 		t.Errorf("expected provider name to be %s, got %s", name, provider.Name())
 	}
 }
 
-func TestNewGeolocationGeoAPIProvider_locate(t *testing.T) {
+func TestNewGeolocationGeoIPProvider_locate(t *testing.T) {
 	t.Run("locate fails on invalid coordinate parsing", func(t *testing.T) {
 		tests := []struct {
 			name string
@@ -88,12 +88,12 @@ func TestNewGeolocationGeoAPIProvider_locate(t *testing.T) {
 				client.Transport = testhelper.MockRoundTripper{Fn: rtFn}
 				provider, err := NewGeolocationGeoIPProvider(client)
 				if err != nil {
-					t.Fatalf("failed to create GeoAPI provider: %s", err)
+					t.Fatalf("failed to create GeoIP provider: %s", err)
 				}
 
 				lat, lon, acc, err := provider.locate(t.Context())
 				if err != nil {
-					t.Fatalf("failed to locate coordinates via GeoAPI: %s", err)
+					t.Fatalf("failed to locate coordinates via GeoIP: %s", err)
 				}
 				if lat != testLat {
 					t.Errorf("expected latitude to be %f, got %f", testLat, lat)
@@ -116,7 +116,7 @@ func TestNewGeolocationGeoAPIProvider_locate(t *testing.T) {
 		client.Transport = testhelper.MockRoundTripper{Fn: rtFn}
 		provider, err := NewGeolocationGeoIPProvider(client)
 		if err != nil {
-			t.Fatalf("failed to create GeoAPI provider: %s", err)
+			t.Fatalf("failed to create GeoIP provider: %s", err)
 		}
 		if _, _, _, err = provider.locate(t.Context()); err == nil {
 			t.Error("expected locate to fail")
@@ -124,10 +124,10 @@ func TestNewGeolocationGeoAPIProvider_locate(t *testing.T) {
 	})
 }
 
-func TestGeolocationGeoAPIProvider_createResult(t *testing.T) {
+func TestGeolocationGeoIPProvider_createResult(t *testing.T) {
 	provider, err := NewGeolocationGeoIPProvider(http.New(logger.New(slog.LevelInfo)))
 	if err != nil {
-		t.Fatalf("failed to create GeoAPI provider: %s", err)
+		t.Fatalf("failed to create GeoIP provider: %s", err)
 	}
 	result := provider.createResult("test", geobus.Coordinate{Lat: testLat, Lon: testLon, Acc: geobus.AccuracyCity})
 	if result.Lat != testLat {
@@ -150,7 +150,7 @@ func TestGeolocationGeoAPIProvider_createResult(t *testing.T) {
 	}
 }
 
-func TestGeolocationGeoAPIProvider_LookupStream(t *testing.T) {
+func TestGeolocationGeoIPProvider_LookupStream(t *testing.T) {
 	t.Run("lookup stream succeeds", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(t.Context())
@@ -172,7 +172,7 @@ func TestGeolocationGeoAPIProvider_LookupStream(t *testing.T) {
 			client.Transport = testhelper.MockRoundTripper{Fn: rtFn}
 			provider, err := NewGeolocationGeoIPProvider(client)
 			if err != nil {
-				t.Fatalf("failed to create GeoAPI provider: %s", err)
+				t.Fatalf("failed to create GeoIP provider: %s", err)
 			}
 			provider.ttl = time.Millisecond * 10
 			provider.period = time.Millisecond * 10
@@ -225,7 +225,7 @@ func TestGeolocationGeoAPIProvider_LookupStream(t *testing.T) {
 
 			provider, err := NewGeolocationGeoIPProvider(http.New(logger.New(slog.LevelInfo)))
 			if err != nil {
-				t.Fatalf("failed to create GeoAPI provider: %s", err)
+				t.Fatalf("failed to create GeoIP provider: %s", err)
 			}
 			provider.period = time.Millisecond * 10
 			provider.locateFn = func(ctx context.Context) (float64, float64, float64, error) {
