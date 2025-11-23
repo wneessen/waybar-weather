@@ -120,7 +120,7 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 	return service, nil
 }
 
-func (s *Service) Run(ctx context.Context) error {
+func (s *Service) Run(ctx context.Context) (err error) {
 	// Start scheduled jobs
 	if err := s.createScheduledJob(ctx, s.config.Intervals.Output, s.printWeather,
 		"weatherdata_output_job"); err != nil {
@@ -144,7 +144,10 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 
 	// Create the orchestrator
-	s.orchestrator = s.createOrchestrator()
+	s.orchestrator, err = s.createOrchestrator()
+	if err != nil {
+		return fmt.Errorf("failed to create geobus orchestrator: %w", err)
+	}
 
 	// Subscribe to geolocation updates from the geobus
 	sub, unsub := s.geobus.Subscribe(DesktopID, 32)
@@ -167,7 +170,7 @@ func (s *Service) Run(ctx context.Context) error {
 	return s.scheduler.Shutdown()
 }
 
-func (s *Service) createOrchestrator() *geobus.Orchestrator {
+func (s *Service) createOrchestrator() (*geobus.Orchestrator, error) {
 	httpClient := http.New(s.logger)
 	var provider []geobus.Provider
 
@@ -184,7 +187,11 @@ func (s *Service) createOrchestrator() *geobus.Orchestrator {
 	}
 
 	if !s.config.GeoLocation.DisableGeoAPI {
-		provider = append(provider, geoapi.NewGeolocationGeoAPIProvider(httpClient))
+		gap, err := geoapi.NewGeolocationGeoAPIProvider(httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create GeoAPI provider: %w", err)
+		}
+		provider = append(provider, gap)
 	}
 
 	if !s.config.GeoLocation.DisableICHNAEA {
@@ -200,7 +207,7 @@ func (s *Service) createOrchestrator() *geobus.Orchestrator {
 			"due to missing location"))
 	}
 
-	return s.geobus.NewOrchestrator(provider)
+	return s.geobus.NewOrchestrator(provider), nil
 }
 
 func (s *Service) createScheduledJob(ctx context.Context, interval time.Duration, task func(context.Context),

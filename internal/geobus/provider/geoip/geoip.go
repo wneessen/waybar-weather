@@ -118,7 +118,7 @@ func (p *GeolocationGeoIPProvider) locate(ctx context.Context) (lat, lon, acc fl
 		return 0, 0, 0, fmt.Errorf("failed to get geolocation data from API: %w", err)
 	}
 
-	acc = geobus.AccuarcyUnknown
+	acc = geobus.AccuracyUnknown
 	if result.CountryCode != "" {
 		acc = geobus.AccuracyCountry
 	}

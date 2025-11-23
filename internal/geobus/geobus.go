@@ -24,7 +24,7 @@ const (
 	AccuracyRegion  = 100000
 	AccuracyCity    = 15000
 	AccuracyZip     = 3000
-	AccuarcyUnknown = 1000000
+	AccuracyUnknown = 1000000
 	TruncPrecision  = 4
 )
 
