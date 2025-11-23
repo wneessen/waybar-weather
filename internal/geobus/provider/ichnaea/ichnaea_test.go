@@ -52,6 +52,7 @@ func TestNewGeolocationICHNAEAProvider(t *testing.T) {
 }
 
 func TestGeolocationICHNAEAProvider_Name(t *testing.T) {
+	testRequiresWiFi(t)
 	provider, err := NewGeolocationICHNAEAProvider(http.New(logger.New(slog.LevelInfo)))
 	if err != nil {
 		t.Fatalf("failed to create ICHNAEA provider: %s", err)
@@ -64,7 +65,6 @@ func TestGeolocationICHNAEAProvider_Name(t *testing.T) {
 // This test is very flacky, since it depends on the WiFi hardware
 func TestNewGeolocationICHNAEAProvider_wifiList(t *testing.T) {
 	testRequiresWiFi(t)
-
 	provider, err := NewGeolocationICHNAEAProvider(http.New(logger.New(slog.LevelInfo)))
 	if err != nil {
 		t.Fatalf("failed to create ICHNAEA provider: %s", err)
@@ -79,6 +79,7 @@ func TestNewGeolocationICHNAEAProvider_wifiList(t *testing.T) {
 }
 
 func TestGeolocationICHNAEAProvider_locate(t *testing.T) {
+	testRequiresWiFi(t)
 	t.Run("locate succeeds with different accuracies", func(t *testing.T) {
 		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
 			data, err := os.Open(testFile)
@@ -137,6 +138,7 @@ func TestGeolocationICHNAEAProvider_locate(t *testing.T) {
 }
 
 func TestGeolocationICHNAEAProvider_createResult(t *testing.T) {
+	testRequiresWiFi(t)
 	provider, err := NewGeolocationICHNAEAProvider(http.New(logger.New(slog.LevelInfo)))
 	if err != nil {
 		t.Fatalf("failed to create GeoIP provider: %s", err)
