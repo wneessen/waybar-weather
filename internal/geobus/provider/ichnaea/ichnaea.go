@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/wneessen/waybar-weather/internal/geobus"
@@ -21,6 +22,7 @@ import (
 const (
 	apiEndpoint   = "https://api.beacondb.net/v1/geolocate"
 	lookupTimeout = time.Second * 5
+	wifiScanTime  = time.Minute * 2
 	name          = "ichnaea"
 )
 
@@ -31,6 +33,9 @@ type GeolocationICHNAEAProvider struct {
 	period   time.Duration
 	ttl      time.Duration
 	locateFn func(ctx context.Context) (lat, lon, acc float64, err error)
+
+	apLock sync.RWMutex
+	aps    []WirelessNetwork
 }
 
 type APIResult struct {
@@ -75,6 +80,7 @@ func (p *GeolocationICHNAEAProvider) Name() string {
 // or context ends.
 func (p *GeolocationICHNAEAProvider) LookupStream(ctx context.Context, key string) <-chan geobus.Result {
 	out := make(chan geobus.Result)
+	go p.monitorWifiAccessPoints(ctx)
 	go func() {
 		defer close(out)
 		state := geobus.GeolocationState{}
@@ -125,7 +131,29 @@ func (p *GeolocationICHNAEAProvider) createResult(key string, coord geobus.Coord
 	}
 }
 
-func (p *GeolocationICHNAEAProvider) wifiList() ([]WirelessNetwork, error) {
+func (p *GeolocationICHNAEAProvider) monitorWifiAccessPoints(ctx context.Context) {
+	firstRun := true
+	for {
+		if !firstRun {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(wifiScanTime):
+			}
+		}
+		firstRun = false
+
+		list, err := p.wifiAccessPoints()
+		if err != nil {
+			continue
+		}
+		p.apLock.Lock()
+		p.aps = list
+		p.apLock.Unlock()
+	}
+}
+
+func (p *GeolocationICHNAEAProvider) wifiAccessPoints() ([]WirelessNetwork, error) {
 	var checkIfaces []*wifi.Interface
 	var list []WirelessNetwork
 
@@ -164,13 +192,9 @@ func (p *GeolocationICHNAEAProvider) wifiList() ([]WirelessNetwork, error) {
 }
 
 func (p *GeolocationICHNAEAProvider) locate(ctx context.Context) (lat, lon, acc float64, err error) {
-	wifiList, err := p.wifiList()
-	if err != nil {
-		return 0, 0, 0, fmt.Errorf("failed to retrieve wifi list: %w", err)
-	}
-	if len(wifiList) == 0 {
-		return 0, 0, 0, nil
-	}
+	p.apLock.RLock()
+	wifiList := p.aps
+	p.apLock.RUnlock()
 
 	type request struct {
 		ConsiderIP   bool              `json:"considerIp"`
