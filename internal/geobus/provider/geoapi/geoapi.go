@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	APIEndpoint   = "https://geoapi.info/api/geo"
-	LookupTimeout = time.Second * 5
-	name          = "geoapi"
+	apiEndpoint  = "https://geoapi.info/api/geo"
+	lookupTimeou = time.Second * 5
+	name         = "geoapi"
 )
 
 type GeolocationGeoAPIProvider struct {
@@ -117,11 +117,11 @@ func (p *GeolocationGeoAPIProvider) createResult(key string, coord geobus.Coordi
 }
 
 func (p *GeolocationGeoAPIProvider) locate(ctx context.Context) (lat, lon, acc float64, err error) {
-	ctxHttp, cancelHttp := context.WithTimeout(ctx, LookupTimeout)
+	ctxHttp, cancelHttp := context.WithTimeout(ctx, lookupTimeou)
 	defer cancelHttp()
 
 	result := new(APIResult)
-	if _, err = p.http.Get(ctxHttp, APIEndpoint, result, nil, nil); err != nil {
+	if _, err = p.http.Get(ctxHttp, apiEndpoint, result, nil, nil); err != nil {
 		return 0, 0, 0, fmt.Errorf("failed to get geolocation data from API: %w", err)
 	}
 
