@@ -183,7 +183,11 @@ func (s *Service) createOrchestrator() (*geobus.Orchestrator, error) {
 	}
 
 	if !s.config.GeoLocation.DisableGeoIP {
-		provider = append(provider, geoip.NewGeolocationGeoIPProvider(httpClient))
+		gip, err := geoip.NewGeolocationGeoIPProvider(httpClient)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create GeoIP provider: %w", err)
+		}
+		provider = append(provider, gip)
 	}
 
 	if !s.config.GeoLocation.DisableGeoAPI {

@@ -15,14 +15,16 @@ import (
 
 const (
 	APIEndpoint   = "https://reallyfreegeoip.org/json/"
-	LookupTimeout = time.Second * 5
+	LookupTimeout = time.Second * 10
+	name          = "geoip"
 )
 
 type GeolocationGeoIPProvider struct {
-	name   string
-	http   *http.Client
-	period time.Duration
-	ttl    time.Duration
+	name     string
+	http     *http.Client
+	period   time.Duration
+	ttl      time.Duration
+	locateFn func(ctx context.Context) (lat, lon, acc float64, err error)
 }
 
 type APIResult struct {
@@ -39,13 +41,18 @@ type APIResult struct {
 	MetroCode   int     `json:"metro_code"`
 }
 
-func NewGeolocationGeoIPProvider(http *http.Client) *GeolocationGeoIPProvider {
-	return &GeolocationGeoIPProvider{
-		name:   "geoip",
+func NewGeolocationGeoIPProvider(http *http.Client) (*GeolocationGeoIPProvider, error) {
+	if http == nil {
+		return nil, fmt.Errorf("http client is required")
+	}
+	provider := &GeolocationGeoIPProvider{
+		name:   name,
 		http:   http,
 		period: 30 * time.Minute,
 		ttl:    60 * time.Minute,
 	}
+	provider.locateFn = provider.locate
+	return provider, nil
 }
 
 func (p *GeolocationGeoIPProvider) Name() string {
@@ -59,17 +66,20 @@ func (p *GeolocationGeoIPProvider) LookupStream(ctx context.Context, key string)
 	go func() {
 		defer close(out)
 		state := geobus.GeolocationState{}
+		firstRun := true
 
 		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
+			if !firstRun {
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(p.period):
+				}
 			}
+			firstRun = false
 
-			lat, lon, acc, err := p.locate(ctx)
+			lat, lon, acc, err := p.locateFn(ctx)
 			if err != nil {
-				time.Sleep(p.period)
 				continue
 			}
 			coord := geobus.Coordinate{Lat: lat, Lon: lon, Acc: acc}
@@ -84,12 +94,6 @@ func (p *GeolocationGeoIPProvider) LookupStream(ctx context.Context, key string)
 					return
 				case out <- r:
 				}
-			}
-
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(p.period):
 			}
 		}
 	}()
