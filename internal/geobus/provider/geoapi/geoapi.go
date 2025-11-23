@@ -21,10 +21,11 @@ const (
 )
 
 type GeolocationGeoAPIProvider struct {
-	name   string
-	http   *http.Client
-	period time.Duration
-	ttl    time.Duration
+	name     string
+	http     *http.Client
+	period   time.Duration
+	ttl      time.Duration
+	locateFn func(ctx context.Context) (lat, lon, acc float64, err error)
 }
 
 type APIResult struct {
@@ -47,12 +48,14 @@ func NewGeolocationGeoAPIProvider(http *http.Client) (*GeolocationGeoAPIProvider
 	if http == nil {
 		return nil, fmt.Errorf("http client is required")
 	}
-	return &GeolocationGeoAPIProvider{
+	provider := &GeolocationGeoAPIProvider{
 		name:   name,
 		http:   http,
 		period: 10 * time.Minute,
 		ttl:    20 * time.Minute,
-	}, nil
+	}
+	provider.locateFn = provider.locate
+	return provider, nil
 }
 
 func (p *GeolocationGeoAPIProvider) Name() string {
@@ -66,17 +69,20 @@ func (p *GeolocationGeoAPIProvider) LookupStream(ctx context.Context, key string
 	go func() {
 		defer close(out)
 		state := geobus.GeolocationState{}
+		firstRun := true
 
 		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
+			if !firstRun {
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(p.period):
+				}
 			}
+			firstRun = false
 
-			lat, lon, acc, err := p.locate(ctx)
+			lat, lon, acc, err := p.locateFn(ctx)
 			if err != nil {
-				time.Sleep(p.period)
 				continue
 			}
 			coord := geobus.Coordinate{Lat: lat, Lon: lon, Acc: acc}
@@ -91,12 +97,6 @@ func (p *GeolocationGeoAPIProvider) LookupStream(ctx context.Context, key string
 					return
 				case out <- r:
 				}
-			}
-
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(p.period):
 			}
 		}
 	}()
