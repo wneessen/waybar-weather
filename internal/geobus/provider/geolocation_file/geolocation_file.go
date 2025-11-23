@@ -123,11 +123,11 @@ func (p *GeolocationFileProvider) readFile() (lat, lon float64, err error) {
 		if len(coords) != 2 {
 			continue
 		}
-		lat, err = strconv.ParseFloat(coords[0], 64)
+		lat, err = strconv.ParseFloat(strings.TrimSpace(coords[0]), 64)
 		if err != nil {
 			continue
 		}
-		lon, err = strconv.ParseFloat(coords[1], 64)
+		lon, err = strconv.ParseFloat(strings.TrimSpace(coords[1]), 64)
 		if err != nil {
 			continue
 		}
