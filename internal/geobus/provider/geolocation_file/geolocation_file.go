@@ -15,30 +15,35 @@ import (
 	"github.com/wneessen/waybar-weather/internal/geobus"
 )
 
-// Accuracy is the default accuracy value for geolocation data. We consider geolocation file data as
-// the most accurate data available.
-const Accuracy = 5
+const (
+	name = "geolocation_file"
+)
+
+var ErrNoCoordinates = fmt.Errorf("no valid coordinates found in geolocation file")
 
 // GeolocationFileProvider reads geolocation data from a file and emits updates via a stream.
 // It periodically reads a specified file, parses its data, and updates geolocation results based on changes.
 // Each result includes details about the location, accuracy, confidence, and timestamp of the data.
 // Results are subject to a time-to-live (TTL) duration, ensuring outdated data is discarded.
 type GeolocationFileProvider struct {
-	name   string
-	path   string
-	period time.Duration
-	ttl    time.Duration
+	name     string
+	path     string
+	period   time.Duration
+	ttl      time.Duration
+	locateFn func() (lat, lon float64, err error)
 }
 
 // NewGeolocationFileProvider initializes a GeolocationFileProvider with a file path and default update
 // interval and TTL settings.
 func NewGeolocationFileProvider(path string) *GeolocationFileProvider {
-	return &GeolocationFileProvider{
-		name:   "GeolocationFile",
+	provider := &GeolocationFileProvider{
+		name:   name,
 		path:   path,
-		period: 2 * time.Minute,
-		ttl:    15 * time.Minute,
+		period: time.Minute * 2,
+		ttl:    time.Hour * 1,
 	}
+	provider.locateFn = provider.readFile
+	return provider
 }
 
 // Name returns the name of the GeolocationFileProvider instance.
@@ -53,21 +58,23 @@ func (p *GeolocationFileProvider) LookupStream(ctx context.Context, key string) 
 	go func() {
 		defer close(out)
 		state := geobus.GeolocationState{}
+		firstRun := true
 
 		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
+			if !firstRun {
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(p.period):
+				}
 			}
+			firstRun = false
 
-			lat, lon, err := p.readFile()
+			lat, lon, err := p.locateFn()
 			if err != nil {
-				// File missing or malformed — just retry later
-				time.Sleep(p.period)
 				continue
 			}
-			coord := geobus.Coordinate{Lat: lat, Lon: lon, Acc: Accuracy}
+			coord := geobus.Coordinate{Lat: lat, Lon: lon, Acc: geobus.AccuracyZip}
 
 			// Only emit if values changed or it's the first read
 			if state.HasChanged(coord) {
@@ -79,12 +86,6 @@ func (p *GeolocationFileProvider) LookupStream(ctx context.Context, key string) 
 					return
 				case out <- r:
 				}
-			}
-
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(p.period):
 			}
 		}
 	}()
@@ -112,17 +113,25 @@ func (p *GeolocationFileProvider) readFile() (lat, lon float64, err error) {
 	if err != nil {
 		return 0, 0, fmt.Errorf("failed to read geolocation file %q: %w", p.path, err)
 	}
-	coords := strings.Split(strings.TrimSpace(string(data)), ",")
-	if len(coords) != 2 {
-		return 0, 0, fmt.Errorf("geolocation file %q contains invalid coordinates", p.path)
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		coords := strings.Split(line, ",")
+		if len(coords) != 2 {
+			continue
+		}
+		lat, err = strconv.ParseFloat(coords[0], 64)
+		if err != nil {
+			continue
+		}
+		lon, err = strconv.ParseFloat(coords[1], 64)
+		if err != nil {
+			continue
+		}
+		return lat, lon, nil
 	}
-	lat, err = strconv.ParseFloat(coords[0], 64)
-	if err != nil {
-		return 0, 0, fmt.Errorf("failed to parse latitude from geolocation file %q: %w", p.path, err)
-	}
-	lon, err = strconv.ParseFloat(coords[1], 64)
-	if err != nil {
-		return 0, 0, fmt.Errorf("failed to parse longitude from geolocation file %q: %w", p.path, err)
-	}
-	return lat, lon, nil
+	return 0, 0, ErrNoCoordinates
 }
