@@ -64,7 +64,7 @@ func (c *Client) Poll(ctx context.Context) (Fix, error) {
 	dialer := &net.Dialer{}
 	conn, err := dialer.DialContext(ctx, "tcp", c.Addr)
 	if err != nil {
-		return zero, fmt.Errorf("gpspoll: dial gpsd: %w", err)
+		return zero, fmt.Errorf("failed to connect to GPSd: %w", err)
 	}
 	defer func() {
 		_ = conn.Close()
@@ -96,7 +96,7 @@ func (c *Client) Poll(ctx context.Context) (Fix, error) {
 
 		line := scanner.Bytes()
 		if err = json.Unmarshal(line, &resp); err != nil {
-			continue
+			return zero, fmt.Errorf("failed to unmarshal JSON from GPSd: %w", err)
 		}
 		if resp.Class != "TPV" {
 			continue
