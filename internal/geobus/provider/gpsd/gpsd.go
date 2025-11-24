@@ -67,7 +67,7 @@ func (p *GeolocationGPSDProvider) LookupStream(ctx context.Context, key string) 
 			if !fix.Has2DFix() {
 				continue
 			}
-			coord := geobus.Coordinate{Lat: fix.Lat, Lon: fix.Lon, Alt: fix.Alt, Acc: geobus.AccuracyZip}
+			coord := geobus.Coordinate{Lat: fix.Lat, Lon: fix.Lon, Alt: fix.Alt, Acc: fix.Acc}
 
 			// Only emit if values changed or it's the first read
 			if state.HasChanged(coord) {
