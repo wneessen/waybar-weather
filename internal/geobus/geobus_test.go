@@ -54,7 +54,7 @@ func TestCoordinate_PosHasSignificantChange(t *testing.T) {
 		changed bool
 	}{
 		{
-			name: "same point - no change",
+			name: "same point, no change",
 			coord: Coordinate{
 				Lat: 50.0,
 				Lon: 8.0,
