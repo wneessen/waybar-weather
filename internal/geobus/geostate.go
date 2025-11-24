@@ -19,7 +19,7 @@ func (s *GeolocationState) HasChanged(other Coordinate) bool {
 	if !s.last.PosHasSignificantChange(other) {
 		return false
 	}
-	return other.Lat != s.last.Lat || other.Lon != s.last.Lon || other.Alt != s.last.Alt || other.Acc != s.last.Acc
+	return other.Lat != s.last.Lat || other.Lon != s.last.Lon || other.Acc != s.last.Acc
 }
 
 // Update updates the stored geolocation state with the provided latitude, longitude, altitude, and

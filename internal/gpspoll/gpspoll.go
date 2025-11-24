@@ -30,7 +30,6 @@ type Client struct {
 type Fix struct {
 	Lat  float64
 	Lon  float64
-	Alt  float64
 	Acc  float64
 	Mode int
 }
@@ -40,7 +39,6 @@ type gpsdPollResponse struct {
 	Class string  `json:"class"`
 	Lat   float64 `json:"lat"`
 	Lon   float64 `json:"lon"`
-	Alt   float64 `json:"alt"`
 	Acc   float64
 	Mode  int     `json:"mode"`
 	Epx   float64 `json:"epx"`
@@ -105,7 +103,6 @@ func (c *Client) Poll(ctx context.Context) (Fix, error) {
 		return Fix{
 			Lat:  resp.Lat,
 			Lon:  resp.Lon,
-			Alt:  resp.Alt,
 			Acc:  horizontalAccuracyMeters(resp),
 			Mode: resp.Mode,
 		}, nil
