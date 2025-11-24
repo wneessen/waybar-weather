@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: MIT
 
-// Package gpspoll provides a minimal, goroutine-safe GPSd client that
-// performs a single POLL request to retrieve the current fix.
 package gpspoll
 
 import (
