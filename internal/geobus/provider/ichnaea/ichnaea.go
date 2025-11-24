@@ -65,8 +65,8 @@ func NewGeolocationICHNAEAProvider(http *http.Client) (*GeolocationICHNAEAProvid
 		name:   name,
 		http:   http,
 		wlan:   wlan,
-		period: 5 * time.Minute,
-		ttl:    10 * time.Minute,
+		period: time.Minute * 5,
+		ttl:    time.Hour * 1,
 	}
 	provider.locateFn = provider.locate
 	return provider, nil

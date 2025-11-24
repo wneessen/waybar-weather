@@ -39,8 +39,8 @@ func NewGeolocationFileProvider(path string) *GeolocationFileProvider {
 	provider := &GeolocationFileProvider{
 		name:   name,
 		path:   path,
-		period: time.Minute * 2,
-		ttl:    time.Hour * 1,
+		period: time.Minute * 5,
+		ttl:    time.Hour * 24,
 	}
 	provider.locateFn = provider.readFile
 	return provider

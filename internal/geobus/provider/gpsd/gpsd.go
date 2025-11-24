@@ -29,8 +29,8 @@ type GeolocationGPSDProvider struct {
 func NewGeolocationGPSDProvider() *GeolocationGPSDProvider {
 	provider := &GeolocationGPSDProvider{
 		name:   name,
-		period: time.Second * 3,
-		ttl:    time.Minute * 2,
+		period: time.Second * 30,
+		ttl:    time.Hour * 2,
 		client: gpspoll.New(host, port),
 	}
 	provider.locateFn = provider.client.Poll

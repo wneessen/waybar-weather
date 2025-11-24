@@ -51,8 +51,8 @@ func NewGeolocationGeoAPIProvider(http *http.Client) (*GeolocationGeoAPIProvider
 	provider := &GeolocationGeoAPIProvider{
 		name:   name,
 		http:   http,
-		period: 10 * time.Minute,
-		ttl:    20 * time.Minute,
+		period: time.Minute * 10,
+		ttl:    time.Hour * 2,
 	}
 	provider.locateFn = provider.locate
 	return provider, nil
