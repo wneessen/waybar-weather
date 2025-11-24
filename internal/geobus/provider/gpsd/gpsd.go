@@ -6,32 +6,36 @@ package gpsd
 
 import (
 	"context"
-	"fmt"
-	"net"
 	"time"
 
 	"github.com/wneessen/waybar-weather/internal/geobus"
-
-	"github.com/stratoberry/go-gpsd"
+	"github.com/wneessen/waybar-weather/internal/gpspoll"
 )
 
 const (
 	host = "localhost"
 	port = "2947"
+	name = "gpsd"
 )
 
 type GeolocationGPSDProvider struct {
-	name   string
-	period time.Duration
-	ttl    time.Duration
+	name     string
+	period   time.Duration
+	ttl      time.Duration
+	client   *gpspoll.Client
+	locateFn func(ctx context.Context) (gpspoll.Fix, error)
 }
 
 func NewGeolocationGPSDProvider() *GeolocationGPSDProvider {
-	return &GeolocationGPSDProvider{
-		name:   "gpsd",
-		period: time.Second * 30,
+	provider := &GeolocationGPSDProvider{
+		name:   name,
+		period: time.Second * 3,
 		ttl:    time.Minute * 2,
+		client: gpspoll.New(host, port),
 	}
+	provider.locateFn = provider.client.Poll
+
+	return provider
 }
 
 func (p *GeolocationGPSDProvider) Name() string {
@@ -44,85 +48,40 @@ func (p *GeolocationGPSDProvider) LookupStream(ctx context.Context, key string) 
 	go func() {
 		defer close(out)
 		state := geobus.GeolocationState{}
+		firstRun := true
 
 		for {
-			// Exit if the caller is done
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
-
-			// Connect to gpsd
-			addr := net.JoinHostPort(host, port)
-			session, err := gpsd.Dial(addr)
-			if err != nil {
-				// gpsd unavailable — log and retry after a delay
-				// (Replace with your logger if you have one.)
-				fmt.Printf("GeolocationGPSD: failed to connect to gpsd at %q: %s\n", addr, err)
-
+			if !firstRun {
 				select {
 				case <-ctx.Done():
 					return
 				case <-time.After(p.period):
-					continue
 				}
 			}
+			firstRun = false
 
-			// Install TPV filter: this gets called for every TPV report
-			session.AddFilter("TPV", func(r interface{}) {
-				tpv, ok := r.(*gpsd.TPVReport)
-				if !ok {
-					return
-				}
+			fix, err := p.locateFn(ctx)
+			if err != nil {
+				continue
+			}
+			if !fix.Has2DFix() {
+				continue
+			}
+			coord := geobus.Coordinate{Lat: fix.Lat, Lon: fix.Lon, Alt: fix.Alt, Acc: fix.Acc}
 
-				// Need at least 2D fix
-				if tpv.Mode < gpsd.Mode2D {
-					return
-				}
-
-				lat, lon, alt, acc := geobus.Truncate(tpv.Lat, geobus.TruncPrecision),
-					geobus.Truncate(tpv.Lon, geobus.TruncPrecision),
-					geobus.Truncate(tpv.Alt, geobus.TruncPrecision),
-					geobus.Truncate((tpv.Lat+tpv.Lon)/2, geobus.TruncPrecision)
-				coord := geobus.Coordinate{Lat: lat, Lon: lon, Alt: alt, Acc: acc}
-
-				// Only emit if values changed or it's the first fix
-				if !state.HasChanged(coord) {
-					return
-				}
+			// Only emit if values changed or it's the first read
+			if state.HasChanged(coord) {
 				state.Update(coord)
-				res := p.createResult(key, coord)
+				r := p.createResult(key, coord)
 
 				select {
 				case <-ctx.Done():
-					// Caller is done; just stop sending.
 					return
-				case out <- res:
+				case out <- r:
 				}
-			})
-
-			// Start watching the stream. Watch() returns a channel that closes
-			// when the watch ends (e.g. connection lost).
-			done := session.Watch()
-
-			select {
-			case <-ctx.Done():
-				// Context canceled; just return. The process exiting will
-				// tear down the gpsd connection; go-gpsd itself has no Close().
-				return
-			case <-done:
-				// gpsd connection ended; reconnect after a short delay
-			}
-
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(p.period):
 			}
 		}
 	}()
-
 	return out
 }
 
