@@ -8,7 +8,7 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0
 	github.com/hectormalot/omgo v0.1.3
 	github.com/kkyr/fig v0.5.0
-	github.com/mdlayher/wifi v0.7.0
+	github.com/mdlayher/wifi v0.7.1
 	github.com/nathan-osman/go-sunrise v1.1.0
 	github.com/stratoberry/go-gpsd v1.3.0
 	github.com/vorlif/humanize v1.0.0
