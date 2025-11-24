@@ -198,7 +198,7 @@ func (p *GeolocationICHNAEAProvider) locate(ctx context.Context) (lat, lon, acc 
 
 	type request struct {
 		ConsiderIP   bool              `json:"considerIp"`
-		Accesspoints []WirelessNetwork `json:"wifiAccessPoints"`
+		Accesspoints []WirelessNetwork `json:"wifiAccessPoints,omitempty"`
 	}
 	req := request{
 		ConsiderIP:   true,
