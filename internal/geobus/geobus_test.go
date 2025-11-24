@@ -5,8 +5,11 @@
 package geobus
 
 import (
+	"log/slog"
 	"testing"
 	"time"
+
+	"github.com/wneessen/waybar-weather/internal/logger"
 )
 
 func TestGeolocationState_HasChanged(t *testing.T) {
@@ -195,5 +198,24 @@ func TestResult_IsExpired(t *testing.T) {
 	result = Result{At: time.Now().Add(-time.Hour), TTL: time.Hour * 2}
 	if result.IsExpired() {
 		t.Error("expected result to not be expired")
+	}
+}
+
+func TestNew(t *testing.T) {
+	bus := New(logger.New(slog.LevelInfo))
+	if bus == nil {
+		t.Fatal("expected bus to be non-nil")
+	}
+	if bus.logger == nil {
+		t.Fatal("expected logger to be non-nil")
+	}
+	if bus.best == nil {
+		t.Fatal("expected best provider to be non-nil")
+	}
+	if bus.subscribers == nil {
+		t.Fatal("expected subscribers to be non-nil")
+	}
+	if bus.globalSubs == nil {
+		t.Fatal("expected global subscribers to be non-nil")
 	}
 }
