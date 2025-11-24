@@ -6,6 +6,7 @@ package ichnaea
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	stdhttp "net/http"
@@ -13,6 +14,7 @@ import (
 	"strings"
 	"testing"
 	"testing/synctest"
+	"time"
 
 	"github.com/mdlayher/wifi"
 
@@ -134,6 +136,121 @@ func TestGeolocationICHNAEAProvider_locate(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected locate to fail")
 		}
+	})
+}
+
+func TestGeolocationICHNAEAProvider_LookupStream(t *testing.T) {
+	t.Run("lookup stream succeeds", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+
+			rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+				data, err := os.Open(testFile)
+				if err != nil {
+					t.Fatalf("failed to open JSON response file: %s", err)
+				}
+
+				return &stdhttp.Response{
+					StatusCode: 200,
+					Body:       data,
+					Header:     make(stdhttp.Header),
+				}, nil
+			}
+			client := http.New(logger.New(slog.LevelInfo))
+			client.Transport = testhelper.MockRoundTripper{Fn: rtFn}
+			provider, err := NewGeolocationICHNAEAProvider(client)
+			if err != nil {
+				t.Fatalf("failed to create GeoIP provider: %s", err)
+			}
+			provider.ttl = time.Millisecond * 10
+			provider.period = time.Millisecond * 10
+
+			out := provider.LookupStream(ctx, "test")
+			if out == nil {
+				t.Fatal("expected stream to be non-nil")
+			}
+
+			var results []geobus.Result
+			for len(results) < 1 {
+				select {
+				case r := <-out:
+					results = append(results, r)
+					cancel()
+				default:
+					// Block until all goroutines are durably blocked, then advance
+					// fake time to the next wakeup (e.g. time.After/ Sleep).
+					synctest.Wait()
+				}
+			}
+
+			synctest.Wait()
+			if len(results) != 1 {
+				t.Fatalf("expected at least one result, got %d", len(results))
+			}
+			result := results[0]
+			if result.Key != "test" {
+				t.Errorf("expected key to be %s, got %s", "test", result.Key)
+			}
+			if result.Lat != testLat {
+				t.Errorf("expected latitude to be %f, got %f", testLat, result.Lat)
+			}
+			if result.Lon != testLon {
+				t.Errorf("expected longitude to be %f, got %f", testLon, result.Lon)
+			}
+			wantAcc := 2000.0
+			if result.AccuracyMeters != wantAcc {
+				t.Errorf("expected accuracy to be %f, got %f", wantAcc, result.AccuracyMeters)
+			}
+			if result.Source != provider.Name() {
+				t.Errorf("expected source to be %s, got %s", provider.Name(), result.Source)
+			}
+		})
+	})
+	t.Run("lookup stream fails during lookup", func(t *testing.T) {
+		runCount := 0
+		synctest.Test(t, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+
+			provider, err := NewGeolocationICHNAEAProvider(http.New(logger.New(slog.LevelInfo)))
+			if err != nil {
+				t.Fatalf("failed to create GeoIP provider: %s", err)
+			}
+			provider.period = time.Millisecond * 10
+			provider.locateFn = func(ctx context.Context) (float64, float64, float64, error) {
+				if runCount == 0 {
+					runCount++
+					return 0, 0, 0, errors.New("intentionally failing")
+				}
+				return 1.0, 2.0, 3.0, nil
+			}
+
+			out := provider.LookupStream(ctx, "test")
+			if out == nil {
+				t.Fatal("expected stream to be non-nil")
+			}
+
+			var result geobus.Result
+			select {
+			case r := <-out:
+				result = r
+				cancel()
+			case <-ctx.Done():
+				t.Fatalf("context done before result: %v", ctx.Err())
+			}
+			synctest.Wait()
+
+			if result.Lat != 1.0 {
+				t.Errorf("expected latitude to be %f, got %f", 1.0, result.Lat)
+			}
+			if result.Lon != 2.0 {
+				t.Errorf("expected longitude to be %f, got %f", 2.0, result.Lon)
+			}
+			if result.AccuracyMeters != 3.0 {
+				t.Errorf("expected accuracy to be %f, got %f", 3.0, result.AccuracyMeters)
+			}
+		})
 	})
 }
 
