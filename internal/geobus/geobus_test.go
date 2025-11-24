@@ -4,7 +4,10 @@
 
 package geobus
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestGeolocationState_HasChanged(t *testing.T) {
 	t.Run("empty state always returns true", func(t *testing.T) {
@@ -133,5 +136,64 @@ func TestCoordinate_PosHasSignificantChange(t *testing.T) {
 				t.Error("expected change to be", tc.changed, "but it wasn't")
 			}
 		})
+	}
+}
+
+func TestResult_BetterThan(t *testing.T) {
+	tests := []struct {
+		name   string
+		new    Result
+		prev   Result
+		better bool
+	}{
+		{
+			name:   "same result, no difference",
+			new:    Result{Key: "test", Lat: 1, Lon: 1, AccuracyMeters: 1},
+			prev:   Result{Key: "test", Lat: 1, Lon: 1, AccuracyMeters: 1},
+			better: false,
+		},
+		{
+			name:   "previous result had no key",
+			new:    Result{Key: "test", Lat: 1, Lon: 1, AccuracyMeters: 1},
+			prev:   Result{Lat: 1, Lon: 1, AccuracyMeters: 1},
+			better: true,
+		},
+		{
+			name:   "previous result is newer",
+			new:    Result{Key: "test", At: time.Date(2024, time.January, 1, 16, 56, 0, 0, time.UTC)},
+			prev:   Result{Key: "test", At: time.Date(2025, time.January, 1, 16, 56, 0, 0, time.UTC)},
+			better: false,
+		},
+		{
+			name:   "new result is more accurate",
+			new:    Result{Key: "test", AccuracyMeters: AccuracyZip},
+			prev:   Result{Key: "test", AccuracyMeters: AccuracyCity},
+			better: true,
+		},
+		{
+			name:   "previsou result is more accurate",
+			new:    Result{Key: "test", AccuracyMeters: AccuracyCity},
+			prev:   Result{Key: "test", AccuracyMeters: AccuracyZip},
+			better: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.new.BetterThan(tc.prev) != tc.better {
+				t.Error("expected new to be", tc.better, "but it wasn't")
+			}
+		})
+	}
+}
+
+func TestResult_IsExpired(t *testing.T) {
+	result := Result{At: time.Now().Add(-time.Hour), TTL: time.Hour}
+	if !result.IsExpired() {
+		t.Error("expected result to be expired")
+	}
+	result = Result{At: time.Now().Add(-time.Hour), TTL: time.Hour * 2}
+	if result.IsExpired() {
+		t.Error("expected result to not be expired")
 	}
 }
