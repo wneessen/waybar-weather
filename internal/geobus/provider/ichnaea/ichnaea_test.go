@@ -140,6 +140,7 @@ func TestGeolocationICHNAEAProvider_locate(t *testing.T) {
 }
 
 func TestGeolocationICHNAEAProvider_LookupStream(t *testing.T) {
+	testRequiresWiFi(t)
 	t.Run("lookup stream succeeds", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(t.Context())
