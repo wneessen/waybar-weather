@@ -411,7 +411,8 @@ func (s *Service) processLocationUpdates(ctx context.Context, sub <-chan geobus.
 				return
 			}
 			s.logger.Debug("received geolocation update",
-				slog.Float64("lat", r.Lat), slog.Float64("lon", r.Lon), slog.String("source", r.Source))
+				slog.Float64("lat", r.Lat), slog.Float64("lon", r.Lon),
+				slog.Float64("accuracy", r.AccuracyMeters), slog.String("source", r.Source))
 			if err := s.updateLocation(ctx, r.Lat, r.Lon); err != nil {
 				s.logger.Error("failed to apply geo update", logger.Err(err), slog.String("source", r.Source))
 			}
