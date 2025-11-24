@@ -212,7 +212,13 @@ func handleMockGPSDConnection(ctx context.Context, conn net.Conn, t *testing.T, 
 
 	// Return some mock data.
 	_, err := fmt.Fprintln(conn, `{"class":"VERSION","release":"gpsd 3.26","proto_major":3,"proto_minor":14}`)
+	if err != nil {
+		t.Logf("failed to write mock gpsd version: %s", err)
+	}
 	_, err = fmt.Fprintln(conn, `{"class":"DEVICES","devices":[{"class":"DEVICE","path":"/dev/ttyACM0","driver":"MockGPS","activated":"2025-11-24T10:40:00.000Z","native":0}]}`)
+	if err != nil {
+		t.Logf("failed to write mock gpsd devices: %s", err)
+	}
 	_, err = fmt.Fprintln(conn, tpv)
 	if err != nil {
 		t.Logf("failed to write mock gpsd response: %s", err)
