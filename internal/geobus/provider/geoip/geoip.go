@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	APIEndpoint   = "https://reallyfreegeoip.org/json/"
-	LookupTimeout = time.Second * 10
+	apiEndpoint   = "https://reallyfreegeoip.org/json/"
+	lookupTimeout = time.Second * 10
 	name          = "geoip"
 )
 
@@ -114,11 +114,11 @@ func (p *GeolocationGeoIPProvider) createResult(key string, coord geobus.Coordin
 }
 
 func (p *GeolocationGeoIPProvider) locate(ctx context.Context) (lat, lon, acc float64, err error) {
-	ctxHttp, cancelHttp := context.WithTimeout(ctx, LookupTimeout)
+	ctxHttp, cancelHttp := context.WithTimeout(ctx, lookupTimeout)
 	defer cancelHttp()
 
 	result := new(APIResult)
-	if _, err = p.http.Get(ctxHttp, APIEndpoint, result, nil, nil); err != nil {
+	if _, err = p.http.Get(ctxHttp, apiEndpoint, result, nil, nil); err != nil {
 		return 0, 0, 0, fmt.Errorf("failed to get geolocation data from API: %w", err)
 	}
 

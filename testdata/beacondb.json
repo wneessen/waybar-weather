@@ -1,0 +1,17 @@
+{
+  "raw": [
+    {
+      "omit": true,
+      "timestamp": 1778112000000,
+      "wifiAccessPoint": {
+        "macAddress": "12:34:56:78:90:ab"
+      }
+    }
+  ],
+  "location": {
+    "lat": 40.7185,
+    "lng": -74.0025
+  },
+  "accuracy": 2000,
+  "fallback": "ipf"
+}

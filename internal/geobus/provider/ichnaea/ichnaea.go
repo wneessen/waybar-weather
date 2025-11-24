@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/wneessen/waybar-weather/internal/geobus"
@@ -19,16 +20,22 @@ import (
 )
 
 const (
-	APIEndpoint   = "https://api.beacondb.net/v1/geolocate"
-	LookupTimeout = time.Second * 5
+	apiEndpoint   = "https://api.beacondb.net/v1/geolocate"
+	lookupTimeout = time.Second * 5
+	wifiScanTime  = time.Minute * 2
+	name          = "ichnaea"
 )
 
 type GeolocationICHNAEAProvider struct {
-	name   string
-	http   *http.Client
-	wlan   *wifi.Client
-	period time.Duration
-	ttl    time.Duration
+	name     string
+	http     *http.Client
+	wlan     *wifi.Client
+	period   time.Duration
+	ttl      time.Duration
+	locateFn func(ctx context.Context) (lat, lon, acc float64, err error)
+
+	apLock sync.RWMutex
+	aps    []WirelessNetwork
 }
 
 type APIResult struct {
@@ -46,17 +53,23 @@ type WirelessNetwork struct {
 }
 
 func NewGeolocationICHNAEAProvider(http *http.Client) (*GeolocationICHNAEAProvider, error) {
+	if http == nil {
+		return nil, fmt.Errorf("http client is required")
+	}
 	wlan, err := wifi.New()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create wifi client: %w", err)
 	}
-	return &GeolocationICHNAEAProvider{
-		name:   "ichnaea",
+
+	provider := &GeolocationICHNAEAProvider{
+		name:   name,
 		http:   http,
 		wlan:   wlan,
 		period: 5 * time.Minute,
 		ttl:    10 * time.Minute,
-	}, nil
+	}
+	provider.locateFn = provider.locate
+	return provider, nil
 }
 
 func (p *GeolocationICHNAEAProvider) Name() string {
@@ -67,20 +80,24 @@ func (p *GeolocationICHNAEAProvider) Name() string {
 // or context ends.
 func (p *GeolocationICHNAEAProvider) LookupStream(ctx context.Context, key string) <-chan geobus.Result {
 	out := make(chan geobus.Result)
+	go p.monitorWifiAccessPoints(ctx)
 	go func() {
 		defer close(out)
 		state := geobus.GeolocationState{}
+		firstRun := true
 
 		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
+			if !firstRun {
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(p.period):
+				}
 			}
+			firstRun = false
 
-			lat, lon, acc, err := p.locate(ctx)
+			lat, lon, acc, err := p.locateFn(ctx)
 			if err != nil {
-				time.Sleep(p.period)
 				continue
 			}
 			coord := geobus.Coordinate{Lat: lat, Lon: lon, Acc: acc}
@@ -95,12 +112,6 @@ func (p *GeolocationICHNAEAProvider) LookupStream(ctx context.Context, key strin
 					return
 				case out <- r:
 				}
-			}
-
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(p.period):
 			}
 		}
 	}()
@@ -120,7 +131,29 @@ func (p *GeolocationICHNAEAProvider) createResult(key string, coord geobus.Coord
 	}
 }
 
-func (p *GeolocationICHNAEAProvider) wifiList() ([]WirelessNetwork, error) {
+func (p *GeolocationICHNAEAProvider) monitorWifiAccessPoints(ctx context.Context) {
+	firstRun := true
+	for {
+		if !firstRun {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(wifiScanTime):
+			}
+		}
+		firstRun = false
+
+		list, err := p.wifiAccessPoints()
+		if err != nil {
+			continue
+		}
+		p.apLock.Lock()
+		p.aps = list
+		p.apLock.Unlock()
+	}
+}
+
+func (p *GeolocationICHNAEAProvider) wifiAccessPoints() ([]WirelessNetwork, error) {
 	var checkIfaces []*wifi.Interface
 	var list []WirelessNetwork
 
@@ -159,17 +192,13 @@ func (p *GeolocationICHNAEAProvider) wifiList() ([]WirelessNetwork, error) {
 }
 
 func (p *GeolocationICHNAEAProvider) locate(ctx context.Context) (lat, lon, acc float64, err error) {
-	wifiList, err := p.wifiList()
-	if err != nil {
-		return 0, 0, 0, fmt.Errorf("failed to retrieve wifi list: %w", err)
-	}
-	if len(wifiList) == 0 {
-		return 0, 0, 0, nil
-	}
+	p.apLock.RLock()
+	wifiList := p.aps
+	p.apLock.RUnlock()
 
 	type request struct {
 		ConsiderIP   bool              `json:"considerIp"`
-		Accesspoints []WirelessNetwork `json:"wifiAccessPoints"`
+		Accesspoints []WirelessNetwork `json:"wifiAccessPoints,omitempty"`
 	}
 	req := request{
 		ConsiderIP:   true,
@@ -180,11 +209,11 @@ func (p *GeolocationICHNAEAProvider) locate(ctx context.Context) (lat, lon, acc 
 		return 0, 0, 0, fmt.Errorf("failed to encode wifi list to JSON: %w", err)
 	}
 
-	ctxHttp, cancelHttp := context.WithTimeout(ctx, LookupTimeout)
+	ctxHttp, cancelHttp := context.WithTimeout(ctx, lookupTimeout)
 	defer cancelHttp()
 	result := new(APIResult)
-	if _, err = p.http.Post(ctxHttp, APIEndpoint, result, bodyBuffer,
-		map[string]string{"Content-Provider": "application/json"}); err != nil {
+	if _, err = p.http.Post(ctxHttp, apiEndpoint, result, bodyBuffer,
+		map[string]string{"Content-Type": "application/json"}); err != nil {
 		return 0, 0, 0, fmt.Errorf("failed to get geolocation data from API: %w", err)
 	}
 
