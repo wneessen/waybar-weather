@@ -31,7 +31,7 @@ func NewGeolocationGPSDProvider() *GeolocationGPSDProvider {
 		name:   name,
 		period: time.Second * 3,
 		ttl:    time.Minute * 2,
-		client: gpspoll.NewClient(host, port),
+		client: gpspoll.New(host, port),
 	}
 	provider.locateFn = provider.client.Poll
 

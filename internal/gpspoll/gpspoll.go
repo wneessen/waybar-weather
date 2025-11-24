@@ -49,8 +49,8 @@ type gpsdPollResponse struct {
 	Epv   float64 `json:"epv"`
 }
 
-// NewClient constructs a new Client for the given host and port.
-func NewClient(host, port string) *Client {
+// New constructs a new Client for the given host and port.
+func New(host, port string) *Client {
 	return &Client{
 		Addr: net.JoinHostPort(host, port),
 	}
