@@ -58,17 +58,17 @@ type Result struct {
 // BetterThan compares two Result objects to determine if the current instance is better than the provided one.
 // Returns true if the current Result is more accurate, more confident, or more recent than the other.
 // Considers accuracy, confidence level, and timestamp for the comparison with small tolerances for precision.
-func (r Result) BetterThan(other Result) bool {
-	if other.Key == "" {
+func (r Result) BetterThan(prev Result) bool {
+	if prev.Key == "" {
 		return true
 	}
-	if r.At.Before(other.At) {
+	if r.At.Before(prev.At) {
 		return false
 	}
-	if r.AccuracyMeters < other.AccuracyMeters-accuracyEpsilon {
+	if r.AccuracyMeters < prev.AccuracyMeters-accuracyEpsilon {
 		return true
 	}
-	if other.AccuracyMeters < r.AccuracyMeters-accuracyEpsilon {
+	if prev.AccuracyMeters < r.AccuracyMeters-accuracyEpsilon {
 		return false
 	}
 	return false
