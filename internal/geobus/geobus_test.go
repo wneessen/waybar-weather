@@ -6,51 +6,25 @@ package geobus
 
 import (
 	"context"
-	"log/slog"
+	"fmt"
+	"strconv"
 	"testing"
 	"time"
-
-	"github.com/wneessen/waybar-weather/internal/logger"
 )
 
-func TestGeolocationState_HasChanged(t *testing.T) {
-	t.Run("empty state always returns true", func(t *testing.T) {
-		state := GeolocationState{}
-		if !state.HasChanged(Coordinate{Lat: 1, Lon: 1, Acc: AccuracyZip}) {
-			t.Error("expected state to have changed")
-		}
-	})
-	t.Run("same coordinate return false", func(t *testing.T) {
-		state := GeolocationState{}
-		state.Update(Coordinate{Lat: 1, Lon: 1, Acc: AccuracyZip})
-		if state.HasChanged(Coordinate{Lat: 1, Lon: 1, Acc: AccuracyZip}) {
-			t.Error("expected state to not have changed")
-		}
-	})
-	t.Run("different coordinate return true", func(t *testing.T) {
-		tests := []struct {
-			name    string
-			lat     float64
-			lon     float64
-			acc     float64
-			changed bool
-		}{
-			{"lat changes", 2, 1, AccuracyZip, true},
-			{"lon changes", 1, 2, AccuracyZip, true},
-			// an accuracy change is not considered a significant positional change
-			{"acc changes", 1, 1, AccuracyCity, false},
-		}
+const (
+	subID = "test"
+)
 
-		for _, tc := range tests {
-			t.Run(tc.name, func(t *testing.T) {
-				state := GeolocationState{}
-				state.Update(Coordinate{Lat: 1, Lon: 1, Acc: AccuracyZip})
-				if state.HasChanged(Coordinate{Lat: tc.lat, Lon: tc.lon, Acc: tc.acc}) != tc.changed {
-					t.Error("expected state change to be", tc.changed, "but it wasn't")
-				}
-			})
-		}
-	})
+func TestGeolocationState_Update(t *testing.T) {
+	state := GeolocationState{}
+	state.Update(Coordinate{Lat: 50.0, Lon: 8.0})
+	if state.last.Lat != 50.0 || state.last.Lon != 8.0 {
+		t.Error("expected last coordinate to be updated")
+	}
+	if !state.haveLast {
+		t.Error("expected haveLast to be true")
+	}
 }
 
 func TestCoordinate_PosHasSignificantChange(t *testing.T) {
@@ -132,6 +106,20 @@ func TestCoordinate_PosHasSignificantChange(t *testing.T) {
 			},
 			changed: true,
 		},
+		{
+			name: "same place but significantly better accuracy",
+			coord: Coordinate{
+				Lat: 52.52,
+				Lon: 13.405,
+				Acc: AccuracyCity,
+			},
+			other: Coordinate{
+				Lat: 52.52,
+				Lon: 13.405,
+				Acc: AccuracyCountry,
+			},
+			changed: true,
+		},
 	}
 
 	for _, tc := range tests {
@@ -175,7 +163,7 @@ func TestResult_BetterThan(t *testing.T) {
 			better: true,
 		},
 		{
-			name:   "previsou result is more accurate",
+			name:   "previous result is more accurate",
 			new:    Result{Key: "test", AccuracyMeters: AccuracyCity},
 			prev:   Result{Key: "test", AccuracyMeters: AccuracyZip},
 			better: false,
@@ -203,12 +191,9 @@ func TestResult_IsExpired(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	bus := New(logger.New(slog.LevelInfo))
+	bus := New()
 	if bus == nil {
 		t.Fatal("expected bus to be non-nil")
-	}
-	if bus.logger == nil {
-		t.Fatal("expected logger to be non-nil")
 	}
 	if bus.best == nil {
 		t.Fatal("expected best provider to be non-nil")
@@ -216,118 +201,151 @@ func TestNew(t *testing.T) {
 	if bus.subscribers == nil {
 		t.Fatal("expected subscribers to be non-nil")
 	}
-	if bus.globalSubs == nil {
-		t.Fatal("expected global subscribers to be non-nil")
-	}
 }
 
-func TestGeoBus_NewOrchestrator(t *testing.T) {
-	bus := New(logger.New(slog.LevelInfo))
-	if bus == nil {
-		t.Fatal("expected bus to be non-nil")
-	}
-	orch := bus.NewOrchestrator([]Provider{&mockProvider{Results: []Result{{Key: "test"}}}})
-	if orch == nil {
-		t.Fatal("expected orchestrator to be non-nil")
-	}
-}
+func TestGeoBus_Publish(t *testing.T) {
+	t.Run("a siggnificant change publishes a result", func(t *testing.T) {
+		bus := New()
+		ch, unsub := bus.Subscribe(subID, 1)
+		defer unsub()
 
-/*
-func TestGeoBus_Subscribe(t *testing.T) {
-	id := "waybar-weather"
-	bus := New(logger.New(slog.LevelInfo))
-	if bus == nil {
-		t.Fatal("expected bus to be non-nil")
-	}
+		bus.Publish(Result{
+			Key:            subID,
+			Lat:            50.0,
+			Lon:            8.0,
+			AccuracyMeters: 20,
+			At:             time.Now(),
+			Source:         "mock-provider",
+		})
+		<-ch
+		bus.Publish(Result{
+			Key:            subID,
+			Lat:            55.0001,
+			Lon:            9.0001,
+			AccuracyMeters: 20,
+			At:             time.Now(),
+			Source:         "mock-provider",
+		})
+		select {
+		case <-ch:
+			t.Fatalf("did not expect update for insignificant movement")
+		case <-time.After(50 * time.Millisecond):
+		}
+	})
+	t.Run("do not publish results without accuracy", func(t *testing.T) {
+		bus := New()
+		ch, unsub := bus.Subscribe(subID, 1)
+		defer unsub()
 
-	provider := &mockProvider{
-		ProviderName: "test-provider",
-		Results: []Result{
-			{
-				Key:    id,
-				Lat:    50.0,
-				Lon:    8.0,
-				Alt:    100,
-				Source: "mock",
-				At:     time.Now(),
-			},
-			{
-				Key:    id,
-				Lat:    51.0,
-				Lon:    9.0,
-				Alt:    100,
-				Source: "mock",
-				At:     time.Now(),
-			},
-		},
-		Delay: time.Millisecond * 500,
-	}
-	orch := bus.NewOrchestrator([]Provider{provider})
+		ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
+		defer cancel()
 
-		t.Run("subscribe to global updates", func(t *testing.T) {
-			synctest.Test(t, func(t *testing.T) {
-				ctx, cancel := context.WithCancel(t.Context())
-				defer cancel()
-				var results []Result
-
-				sub, unsub := bus.Subscribe(id, 32)
-				defer unsub()
-				go orch.Track(ctx, id)
-
-				go func() {
-					for len(results) <= 2 {
-						select {
-						case <-ctx.Done():
-							cancel()
-							return
-						case r, ok := <-sub:
-							t.Logf("received geolocation update from %+v", r)
-							if !ok {
-								return
-							}
-							results = append(results, r)
-						}
-					}
-				}()
-				synctest.Wait()
-			})
+		bus.Publish(Result{
+			Key:            subID,
+			Lat:            50.0,
+			Lon:            8.0,
+			AccuracyMeters: 0,
+			At:             time.Now(),
+			Source:         "mock-provider",
+			TTL:            time.Millisecond * 500,
 		})
 
-}
-*/
-
-// MockProvider is a test double for the Provider interface.
-type mockProvider struct {
-	ProviderName string
-	Results      []Result
-	Delay        time.Duration
-}
-
-// Name returns the configured provider name.
-func (m *mockProvider) Name() string {
-	return "mock-provider"
-}
-
-// LookupStream returns a channel that streams the configured Results.
-// The channel is closed after all results are sent or when ctx is cancelled.
-func (m *mockProvider) LookupStream(ctx context.Context, key string) <-chan Result {
-	ch := make(chan Result)
-
-	go func() {
-		defer close(ch)
-
-		for _, res := range m.Results {
+		for {
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(m.Delay):
-				ch <- res
+			case <-ch:
+				t.Fatalf("did not expect update for insignificant movement")
 			}
 		}
-	}()
+	})
+	t.Run("no At time sets it to 'now'", func(t *testing.T) {
+		bus := New()
+		ch, unsub := bus.Subscribe(subID, 1)
+		defer unsub()
 
-	return ch
+		ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
+		defer cancel()
+
+		bus.Publish(Result{
+			Key:            subID,
+			Lat:            50.0,
+			Lon:            8.0,
+			AccuracyMeters: 1,
+			Source:         "mock-provider",
+			TTL:            time.Millisecond * 500,
+		})
+
+		var result *Result
+		for result == nil {
+			select {
+			case <-ctx.Done():
+				return
+			case r := <-ch:
+				result = &r
+			}
+		}
+		if result == nil {
+			t.Fatal("expected result to be non-nil")
+		}
+		if result.At.IsZero() {
+			t.Fatal("expected At time to be set")
+		}
+	})
 }
 
-func processLocationUpdates(ctx context.Context, ch <-chan Result, t *testing.T) {
+func TestTrackProviders(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	bus := New()
+	fp := &fakeProvider{name: "test", ch: make(chan Result, 1)}
+	TrackProviders(ctx, bus, "k", fp)
+
+	sub, unsub := bus.Subscribe(subID, 1)
+	defer unsub()
+
+	r := Result{
+		Key:            subID,
+		Lat:            1,
+		Lon:            2,
+		AccuracyMeters: 10,
+		At:             time.Now(),
+		TTL:            time.Millisecond * 500,
+	}
+	fp.ch <- r
+
+	got := <-sub
+	if got.Lat != r.Lat || got.Lon != r.Lon {
+		t.Fatalf("unexpected result: %+v", got)
+	}
+}
+
+func TestTruncate(t *testing.T) {
+	in := "123.456789"
+	for i := 5; i >= 1; i-- {
+		t.Run(fmt.Sprintf("truncate float down to precision: %d", i), func(t *testing.T) {
+			val := in[:4+i]
+			num, err := strconv.ParseFloat(val, 64)
+			if err != nil {
+				t.Fatalf("failed to parse float: %s", err)
+			}
+
+			want := Truncate(num, i)
+			if want != num {
+				t.Errorf("expected %f, got %f", num, want)
+			}
+		})
+	}
+}
+
+type fakeProvider struct {
+	name string
+	ch   chan Result
+}
+
+func (f *fakeProvider) Name() string { return f.name }
+
+func (f *fakeProvider) LookupStream(ctx context.Context, key string) <-chan Result {
+	return f.ch
 }
