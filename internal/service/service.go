@@ -41,7 +41,7 @@ import (
 
 const (
 	OutputClass  = "waybar-weather"
-	DesktopID    = "waybar-weather"
+	SubID        = "location-update"
 	cacheHitTTL  = 1 * time.Hour
 	cacheMissTTL = 10 * time.Minute
 )
@@ -53,15 +53,15 @@ type outputData struct {
 }
 
 type Service struct {
-	config       *config.Config
-	geobus       *geobus.GeoBus
-	logger       *logger.Logger
-	geocoder     geocode.Geocoder
-	omclient     omgo.Client
-	orchestrator *geobus.Orchestrator
-	scheduler    gocron.Scheduler
-	templates    *template.Templates
-	t            *spreak.Localizer
+	config   *config.Config
+	geobus   *geobus.GeoBus
+	logger   *logger.Logger
+	geocoder geocode.Geocoder
+	omclient omgo.Client
+	// orchestrator *geobus.Orchestrator
+	scheduler gocron.Scheduler
+	templates *template.Templates
+	t         *spreak.Localizer
 
 	locationLock  sync.RWMutex
 	address       geocode.Address
@@ -109,7 +109,7 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 	service := &Service{
 		config:         conf,
 		geocoder:       geocoder,
-		geobus:         geobus.New(log),
+		geobus:         geobus.New(),
 		logger:         log,
 		omclient:       omclient,
 		scheduler:      scheduler,
@@ -143,16 +143,16 @@ func (s *Service) Run(ctx context.Context) (err error) {
 		return fmt.Errorf("failed to render tooltip template: %w", err)
 	}
 
-	// Create the orchestrator
-	s.orchestrator, err = s.createOrchestrator()
+	// Select the geolocation providers and track them in the geobus
+	provider, err := s.selectProvider()
 	if err != nil {
 		return fmt.Errorf("failed to create geobus orchestrator: %w", err)
 	}
+	geobus.TrackProviders(ctx, s.geobus, SubID, provider...)
 
 	// Subscribe to geolocation updates from the geobus
-	sub, unsub := s.geobus.Subscribe(DesktopID, 32)
+	sub, unsub := s.geobus.Subscribe(SubID, 1)
 	go s.processLocationUpdates(ctx, sub)
-	go s.orchestrator.Track(ctx, DesktopID)
 
 	// Set up signal handler for SIGUSR1 to toggle alt text display
 	sigChan := make(chan os.Signal, 1)
@@ -170,7 +170,7 @@ func (s *Service) Run(ctx context.Context) (err error) {
 	return s.scheduler.Shutdown()
 }
 
-func (s *Service) createOrchestrator() (*geobus.Orchestrator, error) {
+func (s *Service) selectProvider() ([]geobus.Provider, error) {
 	httpClient := http.New(s.logger)
 	var provider []geobus.Provider
 
@@ -211,7 +211,7 @@ func (s *Service) createOrchestrator() (*geobus.Orchestrator, error) {
 			"due to missing location"))
 	}
 
-	return s.geobus.NewOrchestrator(provider), nil
+	return provider, nil
 }
 
 func (s *Service) createScheduledJob(ctx context.Context, interval time.Duration, task func(context.Context),
