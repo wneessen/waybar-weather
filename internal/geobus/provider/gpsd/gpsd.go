@@ -67,7 +67,7 @@ func (p *GeolocationGPSDProvider) LookupStream(ctx context.Context, key string) 
 			if !fix.Has2DFix() {
 				continue
 			}
-			coord := geobus.Coordinate{Lat: fix.Lat, Lon: fix.Lon, Alt: fix.Alt, Acc: fix.Acc}
+			coord := geobus.Coordinate{Lat: fix.Lat, Lon: fix.Lon, Acc: fix.Acc}
 			state.Update(coord)
 			r := p.createResult(key, coord)
 
