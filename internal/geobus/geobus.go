@@ -143,11 +143,19 @@ func (b *GeoBus) Publish(r Result) {
 	}
 
 	b.best[r.Key] = r
-	subs := b.subscribers[r.Key]
+
+	// Copy subscribers into a slice while we still hold the lock.
+	var subs []chan Result
+	if m, ok := b.subscribers[r.Key]; ok {
+		subs = make([]chan Result, 0, len(m))
+		for ch := range m {
+			subs = append(subs, ch)
+		}
+	}
 	b.mu.Unlock()
 
 	// Non-blocking broadcast; slow subscribers just drop updates.
-	for ch := range subs {
+	for _, ch := range subs {
 		select {
 		case ch <- r:
 		default:
