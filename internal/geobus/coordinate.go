@@ -11,6 +11,7 @@ import (
 const (
 	EarthRadius       = 6371000.0 // meters
 	DistanceThreshold = 2500.0    // 2.5km
+	AccuracyThreshold = 50.0
 )
 
 // Coordinate represents a geographic coordinate.
@@ -24,6 +25,11 @@ type Coordinate struct {
 // another based on the distance threshold. We are using the Haversine formula to calculate
 // great-circle distance between two points on a sphere (in our case: Earth).
 func (c Coordinate) PosHasSignificantChange(other Coordinate) bool {
+	// Higher accuracy always trumps the distance threshold.
+	if c.Acc < other.Acc && math.Abs(c.Acc-other.Acc) > AccuracyThreshold {
+		return true
+	}
+
 	dLat := (c.Lat - other.Lat) * math.Pi / 180
 	dLon := (c.Lon - other.Lon) * math.Pi / 180
 	lat1 := c.Lat * math.Pi / 180

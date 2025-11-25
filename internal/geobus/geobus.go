@@ -152,11 +152,24 @@ func (b *GeoBus) Publish(r Result) {
 	if r.At.IsZero() {
 		r.At = time.Now()
 	}
+
 	b.mu.Lock()
 	prev, have := b.best[r.Key]
-	if !have || prev.IsExpired() || r.BetterThan(prev) {
+	prevCoord := Coordinate{Lat: prev.Lat, Lon: prev.Lon, Acc: prev.AccuracyMeters}
+	newCoord := Coordinate{Lat: r.Lat, Lon: r.Lon, Acc: r.AccuracyMeters}
+
+	// Update/broadcast the result if it's better than the previous one, expired or if the coordinate has
+	// changed significantly
+	if !have || prev.IsExpired() || r.BetterThan(prev) && newCoord.PosHasSignificantChange(prevCoord) {
 		b.best[r.Key] = r
 		b.broadcastResult(r)
+	}
+
+	// Update TTL if the source has not changed
+	if have && prev.Source == r.Source {
+		updated := b.best[r.Key]
+		updated.At = r.At
+		b.best[r.Key] = updated
 	}
 	b.mu.Unlock()
 }

@@ -67,18 +67,14 @@ func (p *GeolocationGPSDProvider) LookupStream(ctx context.Context, key string) 
 			if !fix.Has2DFix() {
 				continue
 			}
-			coord := geobus.Coordinate{Lat: fix.Lat, Lon: fix.Lon, Acc: fix.Acc}
+			coord := geobus.Coordinate{Lat: fix.Lat, Lon: fix.Lon, Alt: fix.Alt, Acc: fix.Acc}
+			state.Update(coord)
+			r := p.createResult(key, coord)
 
-			// Only emit if values changed or it's the first read
-			if state.HasChanged(coord) {
-				state.Update(coord)
-				r := p.createResult(key, coord)
-
-				select {
-				case <-ctx.Done():
-					return
-				case out <- r:
-				}
+			select {
+			case <-ctx.Done():
+				return
+			case out <- r:
 			}
 		}
 	}()

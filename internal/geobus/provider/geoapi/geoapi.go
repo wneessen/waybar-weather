@@ -86,17 +86,13 @@ func (p *GeolocationGeoAPIProvider) LookupStream(ctx context.Context, key string
 				continue
 			}
 			coord := geobus.Coordinate{Lat: lat, Lon: lon, Acc: acc}
+			state.Update(coord)
+			r := p.createResult(key, coord)
 
-			// Only emit if values changed or it's the first read
-			if state.HasChanged(coord) {
-				state.Update(coord)
-				r := p.createResult(key, coord)
-
-				select {
-				case <-ctx.Done():
-					return
-				case out <- r:
-				}
+			select {
+			case <-ctx.Done():
+				return
+			case out <- r:
 			}
 		}
 	}()
