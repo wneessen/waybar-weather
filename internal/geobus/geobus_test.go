@@ -7,9 +7,12 @@ package geobus
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/wneessen/waybar-weather/internal/logger"
 )
 
 const (
@@ -191,7 +194,10 @@ func TestResult_IsExpired(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	bus := New()
+	bus, err := New(logger.New(slog.LevelInfo))
+	if err != nil {
+		t.Fatalf("failed to create bus: %s", err)
+	}
 	if bus == nil {
 		t.Fatal("expected bus to be non-nil")
 	}
@@ -205,7 +211,10 @@ func TestNew(t *testing.T) {
 
 func TestGeoBus_Publish(t *testing.T) {
 	t.Run("a siggnificant change publishes a result", func(t *testing.T) {
-		bus := New()
+		bus, err := New(logger.New(slog.LevelInfo))
+		if err != nil {
+			t.Fatalf("failed to create bus: %s", err)
+		}
 		ch, unsub := bus.Subscribe(subID, 1)
 		defer unsub()
 
@@ -233,7 +242,10 @@ func TestGeoBus_Publish(t *testing.T) {
 		}
 	})
 	t.Run("do not publish results without accuracy", func(t *testing.T) {
-		bus := New()
+		bus, err := New(logger.New(slog.LevelInfo))
+		if err != nil {
+			t.Fatalf("failed to create bus: %s", err)
+		}
 		ch, unsub := bus.Subscribe(subID, 1)
 		defer unsub()
 
@@ -260,7 +272,10 @@ func TestGeoBus_Publish(t *testing.T) {
 		}
 	})
 	t.Run("no At time sets it to 'now'", func(t *testing.T) {
-		bus := New()
+		bus, err := New(logger.New(slog.LevelInfo))
+		if err != nil {
+			t.Fatalf("failed to create bus: %s", err)
+		}
 		ch, unsub := bus.Subscribe(subID, 1)
 		defer unsub()
 
@@ -298,7 +313,10 @@ func TestTrackProviders(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
-	bus := New()
+	bus, err := New(logger.New(slog.LevelInfo))
+	if err != nil {
+		t.Fatalf("failed to create bus: %s", err)
+	}
 	fp := &fakeProvider{name: "test", ch: make(chan Result, 1)}
 	TrackProviders(ctx, bus, "k", fp)
 

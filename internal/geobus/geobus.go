@@ -6,9 +6,13 @@ package geobus
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"math"
 	"sync"
 	"time"
+
+	"github.com/wneessen/waybar-weather/internal/logger"
 )
 
 const (
@@ -31,6 +35,15 @@ type Provider interface {
 	LookupStream(ctx context.Context, key string) <-chan Result
 }
 
+// GeoBus coordinates the publishing and subscribing of geolocation
+// results between providers and consumers.
+type GeoBus struct {
+	mu          sync.RWMutex
+	best        map[string]Result
+	subscribers map[string]map[chan Result]struct{}
+	log         *logger.Logger
+}
+
 // Result represents a geolocation result with associated metadata.
 type Result struct {
 	Key            string
@@ -42,51 +55,17 @@ type Result struct {
 	TTL            time.Duration
 }
 
-// BetterThan compares two Result objects to determine if the current instance
-// is better than the provided one.
-func (r Result) BetterThan(prev Result) bool {
-	if prev.Key == "" {
-		return true
-	}
-
-	// Reject out-of-order results.
-	if r.At.Before(prev.At) {
-		return false
-	}
-
-	// More accurate?
-	if r.AccuracyMeters < prev.AccuracyMeters-accuracyEpsilon {
-		return true
-	}
-	if prev.AccuracyMeters < r.AccuracyMeters-accuracyEpsilon {
-		return false
-	}
-
-	// Same-ish accuracy; we treat them as "not better".
-	return false
-}
-
-// IsExpired checks if the Result has exceeded its time-to-live (TTL)
-// based on the current time and the timestamp.
-func (r Result) IsExpired() bool {
-	return r.TTL > 0 && time.Since(r.At) > r.TTL
-}
-
-// GeoBus coordinates the publishing and subscribing of geolocation
-// results between providers and consumers.
-type GeoBus struct {
-	mu          sync.RWMutex
-	best        map[string]Result
-	subscribers map[string]map[chan Result]struct{}
-}
-
 // New initializes and returns a new instance of GeoBus to handle
 // geolocation result coordination.
-func New() *GeoBus {
+func New(log *logger.Logger) (*GeoBus, error) {
+	if log == nil {
+		return nil, fmt.Errorf("logger is required")
+	}
 	return &GeoBus{
 		best:        make(map[string]Result),
 		subscribers: make(map[string]map[chan Result]struct{}),
-	}
+		log:         log,
+	}, nil
 }
 
 // Subscribe adds a subscriber for updates associated with the given key and
@@ -118,6 +97,7 @@ func (b *GeoBus) Subscribe(key string, size int) (<-chan Result, func()) {
 		close(ch)
 	}
 
+	b.log.Debug("subscribed to geobus updates", slog.String("key", key))
 	return ch, unsub
 }
 
@@ -153,6 +133,10 @@ func (b *GeoBus) Publish(r Result) {
 		shouldUpdate = true
 	}
 
+	b.log.Debug("received publish request", slog.Float64("latitude", r.Lat),
+		slog.Float64("longitude", r.Lon), slog.Float64("accuracy", r.AccuracyMeters),
+		slog.String("source", r.Source), slog.Bool("will_update", shouldUpdate),
+	)
 	if !shouldUpdate {
 		b.mu.Unlock()
 		return
@@ -169,6 +153,36 @@ func (b *GeoBus) Publish(r Result) {
 		default:
 		}
 	}
+}
+
+// BetterThan compares two Result objects to determine if the current instance
+// is better than the provided one.
+func (r Result) BetterThan(prev Result) bool {
+	if prev.Key == "" {
+		return true
+	}
+
+	// Reject out-of-order results.
+	if r.At.Before(prev.At) {
+		return false
+	}
+
+	// More accurate?
+	if r.AccuracyMeters < prev.AccuracyMeters-accuracyEpsilon {
+		return true
+	}
+	if prev.AccuracyMeters < r.AccuracyMeters-accuracyEpsilon {
+		return false
+	}
+
+	// Same-ish accuracy; we treat them as "not better".
+	return false
+}
+
+// IsExpired checks if the Result has exceeded its time-to-live (TTL)
+// based on the current time and the timestamp.
+func (r Result) IsExpired() bool {
+	return r.TTL > 0 && time.Since(r.At) > r.TTL
 }
 
 // Truncate truncates a float to a fixed decimal precision.

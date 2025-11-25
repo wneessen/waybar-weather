@@ -53,12 +53,11 @@ type outputData struct {
 }
 
 type Service struct {
-	config   *config.Config
-	geobus   *geobus.GeoBus
-	logger   *logger.Logger
-	geocoder geocode.Geocoder
-	omclient omgo.Client
-	// orchestrator *geobus.Orchestrator
+	config    *config.Config
+	geobus    *geobus.GeoBus
+	logger    *logger.Logger
+	geocoder  geocode.Geocoder
+	omclient  omgo.Client
 	scheduler gocron.Scheduler
 	templates *template.Templates
 	t         *spreak.Localizer
@@ -106,10 +105,15 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 		return nil, fmt.Errorf("unsupported geocoder type: %s", conf.GeoCoder.Provider)
 	}
 
+	bus, err := geobus.New(log)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create geobus: %w", err)
+	}
+
 	service := &Service{
 		config:         conf,
 		geocoder:       geocoder,
-		geobus:         geobus.New(),
+		geobus:         bus,
 		logger:         log,
 		omclient:       omclient,
 		scheduler:      scheduler,
