@@ -5,6 +5,7 @@
 package geobus
 
 import (
+	"context"
 	"log/slog"
 	"testing"
 	"time"
@@ -218,4 +219,115 @@ func TestNew(t *testing.T) {
 	if bus.globalSubs == nil {
 		t.Fatal("expected global subscribers to be non-nil")
 	}
+}
+
+func TestGeoBus_NewOrchestrator(t *testing.T) {
+	bus := New(logger.New(slog.LevelInfo))
+	if bus == nil {
+		t.Fatal("expected bus to be non-nil")
+	}
+	orch := bus.NewOrchestrator([]Provider{&mockProvider{Results: []Result{{Key: "test"}}}})
+	if orch == nil {
+		t.Fatal("expected orchestrator to be non-nil")
+	}
+}
+
+/*
+func TestGeoBus_Subscribe(t *testing.T) {
+	id := "waybar-weather"
+	bus := New(logger.New(slog.LevelInfo))
+	if bus == nil {
+		t.Fatal("expected bus to be non-nil")
+	}
+
+	provider := &mockProvider{
+		ProviderName: "test-provider",
+		Results: []Result{
+			{
+				Key:    id,
+				Lat:    50.0,
+				Lon:    8.0,
+				Alt:    100,
+				Source: "mock",
+				At:     time.Now(),
+			},
+			{
+				Key:    id,
+				Lat:    51.0,
+				Lon:    9.0,
+				Alt:    100,
+				Source: "mock",
+				At:     time.Now(),
+			},
+		},
+		Delay: time.Millisecond * 500,
+	}
+	orch := bus.NewOrchestrator([]Provider{provider})
+
+		t.Run("subscribe to global updates", func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ctx, cancel := context.WithCancel(t.Context())
+				defer cancel()
+				var results []Result
+
+				sub, unsub := bus.Subscribe(id, 32)
+				defer unsub()
+				go orch.Track(ctx, id)
+
+				go func() {
+					for len(results) <= 2 {
+						select {
+						case <-ctx.Done():
+							cancel()
+							return
+						case r, ok := <-sub:
+							t.Logf("received geolocation update from %+v", r)
+							if !ok {
+								return
+							}
+							results = append(results, r)
+						}
+					}
+				}()
+				synctest.Wait()
+			})
+		})
+
+}
+*/
+
+// MockProvider is a test double for the Provider interface.
+type mockProvider struct {
+	ProviderName string
+	Results      []Result
+	Delay        time.Duration
+}
+
+// Name returns the configured provider name.
+func (m *mockProvider) Name() string {
+	return "mock-provider"
+}
+
+// LookupStream returns a channel that streams the configured Results.
+// The channel is closed after all results are sent or when ctx is cancelled.
+func (m *mockProvider) LookupStream(ctx context.Context, key string) <-chan Result {
+	ch := make(chan Result)
+
+	go func() {
+		defer close(ch)
+
+		for _, res := range m.Results {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(m.Delay):
+				ch <- res
+			}
+		}
+	}()
+
+	return ch
+}
+
+func processLocationUpdates(ctx context.Context, ch <-chan Result, t *testing.T) {
 }
