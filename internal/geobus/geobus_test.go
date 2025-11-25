@@ -364,6 +364,6 @@ type fakeProvider struct {
 
 func (f *fakeProvider) Name() string { return f.name }
 
-func (f *fakeProvider) LookupStream(ctx context.Context, key string) <-chan Result {
+func (f *fakeProvider) LookupStream(context.Context, string) <-chan Result {
 	return f.ch
 }
