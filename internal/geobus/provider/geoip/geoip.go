@@ -17,6 +17,8 @@ const (
 	apiEndpoint   = "https://reallyfreegeoip.org/json/"
 	lookupTimeout = time.Second * 10
 	name          = "geoip"
+	ttlTime       = time.Hour * 2
+	pollTime      = time.Minute * 15
 )
 
 type GeolocationGeoIPProvider struct {
@@ -48,8 +50,8 @@ func NewGeolocationGeoIPProvider(http *http.Client) (*GeolocationGeoIPProvider, 
 	provider := &GeolocationGeoIPProvider{
 		name:   name,
 		http:   http,
-		period: 30 * time.Minute,
-		ttl:    60 * time.Minute,
+		period: pollTime,
+		ttl:    ttlTime,
 	}
 	provider.locateFn = provider.locate
 	return provider, nil

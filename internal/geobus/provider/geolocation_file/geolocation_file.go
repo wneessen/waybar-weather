@@ -16,7 +16,9 @@ import (
 )
 
 const (
-	name = "geolocation_file"
+	name     = "geolocation_file"
+	ttlTime  = time.Hour * 12
+	pollTime = time.Minute * 5
 )
 
 var ErrNoCoordinates = fmt.Errorf("no valid coordinates found in geolocation file")
@@ -39,8 +41,8 @@ func NewGeolocationFileProvider(path string) *GeolocationFileProvider {
 	provider := &GeolocationFileProvider{
 		name:   name,
 		path:   path,
-		period: time.Minute * 2,
-		ttl:    time.Hour * 1,
+		period: pollTime,
+		ttl:    ttlTime,
 	}
 	provider.locateFn = provider.readFile
 	return provider
