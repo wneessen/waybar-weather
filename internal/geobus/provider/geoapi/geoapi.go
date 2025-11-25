@@ -18,6 +18,8 @@ const (
 	apiEndpoint  = "https://geoapi.info/api/geo"
 	lookupTimeou = time.Second * 5
 	name         = "geoapi"
+	ttlTime      = time.Hour * 2
+	pollTime     = time.Minute * 5
 )
 
 type GeolocationGeoAPIProvider struct {
@@ -51,8 +53,8 @@ func NewGeolocationGeoAPIProvider(http *http.Client) (*GeolocationGeoAPIProvider
 	provider := &GeolocationGeoAPIProvider{
 		name:   name,
 		http:   http,
-		period: time.Minute * 10,
-		ttl:    time.Hour * 2,
+		period: pollTime,
+		ttl:    ttlTime,
 	}
 	provider.locateFn = provider.locate
 	return provider, nil

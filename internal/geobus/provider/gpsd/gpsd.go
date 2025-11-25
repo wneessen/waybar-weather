@@ -13,9 +13,11 @@ import (
 )
 
 const (
-	host = "localhost"
-	port = "2947"
-	name = "gpsd"
+	host     = "localhost"
+	port     = "2947"
+	name     = "gpsd"
+	ttlTime  = time.Minute * 30
+	pollTime = time.Second * 30
 )
 
 type GeolocationGPSDProvider struct {
@@ -29,8 +31,8 @@ type GeolocationGPSDProvider struct {
 func NewGeolocationGPSDProvider() *GeolocationGPSDProvider {
 	provider := &GeolocationGPSDProvider{
 		name:   name,
-		period: time.Second * 30,
-		ttl:    time.Hour * 2,
+		period: pollTime,
+		ttl:    ttlTime,
 		client: gpspoll.New(host, port),
 	}
 	provider.locateFn = provider.client.Poll

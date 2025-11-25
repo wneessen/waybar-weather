@@ -24,6 +24,8 @@ const (
 	lookupTimeout = time.Second * 5
 	wifiScanTime  = time.Minute * 2
 	name          = "ichnaea"
+	ttlTime       = time.Hour * 1
+	pollTime      = time.Second * 150
 )
 
 type GeolocationICHNAEAProvider struct {
@@ -65,8 +67,8 @@ func NewGeolocationICHNAEAProvider(http *http.Client) (*GeolocationICHNAEAProvid
 		name:   name,
 		http:   http,
 		wlan:   wlan,
-		period: time.Minute * 5,
-		ttl:    time.Hour * 1,
+		period: pollTime,
+		ttl:    ttlTime,
 	}
 	provider.locateFn = provider.locate
 	return provider, nil
