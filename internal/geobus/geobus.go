@@ -171,14 +171,6 @@ func (b *GeoBus) Publish(r Result) {
 	}
 }
 
-// Best returns the best non-expired result for a key, if any.
-func (b *GeoBus) Best(key string) (Result, bool) {
-	b.mu.RLock()
-	defer b.mu.RUnlock()
-	r, ok := b.best[key]
-	return r, ok && !r.IsExpired()
-}
-
 // Truncate truncates a float to a fixed decimal precision.
 func Truncate(x float64, precision int) float64 {
 	p := math.Pow(10, float64(precision))
