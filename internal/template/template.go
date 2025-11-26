@@ -5,6 +5,7 @@
 package template
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"strings"
@@ -94,6 +95,7 @@ func New(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
 	tpls := new(Templates)
 	tpls.localizer = loc
 
+	// Parse templates
 	tpl, err := template.New("text").Funcs(tpls.templateFuncMap()).Parse(conf.Templates.Text)
 	if err != nil {
 		return tpls, fmt.Errorf("failed to parse text template: %w", err)
@@ -112,11 +114,23 @@ func New(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
 	}
 	tpls.Tooltip = tpl
 
+	// Create humanizer
 	collection, err := humanize.New(humanize.WithLocale(supportedHumanizers...))
 	if err != nil {
 		return tpls, fmt.Errorf("failed to create humanizer: %w", err)
 	}
 	tpls.humanizer = collection.CreateHumanizer(loc.Language())
+
+	// Validate that the templates can be rendered
+	if err = tpls.Text.Execute(bytes.NewBuffer(nil), DisplayData{}); err != nil {
+		return nil, fmt.Errorf("failed to render text template: %w", err)
+	}
+	if err = tpls.AltText.Execute(bytes.NewBuffer(nil), DisplayData{}); err != nil {
+		return nil, fmt.Errorf("failed to render alt text template: %w", err)
+	}
+	if err = tpls.Tooltip.Execute(bytes.NewBuffer(nil), DisplayData{}); err != nil {
+		return nil, fmt.Errorf("failed to render tooltip template: %w", err)
+	}
 
 	return tpls, nil
 }

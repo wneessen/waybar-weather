@@ -43,15 +43,17 @@ func TestNewTemplate(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to create localizer: %s", err)
 		}
-		conf.Templates.Text = "{{ .Data }}"
+		conf.Templates.Text = "{{ .Current.Temperature }}"
 		tpl, err := New(conf, loc)
 		if err != nil {
 			t.Fatalf("failed to create template: %s", err)
 		}
 
 		expect := "test"
-		data := map[string]string{
-			"Data": expect,
+		data := map[string]any{
+			"Current": map[string]string{
+				"Temperature": expect,
+			},
 		}
 		buf := bytes.NewBuffer(nil)
 		if err = tpl.Text.Execute(buf, data); err != nil {
@@ -62,47 +64,49 @@ func TestNewTemplate(t *testing.T) {
 		}
 	})
 
-	tests := []struct {
-		name      string
-		configure func(*config.Config)
-	}{
-		{
-			name: "parsing text template fails",
-			configure: func(c *config.Config) {
-				c.Templates.Text = "{{ .Data }"
+	t.Run("parsing templates fails with invalid template", func(t *testing.T) {
+		tests := []struct {
+			name      string
+			configure func(*config.Config)
+		}{
+			{
+				name: "parsing text template fails",
+				configure: func(c *config.Config) {
+					c.Templates.Text = "{{ .Data }"
+				},
 			},
-		},
-		{
-			name: "parsing tooltip template fails",
-			configure: func(c *config.Config) {
-				c.Templates.Tooltip = "{{ .Data }"
+			{
+				name: "parsing tooltip template fails",
+				configure: func(c *config.Config) {
+					c.Templates.Tooltip = "{{ .Data }"
+				},
 			},
-		},
-		{
-			name: "parsing alt text template fails",
-			configure: func(c *config.Config) {
-				c.Templates.AltText = "{{ .Data }"
+			{
+				name: "parsing alt text template fails",
+				configure: func(c *config.Config) {
+					c.Templates.AltText = "{{ .Data }"
+				},
 			},
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			conf, err := config.New()
-			if err != nil {
-				t.Fatalf("failed to create config: %s", err)
-			}
-			loc, err := i18n.New(defaultLang)
-			if err != nil {
-				t.Fatalf("failed to create localizer: %s", err)
-			}
+		}
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				conf, err := config.New()
+				if err != nil {
+					t.Fatalf("failed to create config: %s", err)
+				}
+				loc, err := i18n.New(defaultLang)
+				if err != nil {
+					t.Fatalf("failed to create localizer: %s", err)
+				}
 
-			tc.configure(conf)
-			_, err = New(conf, loc)
-			if err == nil {
-				t.Fatal("expected template parsing to fail, but didn't")
-			}
-		})
-	}
+				tc.configure(conf)
+				_, err = New(conf, loc)
+				if err == nil {
+					t.Fatal("expected template parsing to fail, but didn't")
+				}
+			})
+		}
+	})
 
 	t.Run("localizer function translates correctly", func(t *testing.T) {
 		has := "humidity"
@@ -118,14 +122,14 @@ func TestNewTemplate(t *testing.T) {
 			t.Fatalf("failed to create localizer: %s", err)
 		}
 
-		conf.Templates.Text = "{{loc .Data}}"
+		conf.Templates.Text = "{{loc .TempUnit}}"
 		tpl, err := New(conf, loc)
 		if err != nil {
 			t.Fatalf("failed to create template: %s", err)
 		}
 
 		data := map[string]string{
-			"Data": has,
+			"TempUnit": has,
 		}
 		buf := bytes.NewBuffer(nil)
 		if err = tpl.Text.Execute(buf, data); err != nil {
@@ -148,14 +152,14 @@ func TestNewTemplate(t *testing.T) {
 			t.Fatalf("failed to create localizer: %s", err)
 		}
 
-		conf.Templates.Text = "{{loc .Data}}"
+		conf.Templates.Text = "{{loc .TempUnit}}"
 		tpl, err := New(conf, loc)
 		if err != nil {
 			t.Fatalf("failed to create template: %s", err)
 		}
 
 		data := map[string]string{
-			"Data": has,
+			"TempUnit": has,
 		}
 		buf := bytes.NewBuffer(nil)
 		if err = tpl.Text.Execute(buf, data); err != nil {
@@ -170,7 +174,7 @@ func TestNewTemplate(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to create config: %s", err)
 		}
-		conf.Templates.Text = "{{localizedTime .Data}}"
+		conf.Templates.Text = "{{localizedTime .SunsetTime}}"
 		wantTime := time.Date(2025, time.January, 1, 16, 56, 0, 0, time.UTC)
 
 		tests := []struct {
@@ -193,7 +197,7 @@ func TestNewTemplate(t *testing.T) {
 				}
 
 				data := map[string]time.Time{
-					"Data": wantTime,
+					"SunsetTime": wantTime,
 				}
 				buf := bytes.NewBuffer(nil)
 				if err = tpl.Text.Execute(buf, data); err != nil {
@@ -221,9 +225,9 @@ func TestNewTemplate(t *testing.T) {
 			fmt  string
 			want string
 		}{
-			{"24h", `{{timeFormat .Data "15:04"}}`, "16:56"},
-			{"12h", `{{timeFormat .Data "3:4 pm"}}`, "4:56 pm"},
-			{"RFC3339", `{{timeFormat .Data "2006-01-02T15:04:05Z07:00"}}`, "2025-01-01T16:56:00Z"},
+			{"24h", `{{timeFormat .SunriseTime "15:04"}}`, "16:56"},
+			{"12h", `{{timeFormat .SunriseTime "3:4 pm"}}`, "4:56 pm"},
+			{"RFC3339", `{{timeFormat .SunriseTime "2006-01-02T15:04:05Z07:00"}}`, "2025-01-01T16:56:00Z"},
 		}
 		for _, tc := range tests {
 			t.Run(tc.name, func(t *testing.T) {
@@ -234,7 +238,7 @@ func TestNewTemplate(t *testing.T) {
 				}
 
 				data := map[string]time.Time{
-					"Data": wantTime,
+					"SunriseTime": wantTime,
 				}
 				buf := bytes.NewBuffer(nil)
 				if err = tpl.Text.Execute(buf, data); err != nil {
@@ -273,14 +277,16 @@ func TestNewTemplate(t *testing.T) {
 		}
 		for _, tc := range tests {
 			t.Run(tc.name, func(t *testing.T) {
-				conf.Templates.Text = `{{floatFormat .Data ` + tc.prec + `}}`
+				conf.Templates.Text = `{{floatFormat .Current.Temperature ` + tc.prec + `}}`
 				tpl, err := New(conf, loc)
 				if err != nil {
 					t.Fatalf("failed to create template: %s", err)
 				}
 
-				data := map[string]float64{
-					"Data": number,
+				data := map[string]any{
+					"Current": map[string]float64{
+						"Temperature": number,
+					},
 				}
 				buf := bytes.NewBuffer(nil)
 				if err = tpl.Text.Execute(buf, data); err != nil {
@@ -288,6 +294,50 @@ func TestNewTemplate(t *testing.T) {
 				}
 				if !strings.EqualFold(buf.String(), tc.want) {
 					t.Errorf("expected rendered template to be %q, got %q", tc.want, buf.String())
+				}
+			})
+		}
+	})
+	t.Run("executing templates with invalid values fails", func(t *testing.T) {
+		tests := []struct {
+			name      string
+			configure func(*config.Config)
+		}{
+			{
+				name: "text template",
+				configure: func(c *config.Config) {
+					c.Templates.Text = "{{ .Data }}"
+				},
+			},
+			{
+				name: "tooltip template",
+				configure: func(c *config.Config) {
+					c.Templates.Tooltip = "{{ .Data }}"
+				},
+			},
+			{
+				name: "alt text template",
+				configure: func(c *config.Config) {
+					c.Templates.AltText = "{{ .Data }}"
+				},
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				conf, err := config.New()
+				if err != nil {
+					t.Fatalf("failed to create config: %s", err)
+				}
+				loc, err := i18n.New(defaultLang)
+				if err != nil {
+					t.Fatalf("failed to create localizer: %s", err)
+				}
+
+				tc.configure(conf)
+				_, err = New(conf, loc)
+				if err == nil {
+					t.Fatal("expected template rendering to fail, but didn't")
 				}
 			})
 		}
