@@ -127,24 +127,24 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 
 func (s *Service) Run(ctx context.Context) (err error) {
 	// Start scheduled jobs
-	if err := s.createScheduledJob(ctx, s.config.Intervals.Output, s.printWeather,
+	if err = s.createScheduledJob(ctx, s.config.Intervals.Output, s.printWeather,
 		"weatherdata_output_job"); err != nil {
 		return err
 	}
-	if err := s.createScheduledJob(ctx, s.config.Intervals.WeatherUpdate, s.fetchWeather,
+	if err = s.createScheduledJob(ctx, s.config.Intervals.WeatherUpdate, s.fetchWeather,
 		"weather_update_job"); err != nil {
 		return err
 	}
 	s.scheduler.Start()
 
 	// Validate that the templates can be rendered
-	if err := s.templates.Text.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
+	if err = s.templates.Text.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
 		return fmt.Errorf("failed to render text template: %w", err)
 	}
-	if err := s.templates.AltText.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
+	if err = s.templates.AltText.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
 		return fmt.Errorf("failed to render alt text template: %w", err)
 	}
-	if err := s.templates.Tooltip.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
+	if err = s.templates.Tooltip.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
 		return fmt.Errorf("failed to render tooltip template: %w", err)
 	}
 
