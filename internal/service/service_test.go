@@ -10,16 +10,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"testing"
 	"testing/synctest"
 	tt "text/template"
+	"time"
+
+	"github.com/hectormalot/omgo"
 
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/i18n"
 	"github.com/wneessen/waybar-weather/internal/logger"
 	"github.com/wneessen/waybar-weather/internal/template"
+)
+
+const (
+	weatherDataFile = "../../testdata/weatherdata.json"
 )
 
 func TestNew(t *testing.T) {
@@ -301,6 +309,77 @@ func TestService_printWeather(t *testing.T) {
 				}
 			})
 		}
+	})
+}
+
+func TestService_fillDisplayData(t *testing.T) {
+	type currentWeather struct {
+		Temperature   float64 `json:"temperature"`
+		WeatherCode   float64 `json:"weather_code"`
+		WindDirection float64 `json:"wind_direction"`
+		WindSpeed     float64 `json:"wind_speed"`
+	}
+	type forecast struct {
+		Latitude       float64              `json:"latitude"`
+		Longitude      float64              `json:"longitude"`
+		Elevation      float64              `json:"elevation"`
+		CurrentWeather currentWeather       `json:"currentWeather"`
+		HourlyUnits    map[string]string    `json:"hourly_units"`
+		HourlyMetrics  map[string][]float64 `json:"hourlyMetrics"`
+		HourlyTimes    []time.Time          `json:"hourlyTimes"`
+		DailyUnits     map[string]string    `json:"daily_units"`
+		DailyMetrics   map[string][]float64 `json:"dailyMetrics"`
+		DailyTimes     []time.Time          `json:"dailyTimes"`
+	}
+	weatherJSON := new(forecast)
+	data, err := os.Open(weatherDataFile)
+	if err != nil {
+		t.Fatalf("failed to open JSON response file: %s", err)
+	}
+	defer func() {
+		_ = data.Close()
+	}()
+	if err = json.NewDecoder(data).Decode(weatherJSON); err != nil {
+		t.Fatalf("failed to decode JSON response: %s", err)
+	}
+	weatherData := &omgo.Forecast{
+		Latitude:  weatherJSON.Latitude,
+		Longitude: weatherJSON.Longitude,
+		Elevation: weatherJSON.Elevation,
+		CurrentWeather: omgo.CurrentWeather{
+			Temperature:   weatherJSON.CurrentWeather.Temperature,
+			WeatherCode:   weatherJSON.CurrentWeather.WeatherCode,
+			WindDirection: weatherJSON.CurrentWeather.WindDirection,
+			WindSpeed:     weatherJSON.CurrentWeather.WindSpeed,
+		},
+		HourlyUnits:   weatherJSON.HourlyUnits,
+		HourlyMetrics: weatherJSON.HourlyMetrics,
+		HourlyTimes:   weatherJSON.HourlyTimes,
+		DailyUnits:    weatherJSON.DailyUnits,
+		DailyMetrics:  weatherJSON.DailyMetrics,
+		DailyTimes:    weatherJSON.DailyTimes,
+	}
+
+	t.Run("fill display data with weather data", func(t *testing.T) {
+		serv, err := testService(t, false)
+		if err != nil {
+			t.Fatalf("failed to create service: %s", err)
+		}
+		serv.weather = weatherData
+
+		displaydata := new(template.DisplayData)
+		serv.fillDisplayData(displaydata)
+		if displaydata == nil {
+			t.Fatal("expected display data to be non-nil")
+		}
+	})
+	t.Run("filling a nil target returns nothing", func(t *testing.T) {
+		serv, err := testService(t, false)
+		if err != nil {
+			t.Fatalf("failed to create service: %s", err)
+		}
+		serv.weather = weatherData
+		serv.fillDisplayData(nil)
 	})
 }
 
