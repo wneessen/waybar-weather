@@ -85,6 +85,7 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Open-Meteo client: %w", err)
 	}
+	omclient.UserAgent = http.UserAgent
 
 	tpls, err := template.New(conf, t)
 	if err != nil {
