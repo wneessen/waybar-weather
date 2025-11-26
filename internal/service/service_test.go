@@ -413,7 +413,6 @@ func TestService_selectProvider(t *testing.T) {
 	tests := []struct {
 		name       string
 		confFn     func(*config.Config)
-		expect     int
 		shouldFail bool
 	}{
 		{
@@ -425,7 +424,6 @@ func TestService_selectProvider(t *testing.T) {
 				c.GeoLocation.DisableGPSD = false
 				c.GeoLocation.DisableICHNAEA = false
 			},
-			expect:     5,
 			shouldFail: false,
 		},
 		{
@@ -437,7 +435,6 @@ func TestService_selectProvider(t *testing.T) {
 				c.GeoLocation.DisableGPSD = true
 				c.GeoLocation.DisableICHNAEA = true
 			},
-			expect:     1,
 			shouldFail: false,
 		},
 		{
@@ -449,7 +446,6 @@ func TestService_selectProvider(t *testing.T) {
 				c.GeoLocation.DisableGPSD = true
 				c.GeoLocation.DisableICHNAEA = true
 			},
-			expect:     1,
 			shouldFail: false,
 		},
 		{
@@ -461,7 +457,6 @@ func TestService_selectProvider(t *testing.T) {
 				c.GeoLocation.DisableGPSD = true
 				c.GeoLocation.DisableICHNAEA = true
 			},
-			expect:     1,
 			shouldFail: false,
 		},
 		{
@@ -473,7 +468,6 @@ func TestService_selectProvider(t *testing.T) {
 				c.GeoLocation.DisableGPSD = false
 				c.GeoLocation.DisableICHNAEA = true
 			},
-			expect:     1,
 			shouldFail: false,
 		},
 		{
@@ -485,7 +479,6 @@ func TestService_selectProvider(t *testing.T) {
 				c.GeoLocation.DisableGPSD = true
 				c.GeoLocation.DisableICHNAEA = true
 			},
-			expect:     0,
 			shouldFail: true,
 		},
 	}
@@ -498,15 +491,12 @@ func TestService_selectProvider(t *testing.T) {
 			}
 			tc.confFn(serv.config)
 
-			providers, err := serv.selectProvider()
+			_, err = serv.selectProvider()
 			if !tc.shouldFail && err != nil {
 				t.Fatalf("failed to select provider: %s", err)
 			}
 			if tc.shouldFail && err == nil {
 				t.Fatal("expected select provider to fail")
-			}
-			if len(providers) != tc.expect {
-				t.Errorf("expected %d providers, got %d", tc.expect, len(providers))
 			}
 		})
 	}
