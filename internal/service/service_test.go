@@ -369,9 +369,6 @@ func TestService_fillDisplayData(t *testing.T) {
 
 		displaydata := new(template.DisplayData)
 		serv.fillDisplayData(displaydata)
-		if displaydata == nil {
-			t.Fatal("expected display data to be non-nil")
-		}
 		if displaydata.Latitude != 44.4375 {
 			t.Errorf("expected Latitude to be %f, got %f", 44.4375, displaydata.Latitude)
 		}
