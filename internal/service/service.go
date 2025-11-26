@@ -13,7 +13,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/vorlif/spreak"
@@ -52,6 +51,8 @@ type outputData struct {
 }
 
 type Service struct {
+	SignalSrc signalSource
+
 	config    *config.Config
 	geobus    *geobus.GeoBus
 	logger    *logger.Logger
@@ -60,7 +61,6 @@ type Service struct {
 	scheduler gocron.Scheduler
 	templates *template.Templates
 	t         *spreak.Localizer
-	signalSrc signalSource
 
 	locationLock  sync.RWMutex
 	address       geocode.Address
@@ -112,6 +112,8 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 	}
 
 	service := &Service{
+		SignalSrc: stdLibSignalSource{},
+
 		config:         conf,
 		geocoder:       geocoder,
 		geobus:         bus,
@@ -120,7 +122,6 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 		scheduler:      scheduler,
 		templates:      tpls,
 		t:              t,
-		signalSrc:      stdLibSignalSource{},
 		displayAltText: false,
 	}
 	return service, nil
@@ -159,14 +160,6 @@ func (s *Service) Run(ctx context.Context) (err error) {
 	// Subscribe to geolocation updates from the geobus
 	sub, unsub := s.geobus.Subscribe(SubID, 1)
 	go s.processLocationUpdates(ctx, sub)
-
-	// Set up signal handler for SIGUSR1 to toggle alt text display
-	sigChan := make(chan os.Signal, 1)
-	s.signalSrc.Notify(sigChan, syscall.SIGUSR1)
-	go func() {
-		defer s.signalSrc.Stop(sigChan)
-		s.handleAltTextToggleSignal(ctx, sigChan)
-	}()
 
 	// Detect sleep/wake events and update the weather
 	go s.monitorSleepResume(ctx)
@@ -436,19 +429,4 @@ func (s *Service) weatherIndexByTime(atTime time.Time) int {
 		}
 	}
 	return -1
-}
-
-// handleAltTextToggleSignal toggles the module text display when a signal is received
-func (s *Service) handleAltTextToggleSignal(ctx context.Context, sigChan chan os.Signal) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-sigChan:
-			s.displayAltLock.Lock()
-			s.displayAltText = !s.displayAltText
-			s.displayAltLock.Unlock()
-			s.printWeather(ctx)
-		}
-	}
 }

@@ -5,6 +5,7 @@
 package service
 
 import (
+	"context"
 	"os"
 	"os/signal"
 )
@@ -23,4 +24,19 @@ func (stdLibSignalSource) Notify(c chan<- os.Signal, sig ...os.Signal) {
 
 func (stdLibSignalSource) Stop(c chan<- os.Signal) {
 	signal.Stop(c)
+}
+
+// HandleAltTextToggleSignal toggles the module text display when a signal is received
+func (s *Service) HandleAltTextToggleSignal(ctx context.Context, sigChan chan os.Signal) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-sigChan:
+			s.displayAltLock.Lock()
+			s.displayAltText = !s.displayAltText
+			s.displayAltLock.Unlock()
+			s.printWeather(ctx)
+		}
+	}
 }
