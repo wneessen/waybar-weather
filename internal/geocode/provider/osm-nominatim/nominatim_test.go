@@ -57,7 +57,7 @@ func TestNew(t *testing.T) {
 	})
 }
 
-func TestOpenCage_Reverse(t *testing.T) {
+func TestNominatim_Reverse(t *testing.T) {
 	t.Run("reverse geocoding succeeds", func(t *testing.T) {
 		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
 			data, err := os.Open(cityFile)
@@ -228,7 +228,7 @@ func TestOpenCage_Reverse(t *testing.T) {
 	})
 }
 
-func TestOpenCage_Reverse_integration(t *testing.T) {
+func TestNominatim_Reverse_integration(t *testing.T) {
 	testhelper.PerformIntegrationTests(t)
 	t.Run("reverse geocoding succeeds", func(t *testing.T) {
 		coder := testCoder(t)
