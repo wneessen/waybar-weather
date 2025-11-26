@@ -372,6 +372,35 @@ func TestService_fillDisplayData(t *testing.T) {
 		if displaydata == nil {
 			t.Fatal("expected display data to be non-nil")
 		}
+		if displaydata.Latitude != 44.4375 {
+			t.Errorf("expected Latitude to be %f, got %f", 44.4375, displaydata.Latitude)
+		}
+		if displaydata.Longitude != 26.125 {
+			t.Errorf("expected Longitude to be %f, got %f", 26.125, displaydata.Longitude)
+		}
+		if displaydata.Elevation != 85 {
+			t.Errorf("expected Elevation to be %f, got %f", 85., displaydata.Elevation)
+		}
+		if displaydata.Address.AddressFound {
+			t.Error("expected AddressFound to be false")
+		}
+		sunset := time.Date(2025, 11, 26, 14, 40, 0o7, 0, time.UTC)
+		if !sunset.Equal(displaydata.SunsetTime) {
+			t.Errorf("expected SunsetTime to be %s, got %s", sunset, displaydata.SunsetTime)
+		}
+		sunrise := time.Date(2025, 11, 26, 5, 25, 53, 0, time.UTC)
+		if !sunrise.Equal(displaydata.SunriseTime) {
+			t.Errorf("expected SunriseTime to be %s, got %s", sunset, displaydata.SunsetTime)
+		}
+		if displaydata.Moonphase != "First Quarter" {
+			t.Errorf("expected Moonphase to be %q, got %q", "First Quarter", displaydata.Moonphase)
+		}
+		if displaydata.MoonphaseIcon != MoonPhaseIcon[displaydata.Moonphase] {
+			t.Errorf("expected MoonphaseIcon to be %q, got %q", MoonPhaseIcon[displaydata.Moonphase], displaydata.MoonphaseIcon)
+		}
+		if displaydata.Current.Temperature != 9.1 {
+			t.Errorf("expected Current.Temperature to be %f, got %f", 9.1, displaydata.Current.Temperature)
+		}
 	})
 	t.Run("filling a nil target returns nothing", func(t *testing.T) {
 		serv, err := testService(t, false)
@@ -381,6 +410,121 @@ func TestService_fillDisplayData(t *testing.T) {
 		serv.weather = weatherData
 		serv.fillDisplayData(nil)
 	})
+}
+
+func TestService_selectProvider(t *testing.T) {
+	tests := []struct {
+		name       string
+		confFn     func(*config.Config)
+		expect     int
+		shouldFail bool
+	}{
+		{
+			name: "all providers enabled",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = false
+				c.GeoLocation.DisableGeoIP = false
+				c.GeoLocation.DisableGeolocationFile = false
+				c.GeoLocation.DisableGPSD = false
+				c.GeoLocation.DisableICHNAEA = false
+			},
+			expect:     5,
+			shouldFail: false,
+		},
+		{
+			name: "only geo api",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = false
+				c.GeoLocation.DisableGeoIP = true
+				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableGPSD = true
+				c.GeoLocation.DisableICHNAEA = true
+			},
+			expect:     1,
+			shouldFail: false,
+		},
+		{
+			name: "only geo ip",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = true
+				c.GeoLocation.DisableGeoIP = false
+				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableGPSD = true
+				c.GeoLocation.DisableICHNAEA = true
+			},
+			expect:     1,
+			shouldFail: false,
+		},
+		{
+			name: "only geolocation file",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = true
+				c.GeoLocation.DisableGeoIP = true
+				c.GeoLocation.DisableGeolocationFile = false
+				c.GeoLocation.DisableGPSD = true
+				c.GeoLocation.DisableICHNAEA = true
+			},
+			expect:     1,
+			shouldFail: false,
+		},
+		{
+			name: "only gpsd",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = true
+				c.GeoLocation.DisableGeoIP = true
+				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableGPSD = false
+				c.GeoLocation.DisableICHNAEA = true
+			},
+			expect:     1,
+			shouldFail: false,
+		},
+		{
+			name: "only ichnaea",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = true
+				c.GeoLocation.DisableGeoIP = true
+				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableGPSD = true
+				c.GeoLocation.DisableICHNAEA = false
+			},
+			expect:     1,
+			shouldFail: false,
+		},
+		{
+			name: "no provider fails",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = true
+				c.GeoLocation.DisableGeoIP = true
+				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableGPSD = true
+				c.GeoLocation.DisableICHNAEA = true
+			},
+			expect:     0,
+			shouldFail: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			serv, err := testService(t, false)
+			if err != nil {
+				t.Fatalf("failed to create service: %s", err)
+			}
+			tc.confFn(serv.config)
+
+			providers, err := serv.selectProvider()
+			if !tc.shouldFail && err != nil {
+				t.Fatalf("failed to select provider: %s", err)
+			}
+			if tc.shouldFail && err == nil {
+				t.Fatal("expected select provider to fail")
+			}
+			if len(providers) != tc.expect {
+				t.Errorf("expected %d providers, got %d", tc.expect, len(providers))
+			}
+		})
+	}
 }
 
 func testService(_ *testing.T, nilLogger bool) (*Service, error) {
