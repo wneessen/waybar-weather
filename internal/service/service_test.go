@@ -5,17 +5,29 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"testing"
 	"testing/synctest"
+	tt "text/template"
+	"time"
+
+	"github.com/hectormalot/omgo"
 
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/i18n"
 	"github.com/wneessen/waybar-weather/internal/logger"
+	"github.com/wneessen/waybar-weather/internal/template"
+)
+
+const (
+	weatherDataFile = "../../testdata/weatherdata.json"
 )
 
 func TestNew(t *testing.T) {
@@ -155,6 +167,341 @@ func TestService_Run(t *testing.T) {
 	})
 }
 
+func TestService_printWeather(t *testing.T) {
+	t.Run("print weather to a buffer", func(t *testing.T) {
+		t.Setenv("WAYBARWEATHER_TEMPLATES_TEXT", "text")
+		t.Setenv("WAYBARWEATHER_TEMPLATES_TOOLTIP", "tooltip")
+
+		serv, err := testService(t, false)
+		if err != nil {
+			t.Fatalf("failed to create service: %s", err)
+		}
+		buf := bytes.NewBuffer(nil)
+		serv.output = buf
+		serv.weatherIsSet = true
+
+		serv.printWeather(t.Context())
+
+		var output outputData
+		if err = json.Unmarshal(buf.Bytes(), &output); err != nil {
+			t.Fatalf("failed to unmarshal JSON: %s", err)
+		}
+		if output.Text != "text" {
+			t.Errorf("expected Text to be %q, got %q", "text", output.Text)
+		}
+		if output.Tooltip != "tooltip" {
+			t.Errorf("expected Tooltip to be %q, got %q", "tooltip", output.Tooltip)
+		}
+		if output.Class != OutputClass {
+			t.Errorf("expected Class to be %q, got %q", OutputClass, output.Class)
+		}
+	})
+	t.Run("print alt_text to a buffer", func(t *testing.T) {
+		t.Setenv("WAYBARWEATHER_TEMPLATES_ALT_TEXT", "alt_text")
+
+		serv, err := testService(t, false)
+		if err != nil {
+			t.Fatalf("failed to create service: %s", err)
+		}
+		buf := bytes.NewBuffer(nil)
+		serv.output = buf
+		serv.weatherIsSet = true
+		serv.displayAltText = true
+
+		serv.printWeather(t.Context())
+
+		var output outputData
+		if err = json.Unmarshal(buf.Bytes(), &output); err != nil {
+			t.Fatalf("failed to unmarshal JSON: %s", err)
+		}
+		if output.Text != "alt_text" {
+			t.Errorf("expected Text to be %q, got %q", "alt_text", output.Text)
+		}
+	})
+	t.Run("print weather returns when weather is not set", func(t *testing.T) {
+		serv, err := testService(t, false)
+		if err != nil {
+			t.Fatalf("failed to create service: %s", err)
+		}
+		buf := bytes.NewBuffer(nil)
+		serv.output = buf
+		serv.printWeather(t.Context())
+		if buf.Len() != 0 {
+			t.Errorf("expected output buffer to be empty, got %q", buf.String())
+		}
+	})
+	t.Run("output is empty on failing writer", func(t *testing.T) {
+		serv, err := testService(t, false)
+		if err != nil {
+			t.Fatalf("failed to create service: %s", err)
+		}
+		serv.output = &failWriter{}
+		serv.weatherIsSet = true
+		serv.printWeather(t.Context())
+	})
+	t.Run("printing weather fails on different template errors", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			confFn func(*config.Config)
+			tplFn  func(*template.Templates, *config.Config) error
+		}{
+			{
+				name: "text template",
+				confFn: func(c *config.Config) {
+					c.Templates.Text = "{{.Data}}"
+				},
+				tplFn: func(tpls *template.Templates, conf *config.Config) error {
+					tpl, err := tt.New("text").Parse(conf.Templates.Text)
+					if err != nil {
+						return err
+					}
+					tpls.Text = tpl
+					return nil
+				},
+			},
+			{
+				name: "tooltip template",
+				confFn: func(c *config.Config) {
+					c.Templates.Tooltip = "{{.Data}}"
+				},
+				tplFn: func(tpls *template.Templates, conf *config.Config) error {
+					tpl, err := tt.New("tooltip").Parse(conf.Templates.Tooltip)
+					if err != nil {
+						return err
+					}
+					tpls.Tooltip = tpl
+					return nil
+				},
+			},
+			{
+				name: "alt text template",
+				confFn: func(c *config.Config) {
+					c.Templates.AltText = "{{.Data}}"
+				},
+				tplFn: func(tpls *template.Templates, conf *config.Config) error {
+					tpl, err := tt.New("alt_text").Parse(conf.Templates.AltText)
+					if err != nil {
+						return err
+					}
+					tpls.AltText = tpl
+					return nil
+				},
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				serv, err := testService(t, false)
+				if err != nil {
+					t.Fatalf("failed to create service: %s", err)
+				}
+				tc.confFn(serv.config)
+				if err = tc.tplFn(serv.templates, serv.config); err != nil {
+					t.Fatalf("failed to parse override template: %s", err)
+				}
+
+				buf := bytes.NewBuffer(nil)
+				serv.output = buf
+				serv.weatherIsSet = true
+				serv.printWeather(t.Context())
+				if buf.Len() != 0 {
+					t.Errorf("expected output buffer to be empty, got %q", buf.String())
+				}
+			})
+		}
+	})
+}
+
+func TestService_fillDisplayData(t *testing.T) {
+	type currentWeather struct {
+		Temperature   float64 `json:"temperature"`
+		WeatherCode   float64 `json:"weather_code"`
+		WindDirection float64 `json:"wind_direction"`
+		WindSpeed     float64 `json:"wind_speed"`
+	}
+	type forecast struct {
+		Latitude       float64              `json:"latitude"`
+		Longitude      float64              `json:"longitude"`
+		Elevation      float64              `json:"elevation"`
+		CurrentWeather currentWeather       `json:"currentWeather"`
+		HourlyUnits    map[string]string    `json:"hourly_units"`
+		HourlyMetrics  map[string][]float64 `json:"hourlyMetrics"`
+		HourlyTimes    []time.Time          `json:"hourlyTimes"`
+		DailyUnits     map[string]string    `json:"daily_units"`
+		DailyMetrics   map[string][]float64 `json:"dailyMetrics"`
+		DailyTimes     []time.Time          `json:"dailyTimes"`
+	}
+	weatherJSON := new(forecast)
+	data, err := os.Open(weatherDataFile)
+	if err != nil {
+		t.Fatalf("failed to open JSON response file: %s", err)
+	}
+	defer func() {
+		_ = data.Close()
+	}()
+	if err = json.NewDecoder(data).Decode(weatherJSON); err != nil {
+		t.Fatalf("failed to decode JSON response: %s", err)
+	}
+	weatherData := &omgo.Forecast{
+		Latitude:  weatherJSON.Latitude,
+		Longitude: weatherJSON.Longitude,
+		Elevation: weatherJSON.Elevation,
+		CurrentWeather: omgo.CurrentWeather{
+			Temperature:   weatherJSON.CurrentWeather.Temperature,
+			WeatherCode:   weatherJSON.CurrentWeather.WeatherCode,
+			WindDirection: weatherJSON.CurrentWeather.WindDirection,
+			WindSpeed:     weatherJSON.CurrentWeather.WindSpeed,
+		},
+		HourlyUnits:   weatherJSON.HourlyUnits,
+		HourlyMetrics: weatherJSON.HourlyMetrics,
+		HourlyTimes:   weatherJSON.HourlyTimes,
+		DailyUnits:    weatherJSON.DailyUnits,
+		DailyMetrics:  weatherJSON.DailyMetrics,
+		DailyTimes:    weatherJSON.DailyTimes,
+	}
+
+	t.Run("fill display data with weather data", func(t *testing.T) {
+		serv, err := testService(t, false)
+		if err != nil {
+			t.Fatalf("failed to create service: %s", err)
+		}
+		serv.weather = weatherData
+
+		displaydata := new(template.DisplayData)
+		serv.fillDisplayData(displaydata)
+		if displaydata.Latitude != 44.4375 {
+			t.Errorf("expected Latitude to be %f, got %f", 44.4375, displaydata.Latitude)
+		}
+		if displaydata.Longitude != 26.125 {
+			t.Errorf("expected Longitude to be %f, got %f", 26.125, displaydata.Longitude)
+		}
+		if displaydata.Elevation != 85 {
+			t.Errorf("expected Elevation to be %f, got %f", 85., displaydata.Elevation)
+		}
+		if displaydata.Address.AddressFound {
+			t.Error("expected AddressFound to be false")
+		}
+		sunset := time.Date(2025, 11, 26, 14, 40, 0o7, 0, time.UTC)
+		if !sunset.Equal(displaydata.SunsetTime) {
+			t.Errorf("expected SunsetTime to be %s, got %s", sunset, displaydata.SunsetTime)
+		}
+		sunrise := time.Date(2025, 11, 26, 5, 25, 53, 0, time.UTC)
+		if !sunrise.Equal(displaydata.SunriseTime) {
+			t.Errorf("expected SunriseTime to be %s, got %s", sunset, displaydata.SunsetTime)
+		}
+		if displaydata.Moonphase != "First Quarter" {
+			t.Errorf("expected Moonphase to be %q, got %q", "First Quarter", displaydata.Moonphase)
+		}
+		if displaydata.MoonphaseIcon != MoonPhaseIcon[displaydata.Moonphase] {
+			t.Errorf("expected MoonphaseIcon to be %q, got %q", MoonPhaseIcon[displaydata.Moonphase], displaydata.MoonphaseIcon)
+		}
+		if displaydata.Current.Temperature != 9.1 {
+			t.Errorf("expected Current.Temperature to be %f, got %f", 9.1, displaydata.Current.Temperature)
+		}
+	})
+	t.Run("filling a nil target returns nothing", func(t *testing.T) {
+		serv, err := testService(t, false)
+		if err != nil {
+			t.Fatalf("failed to create service: %s", err)
+		}
+		serv.weather = weatherData
+		serv.fillDisplayData(nil)
+	})
+}
+
+func TestService_selectProvider(t *testing.T) {
+	tests := []struct {
+		name       string
+		confFn     func(*config.Config)
+		shouldFail bool
+	}{
+		{
+			name: "all providers enabled",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = false
+				c.GeoLocation.DisableGeoIP = false
+				c.GeoLocation.DisableGeolocationFile = false
+				c.GeoLocation.DisableGPSD = false
+				c.GeoLocation.DisableICHNAEA = false
+			},
+			shouldFail: false,
+		},
+		{
+			name: "only geo api",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = false
+				c.GeoLocation.DisableGeoIP = true
+				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableGPSD = true
+				c.GeoLocation.DisableICHNAEA = true
+			},
+			shouldFail: false,
+		},
+		{
+			name: "only geo ip",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = true
+				c.GeoLocation.DisableGeoIP = false
+				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableGPSD = true
+				c.GeoLocation.DisableICHNAEA = true
+			},
+			shouldFail: false,
+		},
+		{
+			name: "only geolocation file",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = true
+				c.GeoLocation.DisableGeoIP = true
+				c.GeoLocation.DisableGeolocationFile = false
+				c.GeoLocation.DisableGPSD = true
+				c.GeoLocation.DisableICHNAEA = true
+			},
+			shouldFail: false,
+		},
+		{
+			name: "only gpsd",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = true
+				c.GeoLocation.DisableGeoIP = true
+				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableGPSD = false
+				c.GeoLocation.DisableICHNAEA = true
+			},
+			shouldFail: false,
+		},
+		{
+			name: "no provider fails",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = true
+				c.GeoLocation.DisableGeoIP = true
+				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableGPSD = true
+				c.GeoLocation.DisableICHNAEA = true
+			},
+			shouldFail: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			serv, err := testService(t, false)
+			if err != nil {
+				t.Fatalf("failed to create service: %s", err)
+			}
+			tc.confFn(serv.config)
+
+			_, err = serv.selectProvider()
+			if !tc.shouldFail && err != nil {
+				t.Fatalf("failed to select provider: %s", err)
+			}
+			if tc.shouldFail && err == nil {
+				t.Fatal("expected select provider to fail")
+			}
+		})
+	}
+}
+
 func testService(_ *testing.T, nilLogger bool) (*Service, error) {
 	conf, err := config.New()
 	if err != nil {
@@ -177,3 +524,7 @@ func testService(_ *testing.T, nilLogger bool) (*Service, error) {
 
 	return serv, nil
 }
+
+type failWriter struct{}
+
+func (f failWriter) Write([]byte) (int, error) { return 0, fmt.Errorf("failed to write") }

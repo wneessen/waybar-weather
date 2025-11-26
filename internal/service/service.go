@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"strings"
@@ -58,6 +59,7 @@ type Service struct {
 	logger    *logger.Logger
 	geocoder  geocode.Geocoder
 	omclient  omgo.Client
+	output    io.Writer
 	jobs      []*job.Job
 	templates *template.Templates
 	t         *spreak.Localizer
@@ -114,6 +116,7 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 		geobus:         bus,
 		logger:         log,
 		omclient:       omclient,
+		output:         os.Stdout,
 		templates:      tpls,
 		t:              t,
 		displayAltText: false,
@@ -195,8 +198,7 @@ func (s *Service) selectProvider() ([]geobus.Provider, error) {
 		}
 	}
 	if len(provider) == 0 {
-		s.logger.Error(s.t.Get("no geolocation providers enabled, will not be able to fetch weather data " + "" +
-			"due to missing location"))
+		return nil, fmt.Errorf("no geolocation providers enabled")
 	}
 
 	return provider, nil
@@ -244,7 +246,7 @@ func (s *Service) printWeather(context.Context) {
 		Class:   OutputClass,
 	}
 
-	if err := json.NewEncoder(os.Stdout).Encode(output); err != nil {
+	if err := json.NewEncoder(s.output).Encode(output); err != nil {
 		s.logger.Error("failed to encode weather data", logger.Err(err))
 	}
 }
