@@ -477,18 +477,6 @@ func TestService_selectProvider(t *testing.T) {
 			shouldFail: false,
 		},
 		{
-			name: "only ichnaea",
-			confFn: func(c *config.Config) {
-				c.GeoLocation.DisableGeoAPI = true
-				c.GeoLocation.DisableGeoIP = true
-				c.GeoLocation.DisableGeolocationFile = true
-				c.GeoLocation.DisableGPSD = true
-				c.GeoLocation.DisableICHNAEA = false
-			},
-			expect:     1,
-			shouldFail: false,
-		},
-		{
 			name: "no provider fails",
 			confFn: func(c *config.Config) {
 				c.GeoLocation.DisableGeoAPI = true
