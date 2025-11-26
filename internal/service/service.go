@@ -11,10 +11,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/signal"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/vorlif/spreak"
@@ -53,6 +51,8 @@ type outputData struct {
 }
 
 type Service struct {
+	SignalSrc signalSource
+
 	config    *config.Config
 	geobus    *geobus.GeoBus
 	logger    *logger.Logger
@@ -85,6 +85,7 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Open-Meteo client: %w", err)
 	}
+	omclient.UserAgent = http.UserAgent
 
 	tpls, err := template.New(conf, t)
 	if err != nil {
@@ -111,6 +112,8 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 	}
 
 	service := &Service{
+		SignalSrc: stdLibSignalSource{},
+
 		config:         conf,
 		geocoder:       geocoder,
 		geobus:         bus,
@@ -126,24 +129,24 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 
 func (s *Service) Run(ctx context.Context) (err error) {
 	// Start scheduled jobs
-	if err := s.createScheduledJob(ctx, s.config.Intervals.Output, s.printWeather,
+	if err = s.createScheduledJob(ctx, s.config.Intervals.Output, s.printWeather,
 		"weatherdata_output_job"); err != nil {
 		return err
 	}
-	if err := s.createScheduledJob(ctx, s.config.Intervals.WeatherUpdate, s.fetchWeather,
+	if err = s.createScheduledJob(ctx, s.config.Intervals.WeatherUpdate, s.fetchWeather,
 		"weather_update_job"); err != nil {
 		return err
 	}
 	s.scheduler.Start()
 
 	// Validate that the templates can be rendered
-	if err := s.templates.Text.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
+	if err = s.templates.Text.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
 		return fmt.Errorf("failed to render text template: %w", err)
 	}
-	if err := s.templates.AltText.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
+	if err = s.templates.AltText.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
 		return fmt.Errorf("failed to render alt text template: %w", err)
 	}
-	if err := s.templates.Tooltip.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
+	if err = s.templates.Tooltip.Execute(bytes.NewBuffer(nil), template.DisplayData{}); err != nil {
 		return fmt.Errorf("failed to render tooltip template: %w", err)
 	}
 
@@ -157,11 +160,6 @@ func (s *Service) Run(ctx context.Context) (err error) {
 	// Subscribe to geolocation updates from the geobus
 	sub, unsub := s.geobus.Subscribe(SubID, 1)
 	go s.processLocationUpdates(ctx, sub)
-
-	// Set up signal handler for SIGUSR1 to toggle alt text display
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGUSR1)
-	go s.handleAltTextToggleSignal(ctx, sigChan)
 
 	// Detect sleep/wake events and update the weather
 	go s.monitorSleepResume(ctx)
@@ -431,19 +429,4 @@ func (s *Service) weatherIndexByTime(atTime time.Time) int {
 		}
 	}
 	return -1
-}
-
-// handleAltTextToggleSignal toggles the module text display when a signal is received
-func (s *Service) handleAltTextToggleSignal(ctx context.Context, sigChan chan os.Signal) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-sigChan:
-			s.displayAltLock.Lock()
-			s.displayAltText = !s.displayAltText
-			s.displayAltLock.Unlock()
-			s.printWeather(ctx)
-		}
-	}
 }
