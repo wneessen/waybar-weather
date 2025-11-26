@@ -198,8 +198,7 @@ func (s *Service) selectProvider() ([]geobus.Provider, error) {
 		}
 	}
 	if len(provider) == 0 {
-		s.logger.Error(s.t.Get("no geolocation providers enabled, will not be able to fetch weather data " + "" +
-			"due to missing location"))
+		return nil, fmt.Errorf("no geolocation providers enabled")
 	}
 
 	return provider, nil
