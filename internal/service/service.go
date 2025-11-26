@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/signal"
 	"strings"
 	"sync"
 	"syscall"
@@ -61,6 +60,7 @@ type Service struct {
 	scheduler gocron.Scheduler
 	templates *template.Templates
 	t         *spreak.Localizer
+	signalSrc signalSource
 
 	locationLock  sync.RWMutex
 	address       geocode.Address
@@ -120,6 +120,7 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 		scheduler:      scheduler,
 		templates:      tpls,
 		t:              t,
+		signalSrc:      stdLibSignalSource{},
 		displayAltText: false,
 	}
 	return service, nil
@@ -160,9 +161,18 @@ func (s *Service) Run(ctx context.Context) (err error) {
 	go s.processLocationUpdates(ctx, sub)
 
 	// Set up signal handler for SIGUSR1 to toggle alt text display
+	/*
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGUSR1)
+		go s.handleAltTextToggleSignal(ctx, sigChan)
+	*/
+
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGUSR1)
-	go s.handleAltTextToggleSignal(ctx, sigChan)
+	s.signalSrc.Notify(sigChan, syscall.SIGUSR1)
+	go func() {
+		defer s.signalSrc.Stop(sigChan)
+		s.handleAltTextToggleSignal(ctx, sigChan)
+	}()
 
 	// Detect sleep/wake events and update the weather
 	go s.monitorSleepResume(ctx)
