@@ -28,10 +28,10 @@ import (
 	"github.com/wneessen/waybar-weather/internal/geocode/provider/opencage"
 	nominatim "github.com/wneessen/waybar-weather/internal/geocode/provider/osm-nominatim"
 	"github.com/wneessen/waybar-weather/internal/http"
+	"github.com/wneessen/waybar-weather/internal/job"
 	"github.com/wneessen/waybar-weather/internal/logger"
 	"github.com/wneessen/waybar-weather/internal/template"
 
-	"github.com/go-co-op/gocron/v2"
 	"github.com/hectormalot/omgo"
 	"github.com/nathan-osman/go-sunrise"
 	"github.com/wneessen/go-moonphase"
@@ -58,7 +58,7 @@ type Service struct {
 	logger    *logger.Logger
 	geocoder  geocode.Geocoder
 	omclient  omgo.Client
-	scheduler gocron.Scheduler
+	jobs      []*job.Job
 	templates *template.Templates
 	t         *spreak.Localizer
 
@@ -76,11 +76,6 @@ type Service struct {
 }
 
 func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service, error) {
-	scheduler, err := gocron.NewScheduler()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create scheduler: %w", err)
-	}
-
 	omclient, err := omgo.NewClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Open-Meteo client: %w", err)
@@ -119,25 +114,27 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 		geobus:         bus,
 		logger:         log,
 		omclient:       omclient,
-		scheduler:      scheduler,
 		templates:      tpls,
 		t:              t,
 		displayAltText: false,
 	}
+
+	// Schedule jobs
+	outputJob := job.New(service.config.Intervals.Output, service.printWeather)
+	weatherUpdateJob := job.New(service.config.Intervals.WeatherUpdate, service.fetchWeather)
+	service.jobs = append(service.jobs, outputJob, weatherUpdateJob)
+
 	return service, nil
 }
 
 func (s *Service) Run(ctx context.Context) (err error) {
-	// Start scheduled jobs
-	if err = s.createScheduledJob(ctx, s.config.Intervals.Output, s.printWeather,
-		"weatherdata_output_job"); err != nil {
-		return err
+	// Start scheduled jobs as go routines
+	for _, j := range s.jobs {
+		if j == nil {
+			continue
+		}
+		go j.Start(ctx)
 	}
-	if err = s.createScheduledJob(ctx, s.config.Intervals.WeatherUpdate, s.fetchWeather,
-		"weather_update_job"); err != nil {
-		return err
-	}
-	s.scheduler.Start()
 
 	// Select the geolocation providers and track them in the geobus
 	provider, err := s.selectProvider()
@@ -158,7 +155,7 @@ func (s *Service) Run(ctx context.Context) (err error) {
 	if unsub != nil {
 		unsub()
 	}
-	return s.scheduler.Shutdown()
+	return nil
 }
 
 func (s *Service) selectProvider() ([]geobus.Provider, error) {
@@ -203,22 +200,6 @@ func (s *Service) selectProvider() ([]geobus.Provider, error) {
 	}
 
 	return provider, nil
-}
-
-func (s *Service) createScheduledJob(ctx context.Context, interval time.Duration, task func(context.Context),
-	jobName string,
-) error {
-	_, err := s.scheduler.NewJob(
-		gocron.DurationJob(interval),
-		gocron.NewTask(task),
-		gocron.WithContext(ctx),
-		gocron.WithSingletonMode(gocron.LimitModeReschedule),
-		gocron.WithName(jobName),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create %s: %w", jobName, err)
-	}
-	return nil
 }
 
 // printWeather outputs the current weather data to stdout if available and renders it using predefined templates.
