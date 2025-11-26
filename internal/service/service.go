@@ -263,11 +263,9 @@ func (s *Service) printWeather(context.Context) {
 		return
 	}
 
-	var displayText string
+	displayText := textBuf.String()
 	if displayAltText {
 		displayText = altTextBuf.String()
-	} else {
-		displayText = textBuf.String()
 	}
 
 	output := outputData{
