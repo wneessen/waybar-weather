@@ -5,9 +5,12 @@
 package service
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
+	"testing/synctest"
 
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/http"
@@ -121,6 +124,37 @@ func TestNew(t *testing.T) {
 	})
 }
 
+func TestService_Run(t *testing.T) {
+	t.Run("start the service and gracefully shut it down", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+
+			afterFuncCalled := false
+			context.AfterFunc(ctx, func() {
+				afterFuncCalled = true
+			})
+
+			serv, err := testService(t, false)
+			if err != nil {
+				t.Fatalf("failed to create service: %s", err)
+			}
+
+			go func() {
+				if err = serv.Run(ctx); err != nil {
+					t.Errorf("failed to run service: %s", err)
+				}
+			}()
+
+			cancel()
+			synctest.Wait()
+			if !afterFuncCalled {
+				t.Fatalf("before context is canceled: AfterFunc not called")
+			}
+		})
+	})
+}
+
 func testService(_ *testing.T, nilLogger bool) (*Service, error) {
 	conf, err := config.New()
 	if err != nil {
@@ -129,7 +163,7 @@ func testService(_ *testing.T, nilLogger bool) (*Service, error) {
 
 	var log *logger.Logger
 	if !nilLogger {
-		log = logger.New(conf.LogLevel)
+		log = logger.NewLogger(conf.LogLevel, io.Discard)
 	}
 
 	lang, err := i18n.New(conf.Locale)
