@@ -161,12 +161,6 @@ func (s *Service) Run(ctx context.Context) (err error) {
 	go s.processLocationUpdates(ctx, sub)
 
 	// Set up signal handler for SIGUSR1 to toggle alt text display
-	/*
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, syscall.SIGUSR1)
-		go s.handleAltTextToggleSignal(ctx, sigChan)
-	*/
-
 	sigChan := make(chan os.Signal, 1)
 	s.signalSrc.Notify(sigChan, syscall.SIGUSR1)
 	go func() {
