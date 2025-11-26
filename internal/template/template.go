@@ -114,6 +114,13 @@ func New(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
 	}
 	tpls.Tooltip = tpl
 
+	// Create humanizer
+	collection, err := humanize.New(humanize.WithLocale(supportedHumanizers...))
+	if err != nil {
+		return tpls, fmt.Errorf("failed to create humanizer: %w", err)
+	}
+	tpls.humanizer = collection.CreateHumanizer(loc.Language())
+
 	// Validate that the templates can be rendered
 	if err = tpls.Text.Execute(bytes.NewBuffer(nil), DisplayData{}); err != nil {
 		return nil, fmt.Errorf("failed to render text template: %w", err)
@@ -124,13 +131,6 @@ func New(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
 	if err = tpls.Tooltip.Execute(bytes.NewBuffer(nil), DisplayData{}); err != nil {
 		return nil, fmt.Errorf("failed to render tooltip template: %w", err)
 	}
-
-	// Create humanizer
-	collection, err := humanize.New(humanize.WithLocale(supportedHumanizers...))
-	if err != nil {
-		return tpls, fmt.Errorf("failed to create humanizer: %w", err)
-	}
-	tpls.humanizer = collection.CreateHumanizer(loc.Language())
 
 	return tpls, nil
 }
