@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/vorlif/spreak"
+	"golang.org/x/text/language"
 
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/geobus"
@@ -26,6 +27,7 @@ import (
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/gpsd"
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/ichnaea"
 	"github.com/wneessen/waybar-weather/internal/geocode"
+	geocode_earth "github.com/wneessen/waybar-weather/internal/geocode/provider/geocode-earth"
 	"github.com/wneessen/waybar-weather/internal/geocode/provider/opencage"
 	nominatim "github.com/wneessen/waybar-weather/internal/geocode/provider/osm-nominatim"
 	"github.com/wneessen/waybar-weather/internal/http"
@@ -89,20 +91,6 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 		return nil, fmt.Errorf("failed to parse templates: %w", err)
 	}
 
-	var geocoder geocode.Geocoder
-	switch strings.ToLower(conf.GeoCoder.Provider) {
-	case "nominatim":
-		geocoder = geocode.NewCachedGeocoder(nominatim.New(http.New(log), t.Language()), cacheHitTTL, cacheMissTTL)
-	case "opencage":
-		if conf.GeoCoder.APIKey == "" {
-			return nil, fmt.Errorf("opencage geocoder requires an API key")
-		}
-		geocoder = geocode.NewCachedGeocoder(opencage.New(http.New(log), t.Language(), conf.GeoCoder.APIKey),
-			cacheHitTTL, cacheMissTTL)
-	default:
-		return nil, fmt.Errorf("unsupported geocoder type: %s", conf.GeoCoder.Provider)
-	}
-
 	bus, err := geobus.New(log)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create geobus: %w", err)
@@ -112,7 +100,6 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 		SignalSrc: stdLibSignalSource{},
 
 		config:         conf,
-		geocoder:       geocoder,
 		geobus:         bus,
 		logger:         log,
 		omclient:       omclient,
@@ -139,12 +126,19 @@ func (s *Service) Run(ctx context.Context) (err error) {
 		go j.Start(ctx)
 	}
 
-	// Select the geolocation providers and track them in the geobus
-	provider, err := s.selectProvider()
+	// Select the geocode provider for the address lookup
+	geocodeProvider, err := s.selectGeocodeProvider(s.config, s.logger, s.t.Language())
+	if err != nil {
+		return fmt.Errorf("failed to create geocode provider: %w", err)
+	}
+	s.geocoder = geocodeProvider
+
+	// Select the geobus providers and track them in the geobus
+	geobusProvider, err := s.selectGeobusProviders()
 	if err != nil {
 		return fmt.Errorf("failed to create geobus orchestrator: %w", err)
 	}
-	geobus.TrackProviders(ctx, s.geobus, SubID, provider...)
+	geobus.TrackProviders(ctx, s.geobus, SubID, geobusProvider...)
 
 	// Subscribe to geolocation updates from the geobus
 	sub, unsub := s.geobus.Subscribe(SubID, 1)
@@ -161,7 +155,7 @@ func (s *Service) Run(ctx context.Context) (err error) {
 	return nil
 }
 
-func (s *Service) selectProvider() ([]geobus.Provider, error) {
+func (s *Service) selectGeobusProviders() ([]geobus.Provider, error) {
 	httpClient := http.New(s.logger)
 	var provider []geobus.Provider
 
@@ -202,6 +196,31 @@ func (s *Service) selectProvider() ([]geobus.Provider, error) {
 	}
 
 	return provider, nil
+}
+
+func (s *Service) selectGeocodeProvider(conf *config.Config, log *logger.Logger, lang language.Tag) (geocode.Geocoder, error) {
+	var geocoder geocode.Geocoder
+
+	switch strings.ToLower(conf.GeoCoder.Provider) {
+	case "nominatim":
+		geocoder = geocode.NewCachedGeocoder(nominatim.New(http.New(log), lang), cacheHitTTL, cacheMissTTL)
+	case "opencage":
+		if conf.GeoCoder.APIKey == "" {
+			return nil, fmt.Errorf("opencage geocoder requires an API key")
+		}
+		geocoder = geocode.NewCachedGeocoder(opencage.New(http.New(log), lang, conf.GeoCoder.APIKey),
+			cacheHitTTL, cacheMissTTL)
+	case "geocode-earth":
+		if conf.GeoCoder.APIKey == "" {
+			return nil, fmt.Errorf("geocode-earth geocoder requires an API key")
+		}
+		geocoder = geocode.NewCachedGeocoder(geocode_earth.New(http.New(log), lang, conf.GeoCoder.APIKey),
+			cacheHitTTL, cacheMissTTL)
+	default:
+		return nil, fmt.Errorf("unsupported geocoder type: %s", conf.GeoCoder.Provider)
+	}
+
+	return geocoder, nil
 }
 
 // printWeather outputs the current weather data to stdout if available and renders it using predefined templates.

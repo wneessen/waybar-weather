@@ -491,7 +491,7 @@ func TestService_selectProvider(t *testing.T) {
 			}
 			tc.confFn(serv.config)
 
-			_, err = serv.selectProvider()
+			_, err = serv.selectGeobusProviders()
 			if !tc.shouldFail && err != nil {
 				t.Fatalf("failed to select provider: %s", err)
 			}
