@@ -85,8 +85,12 @@ func (o *OpenCage) Reverse(ctx context.Context, lat, lon float64) (geocode.Addre
 	query.Set("no_record", "1")
 	query.Set("language", o.lang.String())
 
-	if _, err := o.http.GetWithTimeout(ctx, APIEndpoint, &response, query, nil, APITimeout); err != nil {
+	code, err := o.http.GetWithTimeout(ctx, APIEndpoint, &response, query, nil, APITimeout)
+	if err != nil {
 		return geocode.Address{}, fmt.Errorf("failed to retrieve address details from OpenCage API: %w", err)
+	}
+	if code != 200 {
+		return geocode.Address{}, fmt.Errorf("received non-positive response code from OpenCage API: %d", code)
 	}
 	if response.TotalResults != 1 {
 		return geocode.Address{}, fmt.Errorf("unambigous amount of results returned for coordinates: %d",

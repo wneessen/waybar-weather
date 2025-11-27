@@ -207,6 +207,32 @@ func TestOpenCage_Reverse(t *testing.T) {
 			t.Errorf("expected error to contain %q, got %q", wantErr, err)
 		}
 	})
+	t.Run("API responding with a non-200 reponse", func(t *testing.T) {
+		response := Response{TotalResults: 1}
+		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			buf := bytes.NewBuffer(nil)
+			if err := json.NewEncoder(buf).Encode(response); err != nil {
+				return nil, err
+			}
+			return &stdhttp.Response{
+				StatusCode: 401,
+				Body:       io.NopCloser(buf),
+				Header:     make(stdhttp.Header),
+			}, nil
+		}
+		coder := testCoderWithRoundtripFunc(t, rtFn)
+		if coder == nil {
+			t.Fatal("expected a non-nil geocoder")
+		}
+		_, err := coder.Reverse(t.Context(), cityLat, cityLon)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		wantErr := "received non-positive response code from OpenCage API: 401"
+		if !strings.EqualFold(err.Error(), wantErr) {
+			t.Errorf("expected error to be %q, got %q", wantErr, err)
+		}
+	})
 }
 
 func TestOpenCage_Reverse_integration(t *testing.T) {
