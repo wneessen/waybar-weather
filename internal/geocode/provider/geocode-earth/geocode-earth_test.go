@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-package opencage
+package geocode_earth
 
 import (
 	"bytes"
@@ -25,20 +25,20 @@ import (
 )
 
 const (
-	cityExpected = "Quartier 205, Friedrichstrasse 67, 10117 Berlin, Germany"
-	cityFile     = "../../../../testdata/opencage_berlin.json"
+	cityExpected = "A.T. Kearney, Berlin, Germany"
+	cityFile     = "../../../../testdata/geocodeearth_berlin.json"
 	cityLat      = 52.5129
 	cityLon      = 13.3910
 	testHitTTL   = 1 * time.Second
 	testMissTTL  = 1 * time.Second
 
 	villageExpected = "Marshfield"
-	villageFile     = "../../../../testdata/opencage_marshfield.json"
+	villageFile     = "../../../../testdata/geocodeearth_marshfield.json"
 	villageLat      = 51.46292
 	villageLon      = -2.31850
 
 	townExpected = "Otley"
-	townFile     = "../../../../testdata/opencage_otley.json"
+	townFile     = "../../../../testdata/geocodeearth_otley.json"
 	townLat      = 53.90712
 	townLon      = -1.69404
 )
@@ -182,7 +182,7 @@ func TestOpenCage_Reverse(t *testing.T) {
 		}
 	})
 	t.Run("API responding with more than one result should fail", func(t *testing.T) {
-		response := Response{TotalResults: 2}
+		response := Response{Features: []Feature{}}
 		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
 			buf := bytes.NewBuffer(nil)
 			if err := json.NewEncoder(buf).Encode(response); err != nil {
@@ -202,13 +202,13 @@ func TestOpenCage_Reverse(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
-		wantErr := "unambigous amount of results returned for coordinates"
-		if !strings.Contains(err.Error(), wantErr) {
-			t.Errorf("expected error to contain %q, got %q", wantErr, err)
+		wantErr := "no address found for coordinates"
+		if !strings.EqualFold(err.Error(), wantErr) {
+			t.Errorf("expected error to be %q, got %q", wantErr, err)
 		}
 	})
 	t.Run("API responding with a non-200 reponse", func(t *testing.T) {
-		response := Response{TotalResults: 1}
+		response := Response{Features: []Feature{{Properties: Properties{City: "Berlin"}}}}
 		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
 			buf := bytes.NewBuffer(nil)
 			if err := json.NewEncoder(buf).Encode(response); err != nil {
@@ -228,7 +228,7 @@ func TestOpenCage_Reverse(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
-		wantErr := "received non-positive response code from OpenCage API: 401"
+		wantErr := "received non-positive response code from geocode.earth API: 401"
 		if !strings.EqualFold(err.Error(), wantErr) {
 			t.Errorf("expected error to be %q, got %q", wantErr, err)
 		}
@@ -255,9 +255,9 @@ func TestOpenCage_Reverse_integration(t *testing.T) {
 func testCoder(t *testing.T) geocode.Geocoder {
 	testHttpClient := http.New(logger.New(slog.LevelDebug))
 	testLang := language.English
-	apikey := os.Getenv("OPENCAGE_APIKEY")
+	apikey := os.Getenv("GEOCODEEARTH_APIKEY")
 	if apikey == "" {
-		t.Skip("no opencage API key set, skipping tests")
+		t.Skip("no geocode.earth API key set, skipping tests")
 	}
 	return New(testHttpClient, testLang, apikey)
 }
@@ -266,9 +266,9 @@ func testCoderWithRoundtripFunc(t *testing.T, fn func(req *stdhttp.Request) (*st
 	testHttpClient := http.New(logger.New(slog.LevelDebug))
 	testHttpClient.Transport = testhelper.MockRoundTripper{Fn: fn}
 	testLang := language.English
-	apikey := os.Getenv("OPENCAGE_APIKEY")
+	apikey := os.Getenv("GEOCODEEARTH_APIKEY")
 	if apikey == "" {
-		t.Skip("no opencage API key set, skipping tests")
+		t.Skip("no geocode.earth API key set, skipping tests")
 	}
 	return New(testHttpClient, testLang, apikey)
 }

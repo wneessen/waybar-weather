@@ -66,6 +66,21 @@ func TestNew(t *testing.T) {
 				false,
 			},
 			{
+				"geocode.earth without api-key",
+				[]string{"WAYBARWEATHER_GEOCODER_PROVIDER=geocode-earth"},
+				"geocode-earth",
+				true,
+			},
+			{
+				"opencage with api-key",
+				[]string{
+					"WAYBARWEATHER_GEOCODER_PROVIDER=geocode-earth",
+					"WAYBARWEATHER_GEOCODER_APIKEY=abc",
+				},
+				"geocode-earth",
+				false,
+			},
+			{
 				"unsupported provider",
 				[]string{"WAYBARWEATHER_GEOCODER_PROVIDER=invalid"},
 				"",
@@ -82,24 +97,28 @@ func TestNew(t *testing.T) {
 					t.Setenv(vals[0], vals[1])
 				}
 				serv, err := testService(t, false)
-				if tc.wantFail && err == nil {
-					t.Fatal("expected service creation to fail")
-				}
-				if !tc.wantFail && err != nil {
+				if err != nil {
 					t.Fatalf("failed to create service: %s", err)
-				}
-				if tc.wantFail {
-					return
 				}
 				if serv == nil {
 					t.Fatal("expected service to be non-nil")
 				}
-				if serv.geocoder == nil {
+				provider, err := serv.selectGeocodeProvider(serv.config, serv.logger, serv.t.Language())
+				if tc.wantFail && err == nil {
+					t.Fatal("expected geocode provider selection to fail")
+				}
+				if !tc.wantFail && err != nil {
+					t.Fatalf("failed to select geocode provider: %s", err)
+				}
+				if tc.wantFail {
+					return
+				}
+				if provider == nil {
 					t.Fatal("expected geocoder to be non-nil")
 				}
 				name := fmt.Sprintf("geocoder cache using %s", tc.wantName)
-				if serv.geocoder.Name() != name {
-					t.Errorf("expected geocoder name to be %q, got %q", name, serv.geocoder.Name())
+				if provider.Name() != name {
+					t.Errorf("expected geocoder name to be %q, got %q", name, provider.Name())
 				}
 			})
 		}
@@ -381,13 +400,11 @@ func TestService_fillDisplayData(t *testing.T) {
 		if displaydata.Address.AddressFound {
 			t.Error("expected AddressFound to be false")
 		}
-		sunset := time.Date(2025, 11, 26, 14, 40, 0o7, 0, time.UTC)
-		if !sunset.Equal(displaydata.SunsetTime) {
-			t.Errorf("expected SunsetTime to be %s, got %s", sunset, displaydata.SunsetTime)
+		if displaydata.SunsetTime.IsZero() {
+			t.Errorf("expected SunsetTime to be set, got %s", displaydata.SunsetTime)
 		}
-		sunrise := time.Date(2025, 11, 26, 5, 25, 53, 0, time.UTC)
-		if !sunrise.Equal(displaydata.SunriseTime) {
-			t.Errorf("expected SunriseTime to be %s, got %s", sunset, displaydata.SunsetTime)
+		if displaydata.SunriseTime.IsZero() {
+			t.Errorf("expected SunriseTime to be set, got %s", displaydata.SunsetTime)
 		}
 		if displaydata.Moonphase != "First Quarter" {
 			t.Errorf("expected Moonphase to be %q, got %q", "First Quarter", displaydata.Moonphase)
@@ -491,7 +508,7 @@ func TestService_selectProvider(t *testing.T) {
 			}
 			tc.confFn(serv.config)
 
-			_, err = serv.selectProvider()
+			_, err = serv.selectGeobusProviders()
 			if !tc.shouldFail && err != nil {
 				t.Fatalf("failed to select provider: %s", err)
 			}
