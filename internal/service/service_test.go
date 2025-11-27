@@ -66,6 +66,21 @@ func TestNew(t *testing.T) {
 				false,
 			},
 			{
+				"geocode.earth without api-key",
+				[]string{"WAYBARWEATHER_GEOCODER_PROVIDER=geocode-earth"},
+				"geocode-earth",
+				true,
+			},
+			{
+				"opencage with api-key",
+				[]string{
+					"WAYBARWEATHER_GEOCODER_PROVIDER=geocode-earth",
+					"WAYBARWEATHER_GEOCODER_APIKEY=abc",
+				},
+				"geocode-earth",
+				false,
+			},
+			{
 				"unsupported provider",
 				[]string{"WAYBARWEATHER_GEOCODER_PROVIDER=invalid"},
 				"",
@@ -82,24 +97,28 @@ func TestNew(t *testing.T) {
 					t.Setenv(vals[0], vals[1])
 				}
 				serv, err := testService(t, false)
-				if tc.wantFail && err == nil {
-					t.Fatal("expected service creation to fail")
-				}
-				if !tc.wantFail && err != nil {
+				if err != nil {
 					t.Fatalf("failed to create service: %s", err)
-				}
-				if tc.wantFail {
-					return
 				}
 				if serv == nil {
 					t.Fatal("expected service to be non-nil")
 				}
-				if serv.geocoder == nil {
+				provider, err := serv.selectGeocodeProvider(serv.config, serv.logger, serv.t.Language())
+				if tc.wantFail && err == nil {
+					t.Fatal("expected geocode provider selection to fail")
+				}
+				if !tc.wantFail && err != nil {
+					t.Fatalf("failed to select geocode provider: %s", err)
+				}
+				if tc.wantFail {
+					return
+				}
+				if provider == nil {
 					t.Fatal("expected geocoder to be non-nil")
 				}
 				name := fmt.Sprintf("geocoder cache using %s", tc.wantName)
-				if serv.geocoder.Name() != name {
-					t.Errorf("expected geocoder name to be %q, got %q", name, serv.geocoder.Name())
+				if provider.Name() != name {
+					t.Errorf("expected geocoder name to be %q, got %q", name, provider.Name())
 				}
 			})
 		}
