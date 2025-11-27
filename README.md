@@ -170,6 +170,17 @@ To use OpenCage with your waybar-weather installation first [obtain a free API k
 then change the `provider` key in the `geocoding` section of your configuration file to `opencage` and add the 
 `apikey` key with your API key accordingly.
 
+### Geocode Earth
+Geocode Earth is a commercial geocoding provider based in New York. They offer a free 14-day trial plan that can 
+be used for up to 1000 requests per day (which should also be more than enough for most users). Geocode Earth offers
+an extensive set of data fields that allow for very precise geocoding. They were nice enough to provide a free API 
+key for the waybar-weather project, so that we can do proper testing and development. Thank you Geocode Earth for 
+your support!
+
+To use Geocode Earth with your waybar-weather installation first [start a free trial](https://app.geocode.earth/users/sign_up),
+then change the `provider` key in the `geocoding` section of your configuration file to `geocode-earth` and add the
+`apikey` key with your API key accordingly.
+
 ## Sleep/suspend and resume detection
 waybar-weather will automatically detect when your computer goes to sleep and resumes from sleep
 by subscribing to the D-Bus of your linux system. If your computer wakes up from sleep, 
@@ -323,9 +334,10 @@ the commonly used gettext format (PO files). Any contributions are welcome!
 ## Sponsors
 We thank the following companies for their support:
 
-|                                       | Company                                    | Sponsorship                                                              |
-|---------------------------------------|--------------------------------------------|--------------------------------------------------------------------------|
-| ![OpenCage Logo](assets/opencage.png) | [OpenCage](https://opencagedata.com/)      | Thanks for providing a free API key for their reverse geocoding service. |
+|                                                 | Company                                | Sponsorship                                                              |
+|-------------------------------------------------|----------------------------------------|--------------------------------------------------------------------------|
+| ![OpenCage Logo](assets/opencage.png)           | [OpenCage](https://opencagedata.com/)  | Thanks for providing a free API key for their reverse geocoding service. |
+| ![Geocode Earth Logo](assets/geocode-earth.png) | [Geocode Earth](https://geocode.earth) | Thanks for providing a free API key for their reverse geocoding service. |
 
 ## License
 
