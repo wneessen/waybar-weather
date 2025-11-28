@@ -17,25 +17,34 @@ type Data struct {
 	GeneratedAt time.Time
 	Coordinates geobus.Coordinate
 
-	Temperature         map[time.Time]float64
-	ApparentTemperature map[time.Time]float64
-	WeatherCode         map[time.Time]int
-	WindSpeed           map[time.Time]float64
-	IsDay               map[time.Time]bool
-	WindDirection       map[time.Time]float64
-	RelativeHumidity    map[time.Time]float64
-	PressureMSL         map[time.Time]float64
+	Current  Instant
+	Forecast map[DayHour]Instant
 }
+
+type Instant struct {
+	InstantTime         time.Time
+	Temperature         float64
+	ApparentTemperature float64
+	WeatherCode         int
+	WindSpeed           float64
+	WindDirection       float64
+	RelativeHumidity    float64
+	PressureMSL         float64
+	IsDay               bool
+}
+
+type DayHour int64
 
 func NewData() *Data {
 	return &Data{
-		Temperature:         make(map[time.Time]float64),
-		ApparentTemperature: make(map[time.Time]float64),
-		WeatherCode:         make(map[time.Time]int),
-		WindSpeed:           make(map[time.Time]float64),
-		IsDay:               make(map[time.Time]bool),
-		WindDirection:       make(map[time.Time]float64),
-		RelativeHumidity:    make(map[time.Time]float64),
-		PressureMSL:         make(map[time.Time]float64),
+		Forecast: make(map[DayHour]Instant),
 	}
+}
+
+func NewDayHour(t time.Time) DayHour {
+	return DayHour(t.Truncate(time.Hour).Unix())
+}
+
+func (t DayHour) Time() time.Time {
+	return time.Unix(int64(t), 0)
 }
