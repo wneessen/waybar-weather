@@ -25,34 +25,11 @@ var dataFields = []string{
 }
 
 type OpenMeteo struct {
+	unit string
 	log  *logger.Logger
 	http *http.Client
 }
 
-/*
-"latitude": 52.52,
-
-		"longitude": 13.419998,
-		"generationtime_ms": 0.07426738739013672,
-		"utc_offset_seconds": 3600,
-		"timezone": "Europe/Berlin",
-		"timezone_abbreviation": "GMT+1",
-		"elevation": 38.0,
-		"hourly_units": {
-		  "time": "iso8601",
-		  "temperature_2m": "°C"
-		},
-	 "current_units": {
-	    "time": "iso8601",
-	    "interval": "seconds",
-	    "temperature_2m": "°C"
-	  },
-	  "current": {
-	    "time": "2025-11-27T22:15",
-	    "interval": 900,
-	    "temperature_2m": 3.5
-	  },
-*/
 type resTime struct {
 	time.Time
 }
@@ -122,7 +99,7 @@ type Hourly struct {
 	Temperature []float64   `json:"temperature_2m"`
 }
 
-func New(http *http.Client, log *logger.Logger) (*OpenMeteo, error) {
+func New(http *http.Client, log *logger.Logger, unit string) (*OpenMeteo, error) {
 	if http == nil {
 		return nil, fmt.Errorf("http client is required")
 	}
@@ -130,7 +107,7 @@ func New(http *http.Client, log *logger.Logger) (*OpenMeteo, error) {
 		return nil, fmt.Errorf("logger is required")
 	}
 
-	return &OpenMeteo{http: http, log: log}, nil
+	return &OpenMeteo{unit: unit, http: http, log: log}, nil
 }
 
 func (o *OpenMeteo) Name() string {
@@ -149,6 +126,11 @@ func (o *OpenMeteo) GetWeather(ctx context.Context, coords geobus.Coordinate) (*
 	query.Set("hourly", strings.Join(dataFields, ","))
 	query.Set("timezone", "auto")
 	query.Set("past_days", "1")
+	if strings.ToLower(o.unit) == "imperial" {
+		query.Set("temperature_unit", "fahrenheit")
+		query.Set("wind_speed_unit", "mph")
+		query.Set("precipitation_unit", "inch")
+	}
 
 	code, err := o.http.GetWithTimeout(ctx, apiEndpoint, res, query, nil, apiTimeout)
 	if err != nil {
