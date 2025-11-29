@@ -11,15 +11,18 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"testing/synctest"
 	tt "text/template"
 	"time"
+	"unsafe"
 
 	"github.com/hectormalot/omgo"
 
 	"github.com/wneessen/waybar-weather/internal/config"
+	"github.com/wneessen/waybar-weather/internal/geocode"
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/i18n"
 	"github.com/wneessen/waybar-weather/internal/logger"
@@ -545,3 +548,120 @@ func testService(_ *testing.T, nilLogger bool) (*Service, error) {
 type failWriter struct{}
 
 func (f failWriter) Write([]byte) (int, error) { return 0, fmt.Errorf("failed to write") }
+
+type mockGeocoder struct{}
+
+func (m *mockGeocoder) Name() string {
+	return "mock geocoder"
+}
+
+func (m *mockGeocoder) Reverse(
+	_ context.Context, lat, lon float64,
+) (geocode.Address, error) {
+	return geocode.Address{
+		AddressFound: true,
+		Latitude:     lat,
+		Longitude:    lon,
+		DisplayName:  fmt.Sprintf("Test Location %.6f,%.6f", lat, lon),
+	}, nil
+}
+
+func TestService_updateLocation(t *testing.T) {
+	tests := []struct {
+		name      string
+		latitude  float64
+		longitude float64
+		wantErr   bool
+	}{
+		{
+			name:      "positive lat positive lon",
+			latitude:  44.4375,
+			longitude: 26.125,
+			wantErr:   false,
+		},
+		{
+			name:      "negative lat positive lon",
+			latitude:  -33.8688,
+			longitude: 151.2093,
+			wantErr:   false,
+		},
+		{
+			name:      "positive lat negative lon",
+			latitude:  40.7128,
+			longitude: -74.0060,
+			wantErr:   false,
+		},
+		{
+			name:      "negative lat negative lon",
+			latitude:  -22.9068,
+			longitude: -43.1729,
+			wantErr:   false,
+		},
+		{
+			name:      "zero lat zero lon",
+			latitude:  0.0,
+			longitude: 0.0,
+			wantErr:   false,
+		},
+		{
+			name:      "extreme north east",
+			latitude:  90.0,
+			longitude: 180.0,
+			wantErr:   false,
+		},
+		{
+			name:      "extreme south west",
+			latitude:  -90.0,
+			longitude: -180.0,
+			wantErr:   false,
+		},
+		{
+			name:      "equator prime meridian",
+			latitude:  0.0,
+			longitude: 0.0,
+			wantErr:   false,
+		},
+		{
+			name:      "small positive values",
+			latitude:  0.000001,
+			longitude: 0.000001,
+			wantErr:   false,
+		},
+		{
+			name:      "small negative values",
+			latitude:  -0.000001,
+			longitude: -0.000001,
+			wantErr:   false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			serv, err := testService(t, false)
+			if err != nil {
+				t.Fatalf("failed to create service: %s", err)
+			}
+
+			// Set mock geocoder using unsafe to access unexported field
+			rv := reflect.ValueOf(serv).Elem()
+			geocoderField := rv.FieldByName("geocoder")
+			if !geocoderField.IsValid() {
+				t.Fatal("geocoder field not found")
+			}
+			// Use unsafe to set unexported interface field
+			geocoderFieldPtr := unsafe.Pointer(geocoderField.UnsafeAddr())
+			mockGeocoder := &mockGeocoder{}
+			*(*geocode.Geocoder)(geocoderFieldPtr) = mockGeocoder
+
+			ctx := context.Background()
+			err = serv.updateLocation(ctx, tc.latitude, tc.longitude)
+
+			if tc.wantErr && err == nil {
+				t.Error("expected error but got none")
+			}
+			if !tc.wantErr && err != nil {
+				t.Errorf("unexpected error: %s", err)
+			}
+		})
+	}
+}
