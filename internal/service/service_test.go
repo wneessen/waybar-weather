@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	stdhttp "net/http"
 	"os"
 	"strings"
 	"testing"
@@ -25,6 +26,7 @@ import (
 	"github.com/wneessen/waybar-weather/internal/i18n"
 	"github.com/wneessen/waybar-weather/internal/logger"
 	"github.com/wneessen/waybar-weather/internal/template"
+	"github.com/wneessen/waybar-weather/internal/testhelper"
 )
 
 const (
@@ -553,9 +555,7 @@ func (m *mockGeocoder) Name() string {
 	return "mock geocoder"
 }
 
-func (m *mockGeocoder) Reverse(
-	_ context.Context, lat, lon float64,
-) (geocode.Address, error) {
+func (m *mockGeocoder) Reverse(_ context.Context, lat, lon float64) (geocode.Address, error) {
 	return geocode.Address{
 		AddressFound: true,
 		Latitude:     lat,
