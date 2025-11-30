@@ -27,18 +27,17 @@ import (
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/gpsd"
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/ichnaea"
 	"github.com/wneessen/waybar-weather/internal/geocode"
-	geocode_earth "github.com/wneessen/waybar-weather/internal/geocode/provider/geocode-earth"
+	"github.com/wneessen/waybar-weather/internal/geocode/provider/geocode-earth"
 	"github.com/wneessen/waybar-weather/internal/geocode/provider/opencage"
 	nominatim "github.com/wneessen/waybar-weather/internal/geocode/provider/osm-nominatim"
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/job"
 	"github.com/wneessen/waybar-weather/internal/logger"
-	"github.com/wneessen/waybar-weather/internal/presenter"
 	"github.com/wneessen/waybar-weather/internal/template"
+	"github.com/wneessen/waybar-weather/internal/weather"
+	"github.com/wneessen/waybar-weather/internal/weather/provider/open-meteo"
 
 	"github.com/hectormalot/omgo"
-	"github.com/nathan-osman/go-sunrise"
-	"github.com/wneessen/go-moonphase"
 )
 
 const (
@@ -57,15 +56,15 @@ type outputData struct {
 type Service struct {
 	SignalSrc signalSource
 
-	config    *config.Config
-	geobus    *geobus.GeoBus
-	logger    *logger.Logger
-	geocoder  geocode.Geocoder
-	omclient  omgo.Client
-	output    io.Writer
-	jobs      []*job.Job
-	templates *template.Templates
-	t         *spreak.Localizer
+	config      *config.Config
+	geobus      *geobus.GeoBus
+	logger      *logger.Logger
+	geocoder    geocode.Geocoder
+	weatherProv weather.Provider
+	output      io.Writer
+	jobs        []*job.Job
+	templates   *template.Templates
+	t           *spreak.Localizer
 
 	locationLock  sync.RWMutex
 	address       geocode.Address
@@ -74,7 +73,7 @@ type Service struct {
 
 	weatherLock  sync.RWMutex
 	weatherIsSet bool
-	weather      *omgo.Forecast
+	weather      weather.Data
 
 	displayAltLock sync.RWMutex
 	displayAltText bool
@@ -103,7 +102,6 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 		config:         conf,
 		geobus:         bus,
 		logger:         log,
-		omclient:       omclient,
 		output:         os.Stdout,
 		templates:      tpls,
 		t:              t,
@@ -112,8 +110,8 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 
 	// Schedule jobs
 	outputJob := job.New(service.config.Intervals.Output, service.printWeather)
-	weatherUpdateJob := job.New(service.config.Intervals.WeatherUpdate, service.fetchWeather)
-	service.jobs = append(service.jobs, outputJob, weatherUpdateJob)
+	// weatherUpdateJob := job.New(service.config.Intervals.WeatherUpdate, service.fetchWeather)
+	service.jobs = append(service.jobs, outputJob)
 
 	return service, nil
 }
@@ -140,6 +138,13 @@ func (s *Service) Run(ctx context.Context) (err error) {
 		return fmt.Errorf("failed to create geobus orchestrator: %w", err)
 	}
 	geobus.TrackProviders(ctx, s.geobus, SubID, geobusProvider...)
+
+	// Select the weather provider
+	weatherProv, err := s.selectWeatherProvider()
+	if err != nil {
+		return fmt.Errorf("failed to create weather provider: %w", err)
+	}
+	s.weatherProv = weatherProv
 
 	// Subscribe to geolocation updates from the geobus
 	sub, unsub := s.geobus.Subscribe(SubID, 1)
@@ -215,13 +220,26 @@ func (s *Service) selectGeocodeProvider(conf *config.Config, log *logger.Logger,
 		if conf.GeoCoder.APIKey == "" {
 			return nil, fmt.Errorf("geocode-earth geocoder requires an API key")
 		}
-		geocoder = geocode.NewCachedGeocoder(geocode_earth.New(http.New(log), lang, conf.GeoCoder.APIKey),
+		geocoder = geocode.NewCachedGeocoder(geocodeearth.New(http.New(log), lang, conf.GeoCoder.APIKey),
 			cacheHitTTL, cacheMissTTL)
 	default:
 		return nil, fmt.Errorf("unsupported geocoder type: %s", conf.GeoCoder.Provider)
 	}
 
 	return geocoder, nil
+}
+
+func (s *Service) selectWeatherProvider() (provider weather.Provider, err error) {
+	switch strings.ToLower(s.config.Weather.Provider) {
+	case "open-meteo":
+		provider, err = openmeteo.New(http.New(s.logger), s.logger, s.config.Units)
+		if err != nil {
+			return provider, fmt.Errorf("failed to create Open-Meteo weather provider: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("unsupported weather provider: %s", s.config.Weather.Provider)
+	}
+	return provider, nil
 }
 
 // printWeather outputs the current weather data to stdout if available and renders it using predefined templates.
@@ -274,86 +292,89 @@ func (s *Service) printWeather(context.Context) {
 // fillDisplayData populates the provided DisplayData object with details based on current or
 // forecasted weather information. It locks relevant data structures to ensure safe concurrent
 // access and conditionally fills fields based on the mode.
-func (s *Service) fillDisplayData(target *template.DisplayData) {
-	s.locationLock.RLock()
-	defer s.locationLock.RUnlock()
-	s.weatherLock.RLock()
-	defer s.weatherLock.RUnlock()
+func (s *Service) fillDisplayData(_ *template.DisplayData) {
+	/*
+		s.locationLock.RLock()
+		defer s.locationLock.RUnlock()
+		s.weatherLock.RLock()
+		defer s.weatherLock.RUnlock()
 
-	// The target must not be nil
-	if target == nil {
-		return
-	}
-
-	// We need valid weather data to fill the display data
-	if s.weather == nil {
-		s.logger.Debug("no weather data available yet, geo location might not have returned a location yet")
-		return
-	}
-
-	// Coordinates and address data
-	target.Latitude = s.weather.Latitude
-	target.Longitude = s.weather.Longitude
-	target.Elevation = s.weather.Elevation
-	target.Address = s.address
-
-	// Moon phase
-	m := moonphase.New(time.Now())
-	target.Moonphase = m.PhaseName()
-	target.MoonphaseIcon = presenter.MoonPhaseIcon[target.Moonphase]
-
-	// Generel weather data
-	now := time.Now()
-	nowHourUTC := now.UTC().Truncate(time.Hour)
-	nowIdx := s.weatherIndexByTime(nowHourUTC)
-	target.UpdateTime = s.weather.CurrentWeather.Time.Time
-	target.TempUnit = s.weather.HourlyUnits["temperature_2m"]
-	target.PressureUnit = s.weather.HourlyUnits["pressure_msl"]
-	sunriseTimeUTC, sunsetTimeUTC := sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude, now.Year(),
-		now.Month(), now.Day())
-	target.SunriseTime, target.SunsetTime = sunriseTimeUTC.In(now.Location()), sunsetTimeUTC.In(now.Location())
-	target.Current.IsDaytime = false
-	if now.After(target.SunriseTime) && now.Before(target.SunsetTime) {
-		target.Current.IsDaytime = true
-	}
-
-	// Current weather data
-	target.Current.Temperature = s.weather.CurrentWeather.Temperature
-	target.Current.WeatherCode = s.weather.CurrentWeather.WeatherCode
-	target.Current.WindDirection = s.weather.CurrentWeather.WindDirection
-	target.Current.WindSpeed = s.weather.CurrentWeather.WindSpeed
-	target.Current.WeatherDateForTime = s.weather.CurrentWeather.Time.Time
-	target.Current.ConditionIcon = presenter.WMOWeatherIcons[target.Current.WeatherCode][target.Current.IsDaytime]
-	target.Current.Condition = s.t.Get(presenter.WMOWeatherCodes[target.Current.WeatherCode])
-	if nowIdx != -1 {
-		target.Current.ApparentTemperature = s.weather.HourlyMetrics["apparent_temperature"][nowIdx]
-		target.Current.Humidity = s.weather.HourlyMetrics["relative_humidity_2m"][nowIdx]
-		target.Current.PressureMSL = s.weather.HourlyMetrics["pressure_msl"][nowIdx]
-	}
-
-	// Forecast weather data
-	fcastHours := time.Duration(s.config.Weather.ForecastHours) * time.Hour //nolint:gosec
-	fcastTime := now.Add(fcastHours).Truncate(time.Hour)
-	fcastTimeUTC := now.Add(fcastHours).UTC().Truncate(time.Hour)
-	fcastIdx := s.weatherIndexByTime(fcastTimeUTC)
-	if fcastIdx != -1 {
-		target.Forecast.WeatherDateForTime = fcastTime
-		target.Forecast.IsDaytime = false
-		if s.weather.HourlyMetrics["is_day"][fcastIdx] == 1 {
-			target.Forecast.IsDaytime = true
+		// The target must not be nil
+		if target == nil {
+			return
 		}
-		target.Forecast.Temperature = s.weather.HourlyMetrics["temperature_2m"][fcastIdx]
-		target.Forecast.ApparentTemperature = s.weather.HourlyMetrics["apparent_temperature"][fcastIdx]
-		target.Forecast.Humidity = s.weather.HourlyMetrics["relative_humidity_2m"][fcastIdx]
-		target.Forecast.PressureMSL = s.weather.HourlyMetrics["pressure_msl"][fcastIdx]
-		target.Forecast.WeatherCode = s.weather.HourlyMetrics["weather_code"][fcastIdx]
-		target.Forecast.WindDirection = s.weather.HourlyMetrics["wind_direction_10m"][fcastIdx]
-		target.Forecast.WindSpeed = s.weather.HourlyMetrics["wind_speed_10m"][fcastIdx]
-		target.Forecast.ConditionIcon = presenter.WMOWeatherIcons[target.Forecast.WeatherCode][target.Forecast.IsDaytime]
-		target.Forecast.Condition = s.t.Get(presenter.WMOWeatherCodes[target.Forecast.WeatherCode])
-	} else {
-		target.Forecast = target.Current
-	}
+
+		// We need valid weather data to fill the display data
+		if s.weather == nil {
+			s.logger.Debug("no weather data available yet, geo location might not have returned a location yet")
+			return
+		}
+
+		// Coordinates and address data
+		// target.Latitude = s.weather.Latitude
+		// target.Longitude = s.weather.Longitude
+		// target.Elevation = s.weather.Elevation
+		target.Address = s.address
+
+		// Moon phase
+		m := moonphase.New(time.Now())
+		target.Moonphase = m.PhaseName()
+		target.MoonphaseIcon = presenter.MoonPhaseIcon[target.Moonphase]
+
+		// Generel weather data
+		now := time.Now()
+		nowHourUTC := now.UTC().Truncate(time.Hour)
+		nowIdx := s.weatherIndexByTime(nowHourUTC)
+		target.UpdateTime = s.weather.CurrentWeather.Time.Time
+		target.TempUnit = s.weather.HourlyUnits["temperature_2m"]
+		target.PressureUnit = s.weather.HourlyUnits["pressure_msl"]
+		sunriseTimeUTC, sunsetTimeUTC := sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude, now.Year(),
+			now.Month(), now.Day())
+		target.SunriseTime, target.SunsetTime = sunriseTimeUTC.In(now.Location()), sunsetTimeUTC.In(now.Location())
+		target.Current.IsDaytime = false
+		if now.After(target.SunriseTime) && now.Before(target.SunsetTime) {
+			target.Current.IsDaytime = true
+		}
+
+		// Current weather data
+		target.Current.Temperature = s.weather.CurrentWeather.Temperature
+		target.Current.WeatherCode = s.weather.CurrentWeather.WeatherCode
+		target.Current.WindDirection = s.weather.CurrentWeather.WindDirection
+		target.Current.WindSpeed = s.weather.CurrentWeather.WindSpeed
+		target.Current.WeatherDateForTime = s.weather.CurrentWeather.Time.Time
+		target.Current.ConditionIcon = presenter.WMOWeatherIcons[int(target.Current.WeatherCode)][target.Current.IsDaytime]
+		target.Current.Condition = s.t.Get(presenter.WMOWeatherCodes[int(target.Current.WeatherCode)])
+		if nowIdx != -1 {
+			target.Current.ApparentTemperature = s.weather.HourlyMetrics["apparent_temperature"][nowIdx]
+			target.Current.Humidity = s.weather.HourlyMetrics["relative_humidity_2m"][nowIdx]
+			target.Current.PressureMSL = s.weather.HourlyMetrics["pressure_msl"][nowIdx]
+		}
+
+		// Forecast weather data
+		fcastHours := time.Duration(s.config.Weather.ForecastHours) * time.Hour //nolint:gosec
+		fcastTime := now.Add(fcastHours).Truncate(time.Hour)
+		fcastTimeUTC := now.Add(fcastHours).UTC().Truncate(time.Hour)
+		fcastIdx := s.weatherIndexByTime(fcastTimeUTC)
+		if fcastIdx != -1 {
+			target.Forecast.WeatherDateForTime = fcastTime
+			target.Forecast.IsDaytime = false
+			if s.weather.HourlyMetrics["is_day"][fcastIdx] == 1 {
+				target.Forecast.IsDaytime = true
+			}
+			target.Forecast.Temperature = s.weather.HourlyMetrics["temperature_2m"][fcastIdx]
+			target.Forecast.ApparentTemperature = s.weather.HourlyMetrics["apparent_temperature"][fcastIdx]
+			target.Forecast.Humidity = s.weather.HourlyMetrics["relative_humidity_2m"][fcastIdx]
+			target.Forecast.PressureMSL = s.weather.HourlyMetrics["pressure_msl"][fcastIdx]
+			target.Forecast.WeatherCode = s.weather.HourlyMetrics["weather_code"][fcastIdx]
+			target.Forecast.WindDirection = s.weather.HourlyMetrics["wind_direction_10m"][fcastIdx]
+			target.Forecast.WindSpeed = s.weather.HourlyMetrics["wind_speed_10m"][fcastIdx]
+			target.Forecast.ConditionIcon = presenter.WMOWeatherIcons[int(target.Forecast.WeatherCode)][target.Forecast.IsDaytime]
+			target.Forecast.Condition = s.t.Get(presenter.WMOWeatherCodes[int(target.Forecast.WeatherCode)])
+		} else {
+			target.Forecast = target.Current
+		}
+
+	*/
 }
 
 // updateLocation updates the service's location and address based on provided latitude and longitude.
@@ -385,7 +406,6 @@ func (s *Service) updateLocation(ctx context.Context, latitude, longitude float6
 		slog.Any("coordinates", s.location), slog.String("source", s.geocoder.Name()),
 		slog.Bool("cache_hit", address.CacheHit))
 
-	s.fetchWeather(ctx)
 	s.printWeather(ctx)
 
 	return nil
@@ -412,6 +432,7 @@ func (s *Service) processLocationUpdates(ctx context.Context, sub <-chan geobus.
 	}
 }
 
+/*
 func (s *Service) weatherIndexByTime(atTime time.Time) int {
 	for i, t := range s.weather.HourlyTimes {
 		if t.Equal(atTime) {
@@ -420,3 +441,6 @@ func (s *Service) weatherIndexByTime(atTime time.Time) int {
 	}
 	return -1
 }
+
+
+*/
