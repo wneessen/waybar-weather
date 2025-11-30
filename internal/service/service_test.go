@@ -11,14 +11,12 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 	"testing/synctest"
 	tt "text/template"
 	"time"
-	"unsafe"
-
+	
 	"github.com/hectormalot/omgo"
 
 	"github.com/wneessen/waybar-weather/internal/config"
@@ -635,26 +633,24 @@ func TestService_updateLocation(t *testing.T) {
 		},
 	}
 
+	rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+		return &stdhttp.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewBufferString("{}")),
+			Header:     make(stdhttp.Header),
+		}, nil
+	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			serv, err := testService(t, false)
 			if err != nil {
 				t.Fatalf("failed to create service: %s", err)
 			}
+			serv.output = io.Discard
+			serv.geocoder = &mockGeocoder{}
+			serv.omclient.Client.Transport = testhelper.MockRoundTripper{Fn: rtFn}
 
-			// Set mock geocoder using unsafe to access unexported field
-			rv := reflect.ValueOf(serv).Elem()
-			geocoderField := rv.FieldByName("geocoder")
-			if !geocoderField.IsValid() {
-				t.Fatal("geocoder field not found")
-			}
-			// Use unsafe to set unexported interface field
-			geocoderFieldPtr := unsafe.Pointer(geocoderField.UnsafeAddr())
-			mockGeocoder := &mockGeocoder{}
-			*(*geocode.Geocoder)(geocoderFieldPtr) = mockGeocoder
-
-			ctx := context.Background()
-			err = serv.updateLocation(ctx, tc.latitude, tc.longitude)
+			err = serv.updateLocation(t.Context(), tc.latitude, tc.longitude)
 
 			if tc.wantErr && err == nil {
 				t.Error("expected error but got none")
