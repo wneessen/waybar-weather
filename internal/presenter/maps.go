@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-package service
+package presenter
 
 import "github.com/vorlif/spreak/localize"
 
@@ -19,7 +19,7 @@ var MoonPhaseIcon = map[string]string{
 }
 
 // WMOWeatherCodes maps WMO weather code integers to their descriptions
-var WMOWeatherCodes = map[float64]localize.MsgID{
+var WMOWeatherCodes = map[int]localize.MsgID{
 	0:  "Clear sky",
 	1:  "Mainly clear",
 	2:  "Partly cloudy",
@@ -51,7 +51,7 @@ var WMOWeatherCodes = map[float64]localize.MsgID{
 }
 
 // WMOWeatherIcons maps WMO weather codes to single emoji icons for day (1) and night (0)
-var WMOWeatherIcons = map[float64]map[bool]string{
+var WMOWeatherIcons = map[int]map[bool]string{
 	0: {
 		true:  "☀️", // Clear sky (day)
 		false: "🌙",

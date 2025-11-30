@@ -1,8 +1,13 @@
+// SPDX-FileCopyrightText: Winni Neessen <wn@neessen.dev>
+//
+// SPDX-License-Identifier: MIT
+
 package open_meteo
 
 import (
 	"log/slog"
 	"testing"
+	"time"
 
 	"github.com/wneessen/waybar-weather/internal/geobus"
 	"github.com/wneessen/waybar-weather/internal/http"
@@ -18,7 +23,7 @@ const (
 func TestNew(t *testing.T) {
 	var client weather.Provider
 	var err error
-	client, err = New(http.New(logger.New(slog.LevelInfo)), logger.New(slog.LevelDebug))
+	client, err = New(http.New(logger.New(slog.LevelInfo)), logger.New(slog.LevelDebug), "metric")
 	if err != nil {
 		t.Fatalf("failed to create client: %s", err)
 	}
@@ -27,5 +32,6 @@ func TestNew(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to get weather: %s", err)
 	}
-	t.Logf("weather: %+v", data)
+	now := weather.NewDayHour(time.Now())
+	t.Logf("now: %s / weather: %+v°C", now.Time().String(), data.Current.Temperature)
 }

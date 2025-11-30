@@ -33,6 +33,7 @@ import (
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/job"
 	"github.com/wneessen/waybar-weather/internal/logger"
+	"github.com/wneessen/waybar-weather/internal/presenter"
 	"github.com/wneessen/waybar-weather/internal/template"
 
 	"github.com/hectormalot/omgo"
@@ -299,7 +300,7 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 	// Moon phase
 	m := moonphase.New(time.Now())
 	target.Moonphase = m.PhaseName()
-	target.MoonphaseIcon = MoonPhaseIcon[target.Moonphase]
+	target.MoonphaseIcon = presenter.MoonPhaseIcon[target.Moonphase]
 
 	// Generel weather data
 	now := time.Now()
@@ -322,8 +323,8 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 	target.Current.WindDirection = s.weather.CurrentWeather.WindDirection
 	target.Current.WindSpeed = s.weather.CurrentWeather.WindSpeed
 	target.Current.WeatherDateForTime = s.weather.CurrentWeather.Time.Time
-	target.Current.ConditionIcon = WMOWeatherIcons[target.Current.WeatherCode][target.Current.IsDaytime]
-	target.Current.Condition = s.t.Get(WMOWeatherCodes[target.Current.WeatherCode])
+	target.Current.ConditionIcon = presenter.WMOWeatherIcons[target.Current.WeatherCode][target.Current.IsDaytime]
+	target.Current.Condition = s.t.Get(presenter.WMOWeatherCodes[target.Current.WeatherCode])
 	if nowIdx != -1 {
 		target.Current.ApparentTemperature = s.weather.HourlyMetrics["apparent_temperature"][nowIdx]
 		target.Current.Humidity = s.weather.HourlyMetrics["relative_humidity_2m"][nowIdx]
@@ -348,8 +349,8 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 		target.Forecast.WeatherCode = s.weather.HourlyMetrics["weather_code"][fcastIdx]
 		target.Forecast.WindDirection = s.weather.HourlyMetrics["wind_direction_10m"][fcastIdx]
 		target.Forecast.WindSpeed = s.weather.HourlyMetrics["wind_speed_10m"][fcastIdx]
-		target.Forecast.ConditionIcon = WMOWeatherIcons[target.Forecast.WeatherCode][target.Forecast.IsDaytime]
-		target.Forecast.Condition = s.t.Get(WMOWeatherCodes[target.Forecast.WeatherCode])
+		target.Forecast.ConditionIcon = presenter.WMOWeatherIcons[target.Forecast.WeatherCode][target.Forecast.IsDaytime]
+		target.Forecast.Condition = s.t.Get(presenter.WMOWeatherCodes[target.Forecast.WeatherCode])
 	} else {
 		target.Forecast = target.Current
 	}

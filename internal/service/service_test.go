@@ -23,6 +23,7 @@ import (
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/i18n"
 	"github.com/wneessen/waybar-weather/internal/logger"
+	"github.com/wneessen/waybar-weather/internal/presenter"
 	"github.com/wneessen/waybar-weather/internal/template"
 )
 
@@ -409,8 +410,8 @@ func TestService_fillDisplayData(t *testing.T) {
 		if displaydata.Moonphase != "First Quarter" {
 			t.Errorf("expected Moonphase to be %q, got %q", "First Quarter", displaydata.Moonphase)
 		}
-		if displaydata.MoonphaseIcon != MoonPhaseIcon[displaydata.Moonphase] {
-			t.Errorf("expected MoonphaseIcon to be %q, got %q", MoonPhaseIcon[displaydata.Moonphase], displaydata.MoonphaseIcon)
+		if displaydata.MoonphaseIcon != presenter.MoonPhaseIcon[displaydata.Moonphase] {
+			t.Errorf("expected MoonphaseIcon to be %q, got %q", presenter.MoonPhaseIcon[displaydata.Moonphase], displaydata.MoonphaseIcon)
 		}
 		if displaydata.Current.Temperature != 9.1 {
 			t.Errorf("expected Current.Temperature to be %f, got %f", 9.1, displaydata.Current.Temperature)
