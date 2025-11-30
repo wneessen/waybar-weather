@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-package open_meteo
+package openmeteo
 
 import (
 	"context"
