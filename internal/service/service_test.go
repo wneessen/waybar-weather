@@ -17,8 +17,9 @@ import (
 	"testing/synctest"
 	tt "text/template"
 	"time"
-	
+
 	"github.com/hectormalot/omgo"
+	"github.com/wneessen/go-moonphase"
 
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/geocode"
@@ -388,6 +389,7 @@ func TestService_fillDisplayData(t *testing.T) {
 			t.Fatalf("failed to create service: %s", err)
 		}
 		serv.weather = weatherData
+		m := moonphase.New(time.Now())
 
 		displaydata := new(template.DisplayData)
 		serv.fillDisplayData(displaydata)
@@ -409,8 +411,8 @@ func TestService_fillDisplayData(t *testing.T) {
 		if displaydata.SunriseTime.IsZero() {
 			t.Errorf("expected SunriseTime to be set, got %s", displaydata.SunsetTime)
 		}
-		if displaydata.Moonphase != "First Quarter" {
-			t.Errorf("expected Moonphase to be %q, got %q", "First Quarter", displaydata.Moonphase)
+		if displaydata.Moonphase != m.PhaseName() {
+			t.Errorf("expected Moonphase to be %q, got %q", m.PhaseName(), displaydata.Moonphase)
 		}
 		if displaydata.MoonphaseIcon != MoonPhaseIcon[displaydata.Moonphase] {
 			t.Errorf("expected MoonphaseIcon to be %q, got %q", MoonPhaseIcon[displaydata.Moonphase], displaydata.MoonphaseIcon)
