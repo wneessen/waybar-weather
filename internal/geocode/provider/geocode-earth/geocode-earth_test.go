@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-package geocode_earth
+package geocodeearth
 
 import (
 	"bytes"
