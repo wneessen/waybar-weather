@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	stdhttp "net/http"
 	"os"
 	"strings"
 	"testing"
@@ -18,13 +19,16 @@ import (
 	"time"
 
 	"github.com/hectormalot/omgo"
+	"github.com/wneessen/go-moonphase"
 
 	"github.com/wneessen/waybar-weather/internal/config"
+	"github.com/wneessen/waybar-weather/internal/geocode"
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/i18n"
 	"github.com/wneessen/waybar-weather/internal/logger"
 	"github.com/wneessen/waybar-weather/internal/presenter"
 	"github.com/wneessen/waybar-weather/internal/template"
+	"github.com/wneessen/waybar-weather/internal/testhelper"
 )
 
 const (
@@ -386,6 +390,7 @@ func TestService_fillDisplayData(t *testing.T) {
 			t.Fatalf("failed to create service: %s", err)
 		}
 		serv.weather = weatherData
+		m := moonphase.New(time.Now())
 
 		displaydata := new(template.DisplayData)
 		serv.fillDisplayData(displaydata)
@@ -407,8 +412,8 @@ func TestService_fillDisplayData(t *testing.T) {
 		if displaydata.SunriseTime.IsZero() {
 			t.Errorf("expected SunriseTime to be set, got %s", displaydata.SunsetTime)
 		}
-		if displaydata.Moonphase != "First Quarter" {
-			t.Errorf("expected Moonphase to be %q, got %q", "First Quarter", displaydata.Moonphase)
+		if displaydata.Moonphase != m.PhaseName() {
+			t.Errorf("expected Moonphase to be %q, got %q", m.PhaseName(), displaydata.Moonphase)
 		}
 		if displaydata.MoonphaseIcon != presenter.MoonPhaseIcon[displaydata.Moonphase] {
 			t.Errorf("expected MoonphaseIcon to be %q, got %q", presenter.MoonPhaseIcon[displaydata.Moonphase], displaydata.MoonphaseIcon)
@@ -546,3 +551,116 @@ func testService(_ *testing.T, nilLogger bool) (*Service, error) {
 type failWriter struct{}
 
 func (f failWriter) Write([]byte) (int, error) { return 0, fmt.Errorf("failed to write") }
+
+type mockGeocoder struct{}
+
+func (m *mockGeocoder) Name() string {
+	return "mock geocoder"
+}
+
+func (m *mockGeocoder) Reverse(_ context.Context, lat, lon float64) (geocode.Address, error) {
+	return geocode.Address{
+		AddressFound: true,
+		Latitude:     lat,
+		Longitude:    lon,
+		DisplayName:  fmt.Sprintf("Test Location %.6f,%.6f", lat, lon),
+	}, nil
+}
+
+func TestService_updateLocation(t *testing.T) {
+	tests := []struct {
+		name      string
+		latitude  float64
+		longitude float64
+		wantErr   bool
+	}{
+		{
+			name:      "positive lat positive lon",
+			latitude:  44.4375,
+			longitude: 26.125,
+			wantErr:   false,
+		},
+		{
+			name:      "negative lat positive lon",
+			latitude:  -33.8688,
+			longitude: 151.2093,
+			wantErr:   false,
+		},
+		{
+			name:      "positive lat negative lon",
+			latitude:  40.7128,
+			longitude: -74.0060,
+			wantErr:   false,
+		},
+		{
+			name:      "negative lat negative lon",
+			latitude:  -22.9068,
+			longitude: -43.1729,
+			wantErr:   false,
+		},
+		{
+			name:      "zero lat zero lon",
+			latitude:  0.0,
+			longitude: 0.0,
+			wantErr:   false,
+		},
+		{
+			name:      "extreme north east",
+			latitude:  90.0,
+			longitude: 180.0,
+			wantErr:   false,
+		},
+		{
+			name:      "extreme south west",
+			latitude:  -90.0,
+			longitude: -180.0,
+			wantErr:   false,
+		},
+		{
+			name:      "equator prime meridian",
+			latitude:  0.0,
+			longitude: 0.0,
+			wantErr:   false,
+		},
+		{
+			name:      "small positive values",
+			latitude:  0.000001,
+			longitude: 0.000001,
+			wantErr:   false,
+		},
+		{
+			name:      "small negative values",
+			latitude:  -0.000001,
+			longitude: -0.000001,
+			wantErr:   false,
+		},
+	}
+
+	rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+		return &stdhttp.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewBufferString("{}")),
+			Header:     make(stdhttp.Header),
+		}, nil
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			serv, err := testService(t, false)
+			if err != nil {
+				t.Fatalf("failed to create service: %s", err)
+			}
+			serv.output = io.Discard
+			serv.geocoder = &mockGeocoder{}
+			serv.omclient.Client.Transport = testhelper.MockRoundTripper{Fn: rtFn}
+
+			err = serv.updateLocation(t.Context(), tc.latitude, tc.longitude)
+
+			if tc.wantErr && err == nil {
+				t.Error("expected error but got none")
+			}
+			if !tc.wantErr && err != nil {
+				t.Errorf("unexpected error: %s", err)
+			}
+		})
+	}
+}

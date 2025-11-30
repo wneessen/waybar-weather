@@ -360,8 +360,8 @@ func (s *Service) fillDisplayData(target *template.DisplayData) {
 // It locks the location for thread-safe updates and retrieves the address information using reverse geocoding.
 // If valid coordinates are not provided, the update is skipped. The method also triggers all scheduled jobs.
 func (s *Service) updateLocation(ctx context.Context, latitude, longitude float64) error {
-	if latitude <= 0 || longitude <= 0 {
-		s.logger.Debug("coordinates empty, skipping service geo location update")
+	if (latitude <= -90 || latitude >= 90) || (longitude <= -180 || longitude >= 180) {
+		s.logger.Debug("invalid coordinates, skipping service geo location update")
 		return nil
 	}
 
