@@ -17,7 +17,7 @@ import (
 	"testing/synctest"
 	tt "text/template"
 	"time"
-	
+
 	"github.com/hectormalot/omgo"
 
 	"github.com/wneessen/waybar-weather/internal/config"
