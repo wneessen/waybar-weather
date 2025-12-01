@@ -40,3 +40,10 @@ func (c Coordinate) PosHasSignificantChange(other Coordinate) bool {
 
 	return distance > DistanceThreshold
 }
+
+func (c Coordinate) Valid() bool {
+	if (c.Lat <= -90 || c.Lat >= 90) || (c.Lon <= -180 || c.Lon >= 180) {
+		return false
+	}
+	return true
+}

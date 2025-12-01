@@ -69,7 +69,7 @@ type Service struct {
 	locationLock  sync.RWMutex
 	address       geocode.Address
 	locationIsSet bool
-	location      omgo.Location
+	location      geobus.Coordinate
 
 	weatherLock  sync.RWMutex
 	weatherIsSet bool
@@ -242,6 +242,19 @@ func (s *Service) selectWeatherProvider() (provider weather.Provider, err error)
 	return provider, nil
 }
 
+func (s *Service) fetchWeather(ctx context.Context) {
+	s.weatherLock.Lock()
+	defer s.weatherLock.Unlock()
+
+	data, err := s.weatherProv.GetWeather(ctx, s.location)
+	if err != nil {
+		s.logger.Error("failed to fetch weather data", logger.Err(err),
+			slog.String("source", s.weatherProv.Name()))
+	}
+
+	s.logger.Debug("weather data fetched successfully", slog.Any("data", data))
+}
+
 // printWeather outputs the current weather data to stdout if available and renders it using predefined templates.
 func (s *Service) printWeather(context.Context) {
 	if !s.weatherIsSet {
@@ -380,23 +393,18 @@ func (s *Service) fillDisplayData(_ *template.DisplayData) {
 // updateLocation updates the service's location and address based on provided latitude and longitude.
 // It locks the location for thread-safe updates and retrieves the address information using reverse geocoding.
 // If valid coordinates are not provided, the update is skipped. The method also triggers all scheduled jobs.
-func (s *Service) updateLocation(ctx context.Context, latitude, longitude float64) error {
-	if (latitude <= -90 || latitude >= 90) || (longitude <= -180 || longitude >= 180) {
-		s.logger.Debug("invalid coordinates, skipping service geo location update")
-		return nil
+func (s *Service) updateLocation(ctx context.Context, coords geobus.Coordinate) error {
+	if !coords.Valid() {
+		return fmt.Errorf("invalid coordinates: %f, %f", coords.Lat, coords.Lon)
 	}
 
-	address, err := s.geocoder.Reverse(ctx, latitude, longitude)
+	address, err := s.geocoder.Reverse(ctx, coords)
 	if err != nil {
 		return fmt.Errorf("failed reverse geocode coordinates: %w", err)
 	}
-	location, err := omgo.NewLocation(latitude, longitude)
-	if err != nil {
-		return fmt.Errorf("failed create Open-Meteo location from coordinates: %w", err)
-	}
 
 	s.locationLock.Lock()
-	s.location = location
+	s.location = coords
 	if address.AddressFound {
 		s.address = address
 	}
@@ -406,6 +414,7 @@ func (s *Service) updateLocation(ctx context.Context, latitude, longitude float6
 		slog.Any("coordinates", s.location), slog.String("source", s.geocoder.Name()),
 		slog.Bool("cache_hit", address.CacheHit))
 
+	s.fetchWeather(ctx)
 	s.printWeather(ctx)
 
 	return nil
@@ -425,7 +434,7 @@ func (s *Service) processLocationUpdates(ctx context.Context, sub <-chan geobus.
 			s.logger.Debug("received geolocation update",
 				slog.Float64("lat", r.Lat), slog.Float64("lon", r.Lon),
 				slog.Float64("accuracy", r.AccuracyMeters), slog.String("source", r.Source))
-			if err := s.updateLocation(ctx, r.Lat, r.Lon); err != nil {
+			if err := s.updateLocation(ctx, geobus.Coordinate{Lat: r.Lat, Lon: r.Lon}); err != nil {
 				s.logger.Error("failed to apply geo update", logger.Err(err), slog.String("source", r.Source))
 			}
 		}
