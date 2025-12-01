@@ -10,14 +10,16 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/wneessen/waybar-weather/internal/geobus"
 )
 
 const (
 	testHitTTL  = 200 * time.Millisecond
 	testMissTTL = 200 * time.Millisecond
-	testLat     = 52.5129
-	testLon     = 13.3910
 )
+
+var testCoords = geobus.Coordinate{Lat: 52.5129, Lon: 13.3910}
 
 var testAddress = Address{
 	Altitude:     35,
@@ -38,14 +40,14 @@ type (
 
 func (c *mockCache) Name() string { return "mock" }
 
-func (c *mockCache) Reverse(_ context.Context, lat, lon float64) (Address, error) {
+func (c *mockCache) Reverse(_ context.Context, coords geobus.Coordinate) (Address, error) {
 	addr := testAddress
-	addr.Latitude = lat
-	addr.Longitude = lon
-	if lat == testLat && lon == testLon {
+	addr.Latitude = coords.Lat
+	addr.Longitude = coords.Lon
+	if coords.Lat == testCoords.Lat && coords.Lon == testCoords.Lon {
 		addr.AddressFound = true
 	}
-	if lat == 1 && lon == -1 {
+	if coords.Lat == 1 && coords.Lon == -1 {
 		return addr, errors.New("lookup intentionally failed")
 	}
 	return addr, nil
@@ -66,7 +68,7 @@ func TestNewCachedGeocoder(t *testing.T) {
 func TestCachedGeocoder_Reverse(t *testing.T) {
 	coder := NewCachedGeocoder(&mockCache{}, testHitTTL, testMissTTL)
 	t.Run("a cached address should be returned", func(t *testing.T) {
-		addr, err := coder.Reverse(t.Context(), testLat, testLon)
+		addr, err := coder.Reverse(t.Context(), testCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -79,22 +81,22 @@ func TestCachedGeocoder_Reverse(t *testing.T) {
 		if !strings.EqualFold(addr.DisplayName, testAddress.DisplayName) {
 			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
 		}
-		if addr.Latitude != testLat {
-			t.Errorf("expected latitude to be %f, got %f", testLat, addr.Latitude)
+		if addr.Latitude != testCoords.Lat {
+			t.Errorf("expected latitude to be %f, got %f", testCoords.Lat, addr.Latitude)
 		}
-		if addr.Longitude != testLon {
-			t.Errorf("expected longitude to be %f, got %f", testLon, addr.Longitude)
+		if addr.Longitude != testCoords.Lon {
+			t.Errorf("expected longitude to be %f, got %f", testCoords.Lon, addr.Longitude)
 		}
 	})
 	t.Run("fetching results twice should hit the cache", func(t *testing.T) {
-		addr, err := coder.Reverse(t.Context(), testLat, testLon)
+		addr, err := coder.Reverse(t.Context(), testCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if !strings.EqualFold(addr.DisplayName, testAddress.DisplayName) {
 			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
 		}
-		addr, err = coder.Reverse(t.Context(), testLat, testLon)
+		addr, err = coder.Reverse(t.Context(), testCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -106,11 +108,11 @@ func TestCachedGeocoder_Reverse(t *testing.T) {
 		}
 	})
 	t.Run("fetching a very close address should still hit the cache", func(t *testing.T) {
-		addr, err := coder.Reverse(t.Context(), testLat, testLon)
+		addr, err := coder.Reverse(t.Context(), testCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
-		addr, err = coder.Reverse(t.Context(), testLat+0.002, testLon-0.002)
+		addr, err = coder.Reverse(t.Context(), geobus.Coordinate{Lat: testCoords.Lat + 0.002, Lon: testCoords.Lon - 0.002})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -122,11 +124,11 @@ func TestCachedGeocoder_Reverse(t *testing.T) {
 		}
 	})
 	t.Run("fetching a very close address but negative coordinates should still hit the cache", func(t *testing.T) {
-		addr, err := coder.Reverse(t.Context(), testLat, testLon)
+		addr, err := coder.Reverse(t.Context(), testCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
-		addr, err = coder.Reverse(t.Context(), testLat-0.004, testLon+0.003)
+		addr, err = coder.Reverse(t.Context(), geobus.Coordinate{Lat: testCoords.Lat - 0.004, Lon: testCoords.Lon + 0.003})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -138,7 +140,7 @@ func TestCachedGeocoder_Reverse(t *testing.T) {
 		}
 	})
 	t.Run("fetching an unknow address causes a cache miss", func(t *testing.T) {
-		addr, err := coder.Reverse(t.Context(), 2, -2)
+		addr, err := coder.Reverse(t.Context(), geobus.Coordinate{Lat: 2, Lon: -2})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -150,13 +152,13 @@ func TestCachedGeocoder_Reverse(t *testing.T) {
 		}
 	})
 	t.Run("fetching failes during lookup should return an error", func(t *testing.T) {
-		_, err := coder.Reverse(t.Context(), 1, -1)
+		_, err := coder.Reverse(t.Context(), geobus.Coordinate{Lat: 1, Lon: -1})
 		if err == nil {
 			t.Fatal("expected an error")
 		}
 	})
 	t.Run("cache should not trigger on expired TTL", func(t *testing.T) {
-		addr, err := coder.Reverse(t.Context(), testLat, testLon)
+		addr, err := coder.Reverse(t.Context(), testCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -164,7 +166,7 @@ func TestCachedGeocoder_Reverse(t *testing.T) {
 			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
 		}
 		time.Sleep(testHitTTL * 2)
-		addr, err = coder.Reverse(t.Context(), testLat, testLon)
+		addr, err = coder.Reverse(t.Context(), testCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -176,7 +178,7 @@ func TestCachedGeocoder_Reverse(t *testing.T) {
 		}
 	})
 	t.Run("cache should hit on non-expired TTL", func(t *testing.T) {
-		addr, err := coder.Reverse(t.Context(), testLat, testLon)
+		addr, err := coder.Reverse(t.Context(), testCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -184,7 +186,7 @@ func TestCachedGeocoder_Reverse(t *testing.T) {
 			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
 		}
 		time.Sleep(testHitTTL - 5*time.Millisecond)
-		addr, err = coder.Reverse(t.Context(), testLat, testLon)
+		addr, err = coder.Reverse(t.Context(), testCoords)
 		if err != nil {
 			t.Fatal(err)
 		}

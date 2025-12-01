@@ -13,6 +13,7 @@ import (
 
 	"golang.org/x/text/language"
 
+	"github.com/wneessen/waybar-weather/internal/geobus"
 	"github.com/wneessen/waybar-weather/internal/geocode"
 	"github.com/wneessen/waybar-weather/internal/http"
 )
@@ -63,14 +64,14 @@ func (n *Nominatim) Name() string {
 	return name
 }
 
-func (n *Nominatim) Reverse(ctx context.Context, lat, lon float64) (geocode.Address, error) {
+func (n *Nominatim) Reverse(ctx context.Context, coords geobus.Coordinate) (geocode.Address, error) {
 	var result Result
 	var err error
 
 	query := url.Values{}
 	query.Set("format", "jsonv2")
-	query.Set("lat", fmt.Sprintf("%f", lat))
-	query.Set("lon", fmt.Sprintf("%f", lon))
+	query.Set("lat", fmt.Sprintf("%f", coords.Lat))
+	query.Set("lon", fmt.Sprintf("%f", coords.Lon))
 	query.Set("accept-language", n.lang.String())
 
 	if _, err = n.http.GetWithTimeout(ctx, APIEndpoint, &result, query, nil, APITimeout); err != nil {

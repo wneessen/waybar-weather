@@ -15,6 +15,7 @@ import (
 
 	"golang.org/x/text/language"
 
+	"github.com/wneessen/waybar-weather/internal/geobus"
 	"github.com/wneessen/waybar-weather/internal/geocode"
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/logger"
@@ -26,20 +27,20 @@ const (
 	cityFile          = "../../../../testdata/nominatim_berlin.json"
 	cityFileBrokenLat = "../../../../testdata/nominatim_berlin_brokenlat.json"
 	cityFileBrokenLon = "../../../../testdata/nominatim_berlin_brokenlon.json"
-	cityLat           = 52.5129
-	cityLon           = 13.3910
 	testHitTTL        = 1 * time.Second
 	testMissTTL       = 1 * time.Second
 
 	villageExpected = "Marshfield"
 	villageFile     = "../../../../testdata/nominatim_marshfield.json"
-	villageLat      = 51.46292
-	villageLon      = -2.31850
 
 	townExpected = "Otley"
 	townFile     = "../../../../testdata/nominatim_otley.json"
-	townLat      = 53.90712
-	townLon      = -1.69404
+)
+
+var (
+	cityCoords    = geobus.Coordinate{Lat: 52.5129, Lon: 13.3910}
+	villageCoords = geobus.Coordinate{Lat: 51.46292, Lon: -2.31850}
+	townCoords    = geobus.Coordinate{Lat: 53.90712, Lon: -1.69404}
 )
 
 func TestNew(t *testing.T) {
@@ -73,7 +74,7 @@ func TestNominatim_Reverse(t *testing.T) {
 		}
 
 		coder := testCoderWithRoundtripFunc(t, rtFn)
-		addr, err := coder.Reverse(t.Context(), cityLat, cityLon)
+		addr, err := coder.Reverse(t.Context(), cityCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -99,7 +100,7 @@ func TestNominatim_Reverse(t *testing.T) {
 		}
 
 		coder := geocode.NewCachedGeocoder(testCoderWithRoundtripFunc(t, rtFn), testHitTTL, testMissTTL)
-		addr, err := coder.Reverse(t.Context(), cityLat, cityLon)
+		addr, err := coder.Reverse(t.Context(), cityCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -109,7 +110,7 @@ func TestNominatim_Reverse(t *testing.T) {
 		if !strings.EqualFold(addr.DisplayName, cityExpected) {
 			t.Errorf("expected address to be %q, got %q", cityExpected, addr.DisplayName)
 		}
-		addr, err = coder.Reverse(t.Context(), cityLat, cityLon)
+		addr, err = coder.Reverse(t.Context(), cityCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -132,7 +133,7 @@ func TestNominatim_Reverse(t *testing.T) {
 		}
 
 		coder := testCoderWithRoundtripFunc(t, rtFn)
-		addr, err := coder.Reverse(t.Context(), townLat, townLon)
+		addr, err := coder.Reverse(t.Context(), townCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -158,7 +159,7 @@ func TestNominatim_Reverse(t *testing.T) {
 		}
 
 		coder := testCoderWithRoundtripFunc(t, rtFn)
-		addr, err := coder.Reverse(t.Context(), villageLat, villageLon)
+		addr, err := coder.Reverse(t.Context(), villageCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -175,7 +176,7 @@ func TestNominatim_Reverse(t *testing.T) {
 		}
 
 		coder := testCoderWithRoundtripFunc(t, rtFn)
-		_, err := coder.Reverse(t.Context(), cityLat, cityLon)
+		_, err := coder.Reverse(t.Context(), cityCoords)
 		if err == nil {
 			t.Fatal("expected API request to fail")
 		}
@@ -195,7 +196,7 @@ func TestNominatim_Reverse(t *testing.T) {
 		}
 
 		coder := testCoderWithRoundtripFunc(t, rtFn)
-		_, err := coder.Reverse(t.Context(), villageLat, villageLon)
+		_, err := coder.Reverse(t.Context(), villageCoords)
 		if err == nil {
 			t.Fatal("expected API request to fail")
 		}
@@ -218,7 +219,7 @@ func TestNominatim_Reverse(t *testing.T) {
 		}
 
 		coder := testCoderWithRoundtripFunc(t, rtFn)
-		_, err := coder.Reverse(t.Context(), villageLat, villageLon)
+		_, err := coder.Reverse(t.Context(), villageCoords)
 		if err == nil {
 			t.Fatal("expected API request to fail")
 		}
@@ -232,7 +233,7 @@ func TestNominatim_Reverse_integration(t *testing.T) {
 	testhelper.PerformIntegrationTests(t)
 	t.Run("reverse geocoding succeeds", func(t *testing.T) {
 		coder := testCoder(t)
-		addr, err := coder.Reverse(t.Context(), cityLat, cityLon)
+		addr, err := coder.Reverse(t.Context(), cityCoords)
 		if err != nil {
 			t.Fatal(err)
 		}
