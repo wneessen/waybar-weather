@@ -17,14 +17,18 @@ import (
 const (
 	configEnv         = "WAYBARWEATHER"
 	DefaultTextTpl    = "{{.Current.ConditionIcon}} {{.Current.Temperature}}{{.TempUnit}}"
-	DefaultAltTextTpl = "{{.Forecast.ConditionIcon}} {{.Forecast.Temperature}}{{.TempUnit}}"
-	DefaultTooltipTpl = "{{.Address.City}}, {{.Address.Country}}\n" +
-		"{{.Current.Condition}}\n" +
-		"{{loc \"apparent\"}}: {{.Current.ApparentTemperature}}{{.TempUnit}}\n" +
-		"{{loc \"humidity\"}}: {{.Current.Humidity}}%\n" +
-		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.PressureUnit}}\n" +
-		"\n" +
-		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
+	DefaultAltTextTpl = "{{(index .Forecast 0).ConditionIcon}} {{(index .Forecast 0).Temperature}}"
+	DefaultTooltipTpl = ""
+	/*
+		DefaultTooltipTpl = "{{.Address.City}}, {{.Address.Country}}\n" +
+			"{{.Current.Condition}}\n" +
+			"{{loc \"apparent\"}}: {{.Current.ApparentTemperature}}{{.TempUnit}}\n" +
+			"{{loc \"humidity\"}}: {{.Current.Humidity}}%\n" +
+			"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.PressureUnit}}\n" +
+			"\n" +
+			`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
+
+	*/
 )
 
 // Config represents the application's configuration structure.

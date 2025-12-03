@@ -42,6 +42,9 @@ type Presenter struct{}
 func (p *Presenter) BuildContext(addr geocode.Address, data *weather.Data, sunrise, sunset time.Time,
 	moonPhase, moonIcon string,
 ) TemplateContext {
+	if data == nil {
+		return TemplateContext{}
+	}
 	return TemplateContext{
 		Latitude:      data.Coordinates.Lat,
 		Longitude:     data.Coordinates.Lon,

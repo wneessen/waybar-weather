@@ -5,39 +5,27 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/hectormalot/omgo"
 	"github.com/vorlif/spreak"
-	"golang.org/x/text/language"
 
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/geobus"
-	"github.com/wneessen/waybar-weather/internal/geobus/provider/geoapi"
-	"github.com/wneessen/waybar-weather/internal/geobus/provider/geoip"
-	"github.com/wneessen/waybar-weather/internal/geobus/provider/geolocation_file"
-	"github.com/wneessen/waybar-weather/internal/geobus/provider/gpsd"
-	"github.com/wneessen/waybar-weather/internal/geobus/provider/ichnaea"
 	"github.com/wneessen/waybar-weather/internal/geocode"
-	"github.com/wneessen/waybar-weather/internal/geocode/provider/geocode-earth"
-	"github.com/wneessen/waybar-weather/internal/geocode/provider/opencage"
-	nominatim "github.com/wneessen/waybar-weather/internal/geocode/provider/osm-nominatim"
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/job"
 	"github.com/wneessen/waybar-weather/internal/logger"
+	"github.com/wneessen/waybar-weather/internal/presenter"
 	"github.com/wneessen/waybar-weather/internal/template"
 	"github.com/wneessen/waybar-weather/internal/weather"
-	"github.com/wneessen/waybar-weather/internal/weather/provider/open-meteo"
-
-	"github.com/hectormalot/omgo"
 )
 
 const (
@@ -63,6 +51,7 @@ type Service struct {
 	weatherProv weather.Provider
 	output      io.Writer
 	jobs        []*job.Job
+	presenter   presenter.Presenter
 	templates   *template.Templates
 	t           *spreak.Localizer
 
@@ -73,7 +62,7 @@ type Service struct {
 
 	weatherLock  sync.RWMutex
 	weatherIsSet bool
-	weather      weather.Data
+	weather      *weather.Data
 
 	displayAltLock sync.RWMutex
 	displayAltText bool
@@ -103,6 +92,7 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 		geobus:         bus,
 		logger:         log,
 		output:         os.Stdout,
+		presenter:      presenter.Presenter{},
 		templates:      tpls,
 		t:              t,
 		displayAltText: false,
@@ -161,87 +151,6 @@ func (s *Service) Run(ctx context.Context) (err error) {
 	return nil
 }
 
-func (s *Service) selectGeobusProviders() ([]geobus.Provider, error) {
-	httpClient := http.New(s.logger)
-	var provider []geobus.Provider
-
-	if !s.config.GeoLocation.DisableGeolocationFile {
-		provider = append(provider, geolocation_file.NewGeolocationFileProvider(s.config.GeoLocation.File))
-	}
-
-	if !s.config.GeoLocation.DisableGPSD {
-		provider = append(provider, gpsd.NewGeolocationGPSDProvider())
-	}
-
-	if !s.config.GeoLocation.DisableGeoIP {
-		gip, err := geoip.NewGeolocationGeoIPProvider(httpClient)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create GeoIP provider: %w", err)
-		}
-		provider = append(provider, gip)
-	}
-
-	if !s.config.GeoLocation.DisableGeoAPI {
-		gap, err := geoapi.NewGeolocationGeoAPIProvider(httpClient)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create GeoAPI provider: %w", err)
-		}
-		provider = append(provider, gap)
-	}
-
-	if !s.config.GeoLocation.DisableICHNAEA {
-		mls, err := ichnaea.NewGeolocationICHNAEAProvider(httpClient)
-		if err != nil {
-			s.logger.Error("failed to create ICHNAEA provider", logger.Err(err))
-		} else {
-			provider = append(provider, mls)
-		}
-	}
-	if len(provider) == 0 {
-		return nil, fmt.Errorf("no geolocation providers enabled")
-	}
-
-	return provider, nil
-}
-
-func (s *Service) selectGeocodeProvider(conf *config.Config, log *logger.Logger, lang language.Tag) (geocode.Geocoder, error) {
-	var geocoder geocode.Geocoder
-
-	switch strings.ToLower(conf.GeoCoder.Provider) {
-	case "nominatim":
-		geocoder = geocode.NewCachedGeocoder(nominatim.New(http.New(log), lang), cacheHitTTL, cacheMissTTL)
-	case "opencage":
-		if conf.GeoCoder.APIKey == "" {
-			return nil, fmt.Errorf("opencage geocoder requires an API key")
-		}
-		geocoder = geocode.NewCachedGeocoder(opencage.New(http.New(log), lang, conf.GeoCoder.APIKey),
-			cacheHitTTL, cacheMissTTL)
-	case "geocode-earth":
-		if conf.GeoCoder.APIKey == "" {
-			return nil, fmt.Errorf("geocode-earth geocoder requires an API key")
-		}
-		geocoder = geocode.NewCachedGeocoder(geocodeearth.New(http.New(log), lang, conf.GeoCoder.APIKey),
-			cacheHitTTL, cacheMissTTL)
-	default:
-		return nil, fmt.Errorf("unsupported geocoder type: %s", conf.GeoCoder.Provider)
-	}
-
-	return geocoder, nil
-}
-
-func (s *Service) selectWeatherProvider() (provider weather.Provider, err error) {
-	switch strings.ToLower(s.config.Weather.Provider) {
-	case "open-meteo":
-		provider, err = openmeteo.New(http.New(s.logger), s.logger, s.config.Units)
-		if err != nil {
-			return provider, fmt.Errorf("failed to create Open-Meteo weather provider: %w", err)
-		}
-	default:
-		return nil, fmt.Errorf("unsupported weather provider: %s", s.config.Weather.Provider)
-	}
-	return provider, nil
-}
-
 func (s *Service) fetchWeather(ctx context.Context) {
 	s.weatherLock.Lock()
 	defer s.weatherLock.Unlock()
@@ -251,8 +160,10 @@ func (s *Service) fetchWeather(ctx context.Context) {
 		s.logger.Error("failed to fetch weather data", logger.Err(err),
 			slog.String("source", s.weatherProv.Name()))
 	}
+	s.weather = data
+	s.weatherIsSet = true
 
-	s.logger.Debug("weather data fetched successfully", slog.Any("data", data))
+	s.logger.Debug("weather data fetched successfully")
 }
 
 // printWeather outputs the current weather data to stdout if available and renders it using predefined templates.
@@ -265,39 +176,25 @@ func (s *Service) printWeather(context.Context) {
 	displayAltText := s.displayAltText
 	s.displayAltLock.RUnlock()
 
-	displayData := new(template.DisplayData)
-	s.fillDisplayData(displayData)
-
-	textBuf := bytes.NewBuffer(nil)
-	if err := s.templates.Text.Execute(textBuf, displayData); err != nil {
-		s.logger.Error("failed to render text template", logger.Err(err))
-		return
+	tplCtx := s.presenter.BuildContext(s.address, s.weather, time.Now(), time.Now(), "", "")
+	text, alttext, _, err := s.templates.Render(tplCtx)
+	if err != nil {
+		s.logger.Error("failed to render weather template", logger.Err(err))
 	}
 
-	altTextBuf := bytes.NewBuffer(nil)
-	if err := s.templates.AltText.Execute(altTextBuf, displayData); err != nil {
-		s.logger.Error("failed to render alt text template", logger.Err(err))
-		return
-	}
-
-	tooltipBuf := bytes.NewBuffer(nil)
-	if err := s.templates.Tooltip.Execute(tooltipBuf, displayData); err != nil {
-		s.logger.Error("failed to render tooltip template", logger.Err(err))
-		return
-	}
-
-	displayText := textBuf.String()
+	displayText := text
 	if displayAltText {
-		displayText = altTextBuf.String()
+		fmt.Println("printing alt test")
+		displayText = alttext
 	}
 
 	output := outputData{
-		Text:    displayText,
-		Tooltip: tooltipBuf.String(),
-		Class:   OutputClass,
+		Text: displayText,
+		// Tooltip: tooltip,
+		Class: OutputClass,
 	}
 
-	if err := json.NewEncoder(s.output).Encode(output); err != nil {
+	if err = json.NewEncoder(s.output).Encode(output); err != nil {
 		s.logger.Error("failed to encode weather data", logger.Err(err))
 	}
 }

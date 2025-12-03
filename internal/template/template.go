@@ -20,6 +20,7 @@ import (
 
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/geocode"
+	"github.com/wneessen/waybar-weather/internal/presenter"
 )
 
 type DisplayData struct {
@@ -122,17 +123,34 @@ func New(conf *config.Config, loc *spreak.Localizer) (*Templates, error) {
 	tpls.humanizer = collection.CreateHumanizer(loc.Language())
 
 	// Validate that the templates can be rendered
-	if err = tpls.Text.Execute(bytes.NewBuffer(nil), DisplayData{}); err != nil {
+	data := presenter.TemplateContext{Forecast: make([]presenter.WeatherView, 1)}
+	if err = tpls.Text.Execute(bytes.NewBuffer(nil), data); err != nil {
 		return nil, fmt.Errorf("failed to render text template: %w", err)
 	}
-	if err = tpls.AltText.Execute(bytes.NewBuffer(nil), DisplayData{}); err != nil {
+	if err = tpls.AltText.Execute(bytes.NewBuffer(nil), data); err != nil {
 		return nil, fmt.Errorf("failed to render alt text template: %w", err)
 	}
-	if err = tpls.Tooltip.Execute(bytes.NewBuffer(nil), DisplayData{}); err != nil {
+	if err = tpls.Tooltip.Execute(bytes.NewBuffer(nil), data); err != nil {
 		return nil, fmt.Errorf("failed to render tooltip template: %w", err)
 	}
 
 	return tpls, nil
+}
+
+func (t *Templates) Render(tplCtx presenter.TemplateContext) (string, string, string, error) {
+	var textBuf, altBuf, tooltipBuf bytes.Buffer
+
+	if err := t.Text.Execute(&textBuf, tplCtx); err != nil {
+		return "", "", "", fmt.Errorf("failed to render text template: %w", err)
+	}
+	if err := t.AltText.Execute(&altBuf, tplCtx); err != nil {
+		return "", "", "", fmt.Errorf("failed to render alt text template: %w", err)
+	}
+	if err := t.Tooltip.Execute(&tooltipBuf, tplCtx); err != nil {
+		return "", "", "", fmt.Errorf("failed to render tooltip template: %w", err)
+	}
+
+	return textBuf.String(), altBuf.String(), tooltipBuf.String(), nil
 }
 
 func (t *Templates) templateFuncMap() template.FuncMap {
