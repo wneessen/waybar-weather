@@ -165,3 +165,26 @@ var WMOWeatherIcons = map[int]map[bool]string{
 		false: "⛈️",
 	},
 }
+
+var i18nVars = map[string]localize.MsgID{
+	"temp":            "Temperature",
+	"humidity":        "Humidity",
+	"winddir":         "Wind direction",
+	"windspeed":       "Wind speed",
+	"pressure":        "Pressure",
+	"apparent":        "Feels like",
+	"weathercode":     "Weather code",
+	"forecastfor":     "Forecast for",
+	"weatherdatafor":  "Weather data for",
+	"sunrise":         "Sunrise",
+	"sunset":          "Sunset",
+	"moonphase":       "Moonphase",
+	"new moon":        "New moon",
+	"waxing crescent": "Waxing crescent",
+	"first quarter":   "First quarter",
+	"waxing gibbous":  "Waxing gibbous",
+	"full moon":       "Full moon",
+	"waning gibbous":  "Waning gibbous",
+	"third quarter":   "Third quarter",
+	"waning crescent": "Waning crescent",
+}

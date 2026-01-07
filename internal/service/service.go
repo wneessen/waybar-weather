@@ -24,7 +24,6 @@ import (
 	"github.com/wneessen/waybar-weather/internal/job"
 	"github.com/wneessen/waybar-weather/internal/logger"
 	"github.com/wneessen/waybar-weather/internal/presenter"
-	"github.com/wneessen/waybar-weather/internal/template"
 	"github.com/wneessen/waybar-weather/internal/weather"
 )
 
@@ -51,8 +50,7 @@ type Service struct {
 	weatherProv weather.Provider
 	output      io.Writer
 	jobs        []*job.Job
-	presenter   presenter.Presenter
-	templates   *template.Templates
+	presenter   *presenter.Presenter
 	t           *spreak.Localizer
 
 	locationLock  sync.RWMutex
@@ -75,9 +73,9 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 	}
 	omclient.UserAgent = http.UserAgent
 
-	tpls, err := template.New(conf, t)
+	pres, err := presenter.New(conf, t)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse templates: %w", err)
+		return nil, fmt.Errorf("failed to create presenter: %w", err)
 	}
 
 	bus, err := geobus.New(log)
@@ -92,8 +90,7 @@ func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service
 		geobus:         bus,
 		logger:         log,
 		output:         os.Stdout,
-		presenter:      presenter.Presenter{},
-		templates:      tpls,
+		presenter:      pres,
 		t:              t,
 		displayAltText: false,
 	}
@@ -177,14 +174,13 @@ func (s *Service) printWeather(context.Context) {
 	s.displayAltLock.RUnlock()
 
 	tplCtx := s.presenter.BuildContext(s.address, s.weather, time.Now(), time.Now(), "", "")
-	text, alttext, _, err := s.templates.Render(tplCtx)
+	text, alttext, _, err := s.presenter.Render(tplCtx)
 	if err != nil {
 		s.logger.Error("failed to render weather template", logger.Err(err))
 	}
 
 	displayText := text
 	if displayAltText {
-		fmt.Println("printing alt test")
 		displayText = alttext
 	}
 
@@ -202,7 +198,7 @@ func (s *Service) printWeather(context.Context) {
 // fillDisplayData populates the provided DisplayData object with details based on current or
 // forecasted weather information. It locks relevant data structures to ensure safe concurrent
 // access and conditionally fills fields based on the mode.
-func (s *Service) fillDisplayData(_ *template.DisplayData) {
+func (s *Service) fillDisplayData() {
 	/*
 		s.locationLock.RLock()
 		defer s.locationLock.RUnlock()
