@@ -6,7 +6,7 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -42,12 +42,13 @@ func (s *Service) HandleAltTextToggleSignal(ctx context.Context, sigChan chan os
 				s.displayAltText = !s.displayAltText
 				s.displayAltLock.Unlock()
 				s.printWeather(ctx)
-			// USR2 prints the current address to stderr
+			// USR2 prints the current address with the stderr logger
 			case syscall.SIGUSR2:
 				s.locationLock.Lock()
 				address := s.address
 				s.locationLock.Unlock()
-				_, _ = fmt.Fprintf(os.Stderr, "Current address: %s\n", address.DisplayName)
+				s.logger.Info("currently resolved address", slog.String("address", address.DisplayName),
+					slog.Float64("latitude", address.Latitude), slog.Float64("longitude", address.Longitude))
 			}
 		}
 	}
