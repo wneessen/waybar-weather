@@ -14,13 +14,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hectormalot/omgo"
 	"github.com/vorlif/spreak"
 
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/geobus"
 	"github.com/wneessen/waybar-weather/internal/geocode"
-	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/job"
 	"github.com/wneessen/waybar-weather/internal/logger"
 	"github.com/wneessen/waybar-weather/internal/presenter"
@@ -67,12 +65,6 @@ type Service struct {
 }
 
 func New(conf *config.Config, log *logger.Logger, t *spreak.Localizer) (*Service, error) {
-	omclient, err := omgo.NewClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Open-Meteo client: %w", err)
-	}
-	omclient.UserAgent = http.UserAgent
-
 	pres, err := presenter.New(conf, t)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create presenter: %w", err)
