@@ -1,0 +1,227 @@
+# Turkish translations for waybar-weather.
+# Copyright (C) 2023 Winni Neessen <wn@neessen.dev>
+# This file is distributed under the same license as the
+# github.com/wneessen/waybar-weather package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: github.com/wneessen/waybar-weather\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-19 20:47+0000\n"
+"PO-Revision-Date: 2023-11-20 10:00+0200\n"
+"Last-Translator: beucismis <beucismis@tutamail.com>\n"
+"Language-Team: \n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../../../cmd/waybar-weather/main.go:72
+msgid "starting waybar-weather service"
+msgstr "waybar-weather hizmeti başlatılıyor"
+
+#: ../../../cmd/waybar-weather/main.go:75
+msgid "failed to start waybar-weather service"
+msgstr "waybar-weather hizmeti başlatılamadı"
+
+#: ../../../cmd/waybar-weather/main.go:77
+msgid "shutting down waybar-weather service"
+msgstr "waybar-weather hizmeti kapatılıyor"
+
+#: ../../service/maps.go:23
+msgid "Clear sky"
+msgstr "Açık gökyüzü"
+
+#: ../../service/maps.go:24
+msgid "Mainly clear"
+msgstr "Genellikle açık"
+
+#: ../../service/maps.go:25
+msgid "Partly cloudy"
+msgstr "Parçalı bulutlu"
+
+#: ../../service/maps.go:26
+msgid "Overcast"
+msgstr "Kapalı"
+
+#: ../../service/maps.go:27
+msgid "Fog"
+msgstr "Sis"
+
+#: ../../service/maps.go:28
+msgid "Depositing rime fog"
+msgstr "Kırağılı sis"
+
+#: ../../service/maps.go:29
+msgid "Light drizzle"
+msgstr "Hafif çiseleme"
+
+#: ../../service/maps.go:30
+msgid "Moderate drizzle"
+msgstr "Orta şiddette çiseleme"
+
+#: ../../service/maps.go:31
+msgid "Dense drizzle"
+msgstr "Yoğun çiseleme"
+
+#: ../../service/maps.go:32
+msgid "Light freezing drizzle"
+msgstr "Hafif dondurucu çiseleme"
+
+#: ../../service/maps.go:33
+msgid "Dense freezing drizzle"
+msgstr "Yoğun dondurucu çiseleme"
+
+#: ../../service/maps.go:34
+msgid "Slight rain"
+msgstr "Hafif yağmur"
+
+#: ../../service/maps.go:35
+msgid "Moderate rain"
+msgstr "Orta şiddette yağmur"
+
+#: ../../service/maps.go:36
+msgid "Heavy rain"
+msgstr "Şiddetli yağmur"
+
+#: ../../service/maps.go:37
+msgid "Light freezing rain"
+msgstr "Hafif dondurucu yağmur"
+
+#: ../../service/maps.go:38
+msgid "Heavy freezing rain"
+msgstr "Şiddetli dondurucu yağmur"
+
+#: ../../service/maps.go:39
+msgid "Slight snow fall"
+msgstr "Hafif kar yağışı"
+
+#: ../../service/maps.go:40
+msgid "Moderate snow fall"
+msgstr "Orta şiddette kar yağışı"
+
+#: ../../service/maps.go:41
+msgid "Heavy snow fall"
+msgstr "Şiddetli kar yağışı"
+
+#: ../../service/maps.go:42
+msgid "Snow grains"
+msgstr "Kar taneleri"
+
+#: ../../service/maps.go:43
+msgid "Slight rain showers"
+msgstr "Hafif sağanak yağmur"
+
+#: ../../service/maps.go:44
+msgid "Moderate rain showers"
+msgstr "Orta şiddette sağanak yağmur"
+
+#: ../../service/maps.go:45
+msgid "Violent rain showers"
+msgstr "Şiddetli sağanak yağmur"
+
+#: ../../service/maps.go:46
+msgid "Slight snow showers"
+msgstr "Hafif kar sağanağı"
+
+#: ../../service/maps.go:47
+msgid "Heavy snow showers"
+msgstr "Şiddetli kar sağanağı"
+
+#: ../../service/maps.go:48
+msgid "Thunderstorm"
+msgstr "Gök gürültülü fırtına"
+
+#: ../../service/maps.go:49
+msgid "Thunderstorm with slight hail"
+msgstr "Hafif dolulu gök gürültülü fırtına"
+
+#: ../../service/maps.go:50
+msgid "Thunderstorm with heavy hail"
+msgstr "Şiddetli dolulu gök gürültülü fırtına"
+
+#: ../../service/service.go:181
+msgid ""
+"no geolocation providers enabled, will not be able to fetch weather data due to "
+"missing location"
+msgstr "coğrafi konum sağlayıcı etkin değil, eksik konum nedeniyle hava durumu verileri alınamayacak"
+
+#: ../../template/template.go:68
+msgid "Temperature"
+msgstr "Sıcaklık"
+
+#: ../../template/template.go:69
+msgid "Humidity"
+msgstr "Nem"
+
+#: ../../template/template.go:70
+msgid "Wind direction"
+msgstr "Rüzgar yönü"
+
+#: ../../template/template.go:71
+msgid "Wind speed"
+msgstr "Rüzgar hızı"
+
+#: ../../template/template.go:72
+msgid "Pressure"
+msgstr "Basınç"
+
+#: ../../template/template.go:73
+msgid "Feels like"
+msgstr "Hissedilen"
+
+#: ../../template/template.go:74
+msgid "Weather code"
+msgstr "Hava durumu kodu"
+
+#: ../../template/template.go:75
+msgid "Forecast for"
+msgstr "Hava tahmini"
+
+#: ../../template/template.go:76
+msgid "Weather data for"
+msgstr "Hava durumu verileri"
+
+#: ../../template/template.go:77
+msgid "Sunrise"
+msgstr "Gündoğumu"
+
+#: ../../template/template.go:78
+msgid "Sunset"
+msgstr "Günbatımı"
+
+#: ../../template/template.go:79
+msgid "Moonphase"
+msgstr "Ayın evresi"
+
+#: ../../template/template.go:80
+msgid "New moon"
+msgstr "Yeni ay"
+
+#: ../../template/template.go:81
+msgid "Waxing crescent"
+msgstr "Hilal"
+
+#: ../../template/template.go:82
+msgid "First quarter"
+msgstr "İlk dördün"
+
+#: ../../template/template.go:83
+msgid "Waxing gibbous"
+msgstr "Büyüyen ay"
+
+#: ../../template/template.go:84
+msgid "Full moon"
+msgstr "Dolunay"
+
+#: ../../service/maps.go:85
+msgid "Waning gibbous"
+msgstr "Küçülen ay"
+
+#: ../../template/template.go:86
+msgid "Third quarter"
+msgstr "Son dördün"
+
+#: ../../template/template.go:87
+msgid "Waning crescent"
+msgstr "Küçülen hilal"
