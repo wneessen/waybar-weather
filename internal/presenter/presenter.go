@@ -34,7 +34,6 @@ type TemplateContext struct {
 	Address   geocode.Address
 
 	UpdateTime    time.Time
-	TempUnit      string
 	PressureUnit  string
 	SunriseTime   time.Time
 	SunsetTime    time.Time
@@ -157,7 +156,8 @@ func (p *Presenter) validateTemplates() error {
 
 func (p *Presenter) viewFromInstant(in weather.Instant) WeatherView {
 	return WeatherView{
-		Instant:       in,
+		Instant: in,
+
 		Condition:     WMOWeatherCodes[in.WeatherCode],
 		ConditionIcon: WMOWeatherIcons[in.WeatherCode][in.IsDay],
 	}

@@ -31,6 +31,15 @@ type Instant struct {
 	RelativeHumidity    float64
 	PressureMSL         float64
 	IsDay               bool
+	Units               Units
+}
+
+type Units struct {
+	Temperature   string
+	WindSpeed     string
+	Humidity      string
+	Pressure      string
+	WindDirection string
 }
 
 type DayHour int64

@@ -156,6 +156,13 @@ func (o *OpenMeteo) GetWeather(ctx context.Context, coords geobus.Coordinate) (*
 		RelativeHumidity:    float64(res.Current.RelativeHumidity),
 		PressureMSL:         res.Current.PressureMSL,
 		IsDay:               res.Current.IsDay.bool,
+		Units: weather.Units{
+			Temperature:   res.CurrentUnits.Temperature2M,
+			WindSpeed:     res.CurrentUnits.WindSpeed10M,
+			Humidity:      res.CurrentUnits.RelativeHumidity2M,
+			Pressure:      res.CurrentUnits.PressureMsl,
+			WindDirection: res.CurrentUnits.WindDirection10M,
+		},
 	}
 	for i := range res.Hourly.Time {
 		timePos := weather.NewDayHour(res.Hourly.Time[i].Time)
@@ -169,6 +176,13 @@ func (o *OpenMeteo) GetWeather(ctx context.Context, coords geobus.Coordinate) (*
 			RelativeHumidity:    float64(res.Hourly.RelativeHumidity[i]),
 			PressureMSL:         res.Hourly.PressureMsl[i],
 			IsDay:               res.Hourly.IsDay[i].bool,
+			Units: weather.Units{
+				Temperature:   res.HourlyUnits.Temperature,
+				WindSpeed:     res.HourlyUnits.WindSpeed,
+				Humidity:      res.HourlyUnits.RelativeHumidity,
+				Pressure:      res.HourlyUnits.PressureMsl,
+				WindDirection: res.HourlyUnits.WindDirection,
+			},
 		}
 		data.Forecast[timePos] = instant
 	}

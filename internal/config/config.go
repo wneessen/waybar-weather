@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Winni Neessen <wn@neessen.dev>
+// SPDX-FileCopyrightText: Winni Neessen <wn@neessen.de
 //
 // SPDX-License-Identifier: MIT
 
@@ -16,10 +16,13 @@ import (
 
 const (
 	configEnv         = "WAYBARWEATHER"
-	DefaultTextTpl    = "{{.Current.ConditionIcon}} {{.Current.Temperature}}{{.TempUnit}}"
+	DefaultTextTpl    = "{{.Current.ConditionIcon}} {{.Current.Temperature}}{{.Current.Units.Temperature}}"
 	DefaultAltTextTpl = "{{(index .Forecast 0).ConditionIcon}} {{(index .Forecast 0).Temperature}}"
 	DefaultTooltipTpl = "{{ .Address.City }}, {{ .Address.Country }}\n" +
-		"{{ .Current.Condition }}\n"
+		"{{.Current.Condition}}\n" +
+		"{{loc \"apparent\"}}: {{.Current.ApparentTemperature}}{{.Current.Units.Temperature}}\n" +
+		"{{loc \"humidity\"}}: {{.Current.RelativeHumidity}}%\n" +
+		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.Current.Units.Pressure}}\n"
 	/*
 		DefaultTooltipTpl = "{{.Address.City}}, {{.Address.Country}}\n" +
 			"{{.Current.Condition}}\n" +
