@@ -166,7 +166,7 @@ func (s *Service) printWeather(context.Context) {
 	s.displayAltLock.RUnlock()
 
 	tplCtx := s.presenter.BuildContext(s.address, s.weather, time.Now(), time.Now(), "", "")
-	text, alttext, _, err := s.presenter.Render(tplCtx)
+	text, alttext, tooltip, err := s.presenter.Render(tplCtx)
 	if err != nil {
 		s.logger.Error("failed to render weather template", logger.Err(err))
 	}
@@ -177,9 +177,9 @@ func (s *Service) printWeather(context.Context) {
 	}
 
 	output := outputData{
-		Text: displayText,
-		// Tooltip: tooltip,
-		Class: OutputClass,
+		Text:    displayText,
+		Tooltip: tooltip,
+		Class:   OutputClass,
 	}
 
 	if err = json.NewEncoder(s.output).Encode(output); err != nil {
