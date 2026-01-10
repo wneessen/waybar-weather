@@ -321,10 +321,11 @@ setting in your configuration file.
 ### Supported languages
 Currently the following languages are supported by waybar-weather:
 
-| Language | PO file                  | Percent translated | Contributor   |
-|----------|--------------------------|--------------------|---------------|
-| English  | `message.pot` (Template) | 100%               | Winni Neessen |
-| German   | `de.po`                  | 100%               | Winni Neessen |
+| Language | PO file                  | Percent translated | Contributor                               |
+|----------|--------------------------|--------------------|-------------------------------------------|
+| English  | `message.pot` (Template) | 100%               | Winni Neessen                             |
+| German   | `de.po`                  | 100%               | Winni Neessen                             |
+| Turkish  | `tr.po`                  | 100%               | (beucismis](https://github.com/beucismis) |
 
 ### Contributing new languages
 If you want to contribute a new language, please do so by adding a new translation file to the 
