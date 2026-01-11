@@ -142,6 +142,7 @@ func (s *Service) Run(ctx context.Context) (err error) {
 	return nil
 }
 
+// fetchWeather retrieves the current weather data from the weather provider.
 func (s *Service) fetchWeather(ctx context.Context) {
 	s.weatherLock.Lock()
 	defer s.weatherLock.Unlock()
@@ -157,7 +158,7 @@ func (s *Service) fetchWeather(ctx context.Context) {
 	s.logger.Debug("weather data fetched successfully")
 }
 
-// printWeather outputs the current weather data to stdout if available and renders it using predefined templates.
+// printWeather retrieves and displays the current weather data using the service's state and rendering logic.
 func (s *Service) printWeather(context.Context) {
 	if !s.weatherIsSet {
 		return
@@ -180,23 +181,30 @@ func (s *Service) printWeather(context.Context) {
 	// Render the weather data
 	tplCtx := s.presenter.BuildContext(addr, weathr, sunriseTimeUTC.In(now.Location()),
 		sunsetTimeUTC.In(now.Location()), moon.PhaseName())
-	text, alttext, tooltip, err := s.presenter.Render(tplCtx)
+	renderMap, err := s.presenter.Render(tplCtx)
 	if err != nil {
 		s.logger.Error("failed to render weather template", logger.Err(err))
 	}
+	for _, key := range []string{"text", "alt_text", "tooltip", "alt_tooltip"} {
+		if _, ok := renderMap[key]; !ok {
+			renderMap[key] = ""
+		}
+	}
 
 	// Are we in alternative text mode?
-	displayText := text
+	displayText := renderMap["text"]
+	displayTooltip := renderMap["tooltip"]
 	s.displayAltLock.RLock()
 	if s.displayAltText {
-		displayText = alttext
+		displayText = renderMap["alt_text"]
+		displayTooltip = renderMap["alt_tooltip"]
 	}
 	s.displayAltLock.RUnlock()
 
 	// Present the rendered weather data
 	output := outputData{
 		Text:    displayText,
-		Tooltip: tooltip,
+		Tooltip: displayTooltip,
 		Class:   OutputClass,
 	}
 	if err = json.NewEncoder(s.output).Encode(output); err != nil {

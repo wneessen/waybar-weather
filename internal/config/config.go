@@ -24,7 +24,18 @@ const (
 		"{{loc \"humidity\"}}: {{.Current.RelativeHumidity}}%\n" +
 		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.Current.Units.Pressure}}\n" +
 		"\n" +
-		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
+		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}` +
+		"\n" +
+		"Weather data for: {{localizedTime .Current.InstantTime}}"
+	DefaultAltTooltipTpl = "{{ .Address.City }}, {{ .Address.Country }}\n" +
+		"{{.Current.Condition}}\n" +
+		"{{loc \"apparent\"}}: {{.Current.ApparentTemperature}}{{.Current.Units.Temperature}}\n" +
+		"{{loc \"humidity\"}}: {{.Current.RelativeHumidity}}%\n" +
+		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.Current.Units.Pressure}}\n" +
+		"\n" +
+		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}` +
+		"\n" +
+		"Weather data for: {{localizedTime .Current.InstantTime}}"
 )
 
 // Config represents the application's configuration structure.
@@ -47,9 +58,10 @@ type Config struct {
 	} `fig:"intervals"`
 
 	Templates struct {
-		Text    string `fig:"text"`
-		AltText string `fig:"alt_text"`
-		Tooltip string `fig:"tooltip"`
+		Text       string `fig:"text"`
+		AltText    string `fig:"alt_text"`
+		Tooltip    string `fig:"tooltip"`
+		AltTooltip string `fig:"alt_tooltip"`
 	} `fig:"templates"`
 
 	GeoLocation struct {
@@ -104,6 +116,9 @@ func (c *Config) Validate() error {
 	}
 	if c.Templates.Tooltip == "" {
 		c.Templates.Tooltip = DefaultTooltipTpl
+	}
+	if c.Templates.AltTooltip == "" {
+		c.Templates.AltTooltip = DefaultAltTooltipTpl
 	}
 	if c.GeoLocation.File == "" {
 		home, _ := os.UserHomeDir()

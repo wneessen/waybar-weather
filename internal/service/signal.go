@@ -38,6 +38,8 @@ func (s *Service) HandleAltTextToggleSignal(ctx context.Context, sigChan chan os
 			switch sig {
 			// USR1 toggles between displaying the text and the alt text
 			case syscall.SIGUSR1:
+				s.logger.Info("toggling display of weather module text and tooltip",
+					slog.Bool("display_alternative", !s.displayAltText))
 				s.displayAltLock.Lock()
 				s.displayAltText = !s.displayAltText
 				s.displayAltLock.Unlock()

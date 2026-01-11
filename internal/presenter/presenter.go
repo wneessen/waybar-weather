@@ -45,19 +45,24 @@ type TemplateContext struct {
 }
 
 type Presenter struct {
-	TextTemplate    *template.Template
-	AltTextTemplate *template.Template
-	TooltipTemplate *template.Template
+	TextTemplate       *template.Template
+	AltTextTemplate    *template.Template
+	TooltipTemplate    *template.Template
+	AltTooltipTemplate *template.Template
 
-	localizer *spreak.Localizer
-	humanizer *humanize.Humanizer
+	localizer     *spreak.Localizer
+	humanizer     *humanize.Humanizer
+	forecastHours uint
 }
 
 // Supported languages for humanize
 var supportedHumanizers = []*humanize.LocaleData{de.New()}
 
+// New initializes and returns a new Presenter instance with the provided configuration and localizer.
+// It parses templates, creates a humanizer, and validates the templates for rendering.
+// Returns an error if any step in initialization fails.
 func New(conf *config.Config, loc *spreak.Localizer) (*Presenter, error) {
-	presenter := &Presenter{localizer: loc}
+	presenter := &Presenter{localizer: loc, forecastHours: conf.Weather.ForecastHours}
 
 	// Parse the templates
 	if err := presenter.parseTemplates(conf); err != nil {
@@ -79,6 +84,8 @@ func New(conf *config.Config, loc *spreak.Localizer) (*Presenter, error) {
 	return presenter, nil
 }
 
+// BuildContext constructs and returns a populated TemplateContext based on provided address, weather data,
+// and timings data.
 func (p *Presenter) BuildContext(addr geocode.Address, data *weather.Data, sunrise, sunset time.Time, moonPhase string) TemplateContext {
 	if data == nil {
 		return TemplateContext{}
@@ -97,20 +104,36 @@ func (p *Presenter) BuildContext(addr geocode.Address, data *weather.Data, sunri
 	}
 }
 
-func (p *Presenter) Render(tplCtx TemplateContext) (string, string, string, error) {
-	var textBuf, altBuf, tooltipBuf bytes.Buffer
+// Render processes the given TemplateContext and generates text, alternative text, and tooltip content as strings.
+func (p *Presenter) Render(tplCtx TemplateContext) (map[string]string, error) {
+	buf := bytes.NewBuffer(nil)
+	valMap := make(map[string]string)
 
-	if err := p.TextTemplate.Execute(&textBuf, tplCtx); err != nil {
-		return "", "", "", fmt.Errorf("failed to render text template: %w", err)
+	if err := p.TextTemplate.Execute(buf, tplCtx); err != nil {
+		return valMap, fmt.Errorf("failed to render text template: %w", err)
 	}
-	if err := p.AltTextTemplate.Execute(&altBuf, tplCtx); err != nil {
-		return "", "", "", fmt.Errorf("failed to render alt text template: %w", err)
-	}
-	if err := p.TooltipTemplate.Execute(&tooltipBuf, tplCtx); err != nil {
-		return "", "", "", fmt.Errorf("failed to render tooltip template: %w", err)
-	}
+	valMap["text"] = buf.String()
+	buf.Reset()
 
-	return textBuf.String(), altBuf.String(), tooltipBuf.String(), nil
+	if err := p.AltTextTemplate.Execute(buf, tplCtx); err != nil {
+		return valMap, fmt.Errorf("failed to render alt text template: %w", err)
+	}
+	valMap["alt_text"] = buf.String()
+	buf.Reset()
+
+	if err := p.TooltipTemplate.Execute(buf, tplCtx); err != nil {
+		return valMap, fmt.Errorf("failed to render tooltip template: %w", err)
+	}
+	valMap["tooltip"] = buf.String()
+	buf.Reset()
+
+	if err := p.AltTooltipTemplate.Execute(buf, tplCtx); err != nil {
+		return valMap, fmt.Errorf("failed to render tooltip template: %w", err)
+	}
+	valMap["alt_tooltip"] = buf.String()
+	buf.Reset()
+
+	return valMap, nil
 }
 
 // parseTemplates parses the templates from the config and stores them in the Presenter struct
@@ -133,6 +156,12 @@ func (p *Presenter) parseTemplates(conf *config.Config) error {
 	}
 	p.TooltipTemplate = tpl
 
+	tpl, err = template.New("alt_tooltip").Funcs(p.templateFuncMap()).Parse(conf.Templates.AltTooltip)
+	if err != nil {
+		return fmt.Errorf("failed to parse tooltip template: %w", err)
+	}
+	p.AltTooltipTemplate = tpl
+
 	return nil
 }
 
@@ -152,6 +181,7 @@ func (p *Presenter) validateTemplates() error {
 	return nil
 }
 
+// viewFromInstant converts a weather.Instant into a WeatherView with condition details and corresponding icon.
 func (p *Presenter) viewFromInstant(in weather.Instant) WeatherView {
 	return WeatherView{
 		Instant: in,
@@ -161,6 +191,7 @@ func (p *Presenter) viewFromInstant(in weather.Instant) WeatherView {
 	}
 }
 
+// viewSliceFromMap converts a map of DayHour-Instant pairs into a sorted slice of WeatherView based on InstantTime.
 func (p *Presenter) viewSliceFromMap(m map[weather.DayHour]weather.Instant) []WeatherView {
 	views := make([]WeatherView, 0, len(m))
 	for _, inst := range m {
