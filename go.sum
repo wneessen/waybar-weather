@@ -26,6 +26,8 @@ github.com/mdlayher/wifi v0.7.2 h1:5yBq4nTm2HIYarKpJHrHU8q2BuxlX/BEfPa8kVKeOYU=
 github.com/mdlayher/wifi v0.7.2/go.mod h1:zJM6S0QpUxpUgf915rgAQHE4/e1YzRRkhK3M26NPakI=
 github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyuac5Z2hdY=
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
+github.com/nathan-osman/go-sunrise v1.1.0 h1:ZqZmtmtzs8Os/DGQYi0YMHpuUqR/iRoJK+wDO0wTCw8=
+github.com/nathan-osman/go-sunrise v1.1.0/go.mod h1:RcWqhT+5ShCZDev79GuWLayetpJp78RSjSWxiDowmlM=
 github.com/pelletier/go-toml/v2 v2.2.4 h1:mye9XuhQ6gvn5h28+VilKrrPoQVanw5PMw/TB0t5Ec4=
 github.com/pelletier/go-toml/v2 v2.2.4/go.mod h1:2gIqNv+qfxSVS7cM2xJQKtLSTLUE9V8t9Stt+h56mCY=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
@@ -39,6 +41,8 @@ github.com/vorlif/humanize v1.0.0 h1:KqWA5AXLDFqbEpLhhwuU8jX1wtQD7Weswhj6T7DSAzY
 github.com/vorlif/humanize v1.0.0/go.mod h1:4Kby5bMnBiNwZ77TPmXZZ2e8ofEkgaeFZmwCqlDHJTM=
 github.com/vorlif/spreak v1.0.0 h1:SUaD/p+cWcGgLAdHi73cTmBBejpPpztlgM5I4kPSewY=
 github.com/vorlif/spreak v1.0.0/go.mod h1:oJ0AuinQV2XPy8WkdkbGejGDHQ3dCoB9brQMj5dsEyc=
+github.com/wneessen/go-moonphase v0.0.0-20251108174843-0043855bd40d h1:DURVLjTC4cF8q+m8Vy2ixli+/vOSj7FTUexeFYgiYmM=
+github.com/wneessen/go-moonphase v0.0.0-20251108174843-0043855bd40d/go.mod h1:MsfMTRN772dbfPpJTSSygAVr5qt+hDab2+L74VTvBCc=
 golang.org/x/crypto v0.46.0 h1:cKRW/pmt1pKAfetfu+RCEvjvZkA9RimPbh7bhFjGVBU=
 golang.org/x/crypto v0.46.0/go.mod h1:Evb/oLKmMraqjZ2iQTwDwvCtJkczlDuTmdJXoZVzqU0=
 golang.org/x/net v0.48.0 h1:zyQRTTrjc33Lhh0fBgT/H3oZq9WuvRR5gPC70xpDiQU=

@@ -7,8 +7,10 @@ require (
 	github.com/godbus/dbus/v5 v5.2.2
 	github.com/kkyr/fig v0.5.0
 	github.com/mdlayher/wifi v0.7.2
+	github.com/nathan-osman/go-sunrise v1.1.0
 	github.com/vorlif/humanize v1.0.0
 	github.com/vorlif/spreak v1.0.0
+	github.com/wneessen/go-moonphase v0.0.0-20251108174843-0043855bd40d
 	golang.org/x/text v0.32.0
 )
 
