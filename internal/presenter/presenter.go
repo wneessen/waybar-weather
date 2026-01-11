@@ -40,8 +40,9 @@ type TemplateContext struct {
 	MoonPhase     string
 	MoonPhaseIcon string
 
-	Current  WeatherView
-	Forecast []WeatherView
+	Current   WeatherView
+	Forecast  WeatherView
+	Forecasts []WeatherView
 }
 
 type Presenter struct {
@@ -90,6 +91,7 @@ func (p *Presenter) BuildContext(addr geocode.Address, data *weather.Data, sunri
 	if data == nil {
 		return TemplateContext{}
 	}
+	fcastHour := weather.NewDayHour(time.Now().Add(time.Hour * time.Duration(p.forecastHours)))
 	return TemplateContext{
 		Latitude:      data.Coordinates.Lat,
 		Longitude:     data.Coordinates.Lon,
@@ -100,7 +102,8 @@ func (p *Presenter) BuildContext(addr geocode.Address, data *weather.Data, sunri
 		MoonPhase:     moonPhase,
 		MoonPhaseIcon: MoonPhaseIcon[moonPhase],
 		Current:       p.viewFromInstant(data.Current),
-		Forecast:      p.viewSliceFromMap(data.Forecast),
+		Forecast:      p.viewFromInstant(data.Forecast[fcastHour]),
+		Forecasts:     p.viewSliceFromMap(data.Forecast),
 	}
 }
 
@@ -167,7 +170,7 @@ func (p *Presenter) parseTemplates(conf *config.Config) error {
 
 // validateTemplates validates that the templates can be rendered
 func (p *Presenter) validateTemplates() error {
-	data := TemplateContext{Forecast: make([]WeatherView, 1)}
+	data := TemplateContext{Forecasts: make([]WeatherView, 1)}
 	if err := p.TextTemplate.Execute(bytes.NewBuffer(nil), data); err != nil {
 		return fmt.Errorf("failed to render text template: %w", err)
 	}

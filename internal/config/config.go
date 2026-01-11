@@ -17,7 +17,7 @@ import (
 const (
 	configEnv         = "WAYBARWEATHER"
 	DefaultTextTpl    = "{{.Current.ConditionIcon}} {{.Current.Temperature}}{{.Current.Units.Temperature}}"
-	DefaultAltTextTpl = "{{(index .Forecast 0).ConditionIcon}} {{(index .Forecast 0).Temperature}}"
+	DefaultAltTextTpl = "{{.Forecast.ConditionIcon}} {{.Forecast.Temperature}}"
 	DefaultTooltipTpl = "{{ .Address.City }}, {{ .Address.Country }}\n" +
 		"{{.Current.Condition}}\n" +
 		"{{loc \"apparent\"}}: {{.Current.ApparentTemperature}}{{.Current.Units.Temperature}}\n" +
@@ -28,14 +28,14 @@ const (
 		"\n" +
 		"Weather data for: {{localizedTime .Current.InstantTime}}"
 	DefaultAltTooltipTpl = "{{ .Address.City }}, {{ .Address.Country }}\n" +
-		"{{.Current.Condition}}\n" +
-		"{{loc \"apparent\"}}: {{.Current.ApparentTemperature}}{{.Current.Units.Temperature}}\n" +
-		"{{loc \"humidity\"}}: {{.Current.RelativeHumidity}}%\n" +
-		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.Current.Units.Pressure}}\n" +
+		"{{.Forecast.Condition}}\n" +
+		"{{loc \"apparent\"}}: {{.Forecast.ApparentTemperature}}{{.Forecast.Units.Temperature}}\n" +
+		"{{loc \"humidity\"}}: {{.Forecast.RelativeHumidity}}%\n" +
+		"{{loc \"pressure\"}}: {{.Forecast.PressureMSL}} {{.Forecast.Units.Pressure}}\n" +
 		"\n" +
 		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}` +
 		"\n" +
-		"Weather data for: {{localizedTime .Current.InstantTime}}"
+		"Weather data for: {{localizedTime .Forecast.InstantTime}}"
 )
 
 // Config represents the application's configuration structure.

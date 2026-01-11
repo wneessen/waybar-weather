@@ -44,10 +44,10 @@ func (p *Presenter) floatFormat(val float64, precision int) string {
 
 // forecast returns the forecast at the given offset (0-based).
 func forecast(ctx TemplateContext, offset int) WeatherView {
-	if offset < 0 || offset >= len(ctx.Forecast) {
+	if offset < 0 || offset >= len(ctx.Forecasts) {
 		return WeatherView{} // zero value; templates will see empty fields
 	}
-	return ctx.Forecast[offset]
+	return ctx.Forecasts[offset]
 }
 
 // firstForecast returns the earliest forecast entry, if any.
