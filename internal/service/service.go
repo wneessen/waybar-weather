@@ -171,10 +171,6 @@ func (s *Service) printWeather(context.Context) {
 	s.locationLock.RUnlock()
 	s.weatherLock.RUnlock()
 
-	s.displayAltLock.RLock()
-	displayAltText := s.displayAltText
-	s.displayAltLock.RUnlock()
-
 	// Moonphase and sunrise/sunset times
 	now := time.Now()
 	moon := moonphase.New(time.Now())
@@ -189,108 +185,23 @@ func (s *Service) printWeather(context.Context) {
 		s.logger.Error("failed to render weather template", logger.Err(err))
 	}
 
+	// Are we in alternative text mode?
 	displayText := text
-	if displayAltText {
+	s.displayAltLock.RLock()
+	if s.displayAltText {
 		displayText = alttext
 	}
+	s.displayAltLock.RUnlock()
 
+	// Present the rendered weather data
 	output := outputData{
 		Text:    displayText,
 		Tooltip: tooltip,
 		Class:   OutputClass,
 	}
-
 	if err = json.NewEncoder(s.output).Encode(output); err != nil {
 		s.logger.Error("failed to encode weather data", logger.Err(err))
 	}
-}
-
-// fillDisplayData populates the provided DisplayData object with details based on current or
-// forecasted weather information. It locks relevant data structures to ensure safe concurrent
-// access and conditionally fills fields based on the mode.
-func (s *Service) fillDisplayData() {
-	/*
-		s.locationLock.RLock()
-		defer s.locationLock.RUnlock()
-		s.weatherLock.RLock()
-		defer s.weatherLock.RUnlock()
-
-		// The target must not be nil
-		if target == nil {
-			return
-		}
-
-		// We need valid weather data to fill the display data
-		if s.weather == nil {
-			s.logger.Debug("no weather data available yet, geo location might not have returned a location yet")
-			return
-		}
-
-		// Coordinates and address data
-		// target.Latitude = s.weather.Latitude
-		// target.Longitude = s.weather.Longitude
-		// target.Elevation = s.weather.Elevation
-		target.Address = s.address
-
-		// Moon phase
-		m := moonphase.New(time.Now())
-		target.Moonphase = m.PhaseName()
-		target.MoonphaseIcon = presenter.MoonPhaseIcon[target.Moonphase]
-
-		// Generel weather data
-		now := time.Now()
-		nowHourUTC := now.UTC().Truncate(time.Hour)
-		nowIdx := s.weatherIndexByTime(nowHourUTC)
-		target.UpdateTime = s.weather.CurrentWeather.Time.Time
-		target.TempUnit = s.weather.HourlyUnits["temperature_2m"]
-		target.PressureUnit = s.weather.HourlyUnits["pressure_msl"]
-		sunriseTimeUTC, sunsetTimeUTC := sunrise.SunriseSunset(s.weather.Latitude, s.weather.Longitude, now.Year(),
-			now.Month(), now.Day())
-		target.SunriseTime, target.SunsetTime = sunriseTimeUTC.In(now.Location()), sunsetTimeUTC.In(now.Location())
-		target.Current.IsDaytime = false
-		if now.After(target.SunriseTime) && now.Before(target.SunsetTime) {
-			target.Current.IsDaytime = true
-		}
-
-		// Current weather data
-		target.Current.Temperature = s.weather.CurrentWeather.Temperature
-		target.Current.WeatherCode = s.weather.CurrentWeather.WeatherCode
-		target.Current.WindDirection = s.weather.CurrentWeather.WindDirection
-		target.Current.WindSpeed = s.weather.CurrentWeather.WindSpeed
-		target.Current.WeatherDateForTime = s.weather.CurrentWeather.Time.Time
-		target.Current.ConditionIcon = presenter.WMOWeatherIcons[int(target.Current.WeatherCode)][target.Current.IsDaytime]
-		target.Current.Condition = s.t.Get(presenter.WMOWeatherCodes[int(target.Current.WeatherCode)])
-		if nowIdx != -1 {
-			target.Current.ApparentTemperature = s.weather.HourlyMetrics["apparent_temperature"][nowIdx]
-			target.Current.Humidity = s.weather.HourlyMetrics["relative_humidity_2m"][nowIdx]
-			target.Current.PressureMSL = s.weather.HourlyMetrics["pressure_msl"][nowIdx]
-		}
-
-		// Forecast weather data
-		fcastHours := time.Duration(s.config.Weather.ForecastHours) * time.Hour //nolint:gosec
-		fcastTime := now.Add(fcastHours).Truncate(time.Hour)
-		fcastTimeUTC := now.Add(fcastHours).UTC().Truncate(time.Hour)
-		fcastIdx := s.weatherIndexByTime(fcastTimeUTC)
-		if fcastIdx != -1 {
-			target.Forecast.WeatherDateForTime = fcastTime
-			target.Forecast.IsDaytime = false
-			if s.weather.HourlyMetrics["is_day"][fcastIdx] == 1 {
-				target.Forecast.IsDaytime = true
-			}
-			target.Forecast.Temperature = s.weather.HourlyMetrics["temperature_2m"][fcastIdx]
-			target.Forecast.ApparentTemperature = s.weather.HourlyMetrics["apparent_temperature"][fcastIdx]
-			target.Forecast.Humidity = s.weather.HourlyMetrics["relative_humidity_2m"][fcastIdx]
-			target.Forecast.PressureMSL = s.weather.HourlyMetrics["pressure_msl"][fcastIdx]
-			target.Forecast.WeatherCode = s.weather.HourlyMetrics["weather_code"][fcastIdx]
-			target.Forecast.WindDirection = s.weather.HourlyMetrics["wind_direction_10m"][fcastIdx]
-			target.Forecast.WindSpeed = s.weather.HourlyMetrics["wind_speed_10m"][fcastIdx]
-			target.Forecast.ConditionIcon = presenter.WMOWeatherIcons[int(target.Forecast.WeatherCode)][target.Forecast.IsDaytime]
-			target.Forecast.Condition = s.t.Get(presenter.WMOWeatherCodes[int(target.Forecast.WeatherCode)])
-		} else {
-			target.Forecast = target.Current
-		}
-
-	*/
 }
 
 // updateLocation updates the service's location and address based on provided latitude and longitude.
@@ -343,16 +254,3 @@ func (s *Service) processLocationUpdates(ctx context.Context, sub <-chan geobus.
 		}
 	}
 }
-
-/*
-func (s *Service) weatherIndexByTime(atTime time.Time) int {
-	for i, t := range s.weather.HourlyTimes {
-		if t.Equal(atTime) {
-			return i
-		}
-	}
-	return -1
-}
-
-
-*/
