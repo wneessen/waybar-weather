@@ -50,6 +50,10 @@ type Config struct {
 
 		// Allowed value: 1 to 24
 		ForecastHours uint `fig:"forecast_hours" default:"3"`
+
+		// Cold and hot class thresholds
+		ColdThreshold float64 `fig:"cold_threshold" default:"2"`
+		HotThreshold  float64 `fig:"hot_threshold" default:"24"`
 	} `fig:"weather"`
 
 	Intervals struct {

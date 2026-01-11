@@ -11,6 +11,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -28,10 +29,12 @@ import (
 )
 
 const (
-	OutputClass  = "waybar-weather"
-	SubID        = "location-update"
-	cacheHitTTL  = 1 * time.Hour
-	cacheMissTTL = 10 * time.Minute
+	OutputClass     = "waybar-weather"
+	ColdOutputClass = "cold"
+	HotOutputClass  = "hot"
+	SubID           = "location-update"
+	cacheHitTTL     = 1 * time.Hour
+	cacheMissTTL    = 10 * time.Minute
 )
 
 type outputData struct {
@@ -192,20 +195,41 @@ func (s *Service) printWeather(context.Context) {
 	}
 
 	// Are we in alternative text mode?
+	altMode := false
 	displayText := renderMap["text"]
 	displayTooltip := renderMap["tooltip"]
 	s.displayAltLock.RLock()
 	if s.displayAltText {
+		altMode = true
 		displayText = renderMap["alt_text"]
 		displayTooltip = renderMap["alt_tooltip"]
 	}
 	s.displayAltLock.RUnlock()
 
+	// Do we hit the cold or hot tresholds?
+	outputClass := []string{OutputClass}
+	switch altMode {
+	case true:
+		if tplCtx.Forecast.Temperature >= s.config.Weather.HotThreshold {
+			outputClass = append(outputClass, HotOutputClass)
+		}
+		if tplCtx.Forecast.Temperature <= s.config.Weather.ColdThreshold {
+			outputClass = append(outputClass, ColdOutputClass)
+		}
+	default:
+		if tplCtx.Current.Temperature >= s.config.Weather.HotThreshold {
+			outputClass = append(outputClass, HotOutputClass)
+		}
+		if tplCtx.Current.Temperature <= s.config.Weather.ColdThreshold {
+			outputClass = append(outputClass, ColdOutputClass)
+		}
+	}
+
 	// Present the rendered weather data
 	output := outputData{
 		Text:    displayText,
 		Tooltip: displayTooltip,
-		Class:   OutputClass,
+		Class:   strings.Join(outputClass, " "),
 	}
 	if err = json.NewEncoder(s.output).Encode(output); err != nil {
 		s.logger.Error("failed to encode weather data", logger.Err(err))
