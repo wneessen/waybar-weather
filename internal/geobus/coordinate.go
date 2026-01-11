@@ -41,9 +41,7 @@ func (c Coordinate) PosHasSignificantChange(other Coordinate) bool {
 	return distance > DistanceThreshold
 }
 
+// Valid checks if the coordinate is valid according to the EPSG logic
 func (c Coordinate) Valid() bool {
-	if (c.Lat <= -90 || c.Lat >= 90) || (c.Lon <= -180 || c.Lon >= 180) {
-		return false
-	}
-	return true
+	return c.Lat >= -90 && c.Lat <= 90 && c.Lon >= -180 && c.Lon <= 180
 }

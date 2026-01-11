@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	stdhttp "net/http"
 	"strings"
 	"testing"
 	"testing/synctest"
@@ -18,8 +19,11 @@ import (
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/geobus"
 	"github.com/wneessen/waybar-weather/internal/geocode"
+	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/i18n"
 	"github.com/wneessen/waybar-weather/internal/logger"
+	"github.com/wneessen/waybar-weather/internal/testhelper"
+	openmeteo "github.com/wneessen/waybar-weather/internal/weather/provider/open-meteo"
 )
 
 const (
@@ -198,8 +202,15 @@ func TestService_printWeather(t *testing.T) {
 		if output.Tooltip != "tooltip" {
 			t.Errorf("expected Tooltip to be %q, got %q", "tooltip", output.Tooltip)
 		}
-		if output.Classes != OutputClass {
-			t.Errorf("expected Classes to be %q, got %q", OutputClass, output.Classes)
+		wantClasses := 2
+		if len(output.Classes) != wantClasses {
+			t.Errorf("expected Classes to have length %d, got %d", wantClasses, len(output.Classes))
+		}
+		if output.Classes[0] != OutputClass {
+			t.Errorf("expected first class to be %q, got %q", OutputClass, output.Classes[0])
+		}
+		if output.Classes[1] != ColdOutputClass {
+			t.Errorf("expected 2nd class to be %q, got %q", ColdOutputClass, output.Classes[1])
 		}
 	})
 	t.Run("print alt_text to a buffer", func(t *testing.T) {
@@ -605,6 +616,42 @@ func TestService_updateLocation(t *testing.T) {
 			wantErr:   false,
 		},
 		{
+			name:      "invalid positive latitude",
+			latitude:  91.0,
+			longitude: 180.0,
+			wantErr:   true,
+		},
+		{
+			name:      "invalid positive longitude",
+			latitude:  90.0,
+			longitude: 181.0,
+			wantErr:   true,
+		},
+		{
+			name:      "invalid positive values",
+			latitude:  91.0,
+			longitude: 181.0,
+			wantErr:   true,
+		},
+		{
+			name:      "invalid negative latitude",
+			latitude:  -91.0,
+			longitude: 180.0,
+			wantErr:   true,
+		},
+		{
+			name:      "invalid negative longitude",
+			latitude:  90.0,
+			longitude: -181.0,
+			wantErr:   true,
+		},
+		{
+			name:      "invalid negative values",
+			latitude:  -91.0,
+			longitude: -181.0,
+			wantErr:   true,
+		},
+		{
 			name:      "equator prime meridian",
 			latitude:  0.0,
 			longitude: 0.0,
@@ -624,16 +671,14 @@ func TestService_updateLocation(t *testing.T) {
 		},
 	}
 
-	/*
-		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
-			return &stdhttp.Response{
-				StatusCode: 200,
-				Body:       io.NopCloser(bytes.NewBufferString("{}")),
-				Header:     make(stdhttp.Header),
-			}, nil
-		}
+	rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+		return &stdhttp.Response{
+			StatusCode: 200,
+			Body:       io.NopCloser(bytes.NewBufferString("{}")),
+			Header:     make(stdhttp.Header),
+		}, nil
+	}
 
-	*/
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			serv, err := testService(t, false)
@@ -642,8 +687,11 @@ func TestService_updateLocation(t *testing.T) {
 			}
 			serv.output = io.Discard
 			serv.geocoder = &mockGeocoder{}
-			// serv.omclient.Client.Transport = testhelper.MockRoundTripper{Fn: rtFn}
 
+			httpclient := http.New(serv.logger)
+			httpclient.Transport = testhelper.MockRoundTripper{Fn: rtFn}
+			weatherProv, err := openmeteo.New(httpclient, serv.logger, serv.config.Units)
+			serv.weatherProv = weatherProv
 			err = serv.updateLocation(t.Context(), geobus.Coordinate{Lat: tc.latitude, Lon: tc.longitude})
 
 			if tc.wantErr && err == nil {
