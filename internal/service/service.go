@@ -11,7 +11,6 @@ import (
 	"io"
 	"log/slog"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -38,9 +37,9 @@ const (
 )
 
 type outputData struct {
-	Text    string `json:"text"`
-	Tooltip string `json:"tooltip"`
-	Class   string `json:"class"`
+	Text    string   `json:"text"`
+	Tooltip string   `json:"tooltip"`
+	Class   []string `json:"class"`
 }
 
 type Service struct {
@@ -207,21 +206,21 @@ func (s *Service) printWeather(context.Context) {
 	s.displayAltLock.RUnlock()
 
 	// Do we hit the cold or hot tresholds?
-	var outputClass []string
+	outputClasses := []string{OutputClass}
 	switch altMode {
 	case true:
 		if tplCtx.Forecast.Temperature >= s.config.Weather.HotThreshold {
-			outputClass = append(outputClass, HotOutputClass)
+			outputClasses = append(outputClasses, HotOutputClass)
 		}
 		if tplCtx.Forecast.Temperature <= s.config.Weather.ColdThreshold {
-			outputClass = append(outputClass, ColdOutputClass)
+			outputClasses = append(outputClasses, ColdOutputClass)
 		}
 	default:
 		if tplCtx.Current.Temperature >= s.config.Weather.HotThreshold {
-			outputClass = append(outputClass, HotOutputClass)
+			outputClasses = append(outputClasses, HotOutputClass)
 		}
 		if tplCtx.Current.Temperature <= s.config.Weather.ColdThreshold {
-			outputClass = append(outputClass, ColdOutputClass)
+			outputClasses = append(outputClasses, ColdOutputClass)
 		}
 	}
 
@@ -229,7 +228,7 @@ func (s *Service) printWeather(context.Context) {
 	output := outputData{
 		Text:    displayText,
 		Tooltip: displayTooltip,
-		Class:   strings.Join(outputClass, " "),
+		Class:   outputClasses,
 	}
 	if err = json.NewEncoder(s.output).Encode(output); err != nil {
 		s.logger.Error("failed to encode weather data", logger.Err(err))
