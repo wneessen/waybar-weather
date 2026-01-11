@@ -14,7 +14,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nathan-osman/go-sunrise"
 	"github.com/vorlif/spreak"
+	"github.com/wneessen/go-moonphase"
 
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/geobus"
@@ -161,11 +163,27 @@ func (s *Service) printWeather(context.Context) {
 		return
 	}
 
+	// Read relevant data from the service state
+	s.locationLock.RLock()
+	s.weatherLock.RLock()
+	addr := s.address
+	weathr := s.weather
+	s.locationLock.RUnlock()
+	s.weatherLock.RUnlock()
+
 	s.displayAltLock.RLock()
 	displayAltText := s.displayAltText
 	s.displayAltLock.RUnlock()
 
-	tplCtx := s.presenter.BuildContext(s.address, s.weather, time.Now(), time.Now(), "", "")
+	// Moonphase and sunrise/sunset times
+	now := time.Now()
+	moon := moonphase.New(time.Now())
+	sunriseTimeUTC, sunsetTimeUTC := sunrise.SunriseSunset(addr.Latitude, addr.Longitude, now.Year(),
+		now.Month(), now.Day())
+
+	// Render the weather data
+	tplCtx := s.presenter.BuildContext(addr, weathr, sunriseTimeUTC.In(now.Location()),
+		sunsetTimeUTC.In(now.Location()), moon.PhaseName())
 	text, alttext, tooltip, err := s.presenter.Render(tplCtx)
 	if err != nil {
 		s.logger.Error("failed to render weather template", logger.Err(err))

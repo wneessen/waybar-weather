@@ -22,17 +22,9 @@ const (
 		"{{.Current.Condition}}\n" +
 		"{{loc \"apparent\"}}: {{.Current.ApparentTemperature}}{{.Current.Units.Temperature}}\n" +
 		"{{loc \"humidity\"}}: {{.Current.RelativeHumidity}}%\n" +
-		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.Current.Units.Pressure}}\n"
-	/*
-		DefaultTooltipTpl = "{{.Address.City}}, {{.Address.Country}}\n" +
-			"{{.Current.Condition}}\n" +
-			"{{loc \"apparent\"}}: {{.Current.ApparentTemperature}}{{.TempUnit}}\n" +
-			"{{loc \"humidity\"}}: {{.Current.Humidity}}%\n" +
-			"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.PressureUnit}}\n" +
-			"\n" +
-			`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
-
-	*/
+		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.Current.Units.Pressure}}\n" +
+		"\n" +
+		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
 )
 
 // Config represents the application's configuration structure.

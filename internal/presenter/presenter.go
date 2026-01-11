@@ -79,9 +79,7 @@ func New(conf *config.Config, loc *spreak.Localizer) (*Presenter, error) {
 	return presenter, nil
 }
 
-func (p *Presenter) BuildContext(addr geocode.Address, data *weather.Data, sunrise, sunset time.Time,
-	moonPhase, moonIcon string,
-) TemplateContext {
+func (p *Presenter) BuildContext(addr geocode.Address, data *weather.Data, sunrise, sunset time.Time, moonPhase string) TemplateContext {
 	if data == nil {
 		return TemplateContext{}
 	}
@@ -93,7 +91,7 @@ func (p *Presenter) BuildContext(addr geocode.Address, data *weather.Data, sunri
 		SunriseTime:   sunrise,
 		SunsetTime:    sunset,
 		MoonPhase:     moonPhase,
-		MoonPhaseIcon: moonIcon,
+		MoonPhaseIcon: MoonPhaseIcon[moonPhase],
 		Current:       p.viewFromInstant(data.Current),
 		Forecast:      p.viewSliceFromMap(data.Forecast),
 	}
