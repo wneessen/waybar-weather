@@ -207,7 +207,7 @@ func (s *Service) printWeather(context.Context) {
 	s.displayAltLock.RUnlock()
 
 	// Do we hit the cold or hot tresholds?
-	outputClass := []string{OutputClass}
+	var outputClass []string
 	switch altMode {
 	case true:
 		if tplCtx.Forecast.Temperature >= s.config.Weather.HotThreshold {
