@@ -24,18 +24,14 @@ const (
 		"{{loc \"humidity\"}}: {{.Current.RelativeHumidity}}%\n" +
 		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.Current.Units.Pressure}}\n" +
 		"\n" +
-		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}` +
-		"\n" +
-		"Weather data for: {{localizedTime .Current.InstantTime}}"
+		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
 	DefaultAltTooltipTpl = "{{ .Address.City }}, {{ .Address.Country }}\n" +
 		"{{.Forecast.Condition}}\n" +
 		"{{loc \"apparent\"}}: {{.Forecast.ApparentTemperature}}{{.Forecast.Units.Temperature}}\n" +
 		"{{loc \"humidity\"}}: {{.Forecast.RelativeHumidity}}%\n" +
 		"{{loc \"pressure\"}}: {{.Forecast.PressureMSL}} {{.Forecast.Units.Pressure}}\n" +
 		"\n" +
-		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}` +
-		"\n" +
-		"Weather data for: {{localizedTime .Forecast.InstantTime}}"
+		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
 )
 
 // Config represents the application's configuration structure.
