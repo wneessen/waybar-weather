@@ -39,7 +39,7 @@ const (
 type outputData struct {
 	Text    string   `json:"text"`
 	Tooltip string   `json:"tooltip"`
-	Classes []string `json:"classes"`
+	Classes []string `json:"class"`
 }
 
 type Service struct {
