@@ -198,8 +198,8 @@ func TestService_printWeather(t *testing.T) {
 		if output.Tooltip != "tooltip" {
 			t.Errorf("expected Tooltip to be %q, got %q", "tooltip", output.Tooltip)
 		}
-		if output.Class != OutputClass {
-			t.Errorf("expected Class to be %q, got %q", OutputClass, output.Class)
+		if output.Classes != OutputClass {
+			t.Errorf("expected Classes to be %q, got %q", OutputClass, output.Classes)
 		}
 	})
 	t.Run("print alt_text to a buffer", func(t *testing.T) {

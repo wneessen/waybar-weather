@@ -24,6 +24,7 @@ import (
 type WeatherView struct {
 	weather.Instant
 
+	Category      string
 	Condition     string
 	ConditionIcon string
 }
@@ -189,6 +190,7 @@ func (p *Presenter) viewFromInstant(in weather.Instant) WeatherView {
 	return WeatherView{
 		Instant: in,
 
+		Category:      weatherCategory(in.WeatherCode),
 		Condition:     WMOWeatherCodes[in.WeatherCode],
 		ConditionIcon: WMOWeatherIcons[in.WeatherCode][in.IsDay],
 	}
@@ -204,4 +206,29 @@ func (p *Presenter) viewSliceFromMap(m map[weather.DayHour]weather.Instant) []We
 		return views[i].InstantTime.Before(views[j].InstantTime)
 	})
 	return views
+}
+
+// weatherCategory categorizes a weather code into general weather conditions such as clear, cloudy, rain, snow, etc.
+func weatherCategory(code int) string {
+	switch code {
+
+	case 0, 1:
+		return "clear"
+	case 2, 3:
+		return "cloudy"
+	case 45, 48:
+		return "fog"
+	case 51, 53, 55,
+		56, 57,
+		61, 63, 65,
+		66, 67,
+		80, 81, 82:
+		return "rain"
+	case 71, 73, 75, 77, 85, 86:
+		return "snow"
+	case 95, 96, 99:
+		return "thunderstorm"
+	default:
+		return ""
+	}
 }
