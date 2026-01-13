@@ -121,14 +121,21 @@ func (o *OpenMeteo) Name() string {
 func (o *OpenMeteo) GetWeather(ctx context.Context, coords geobus.Coordinate) (*weather.Data, error) {
 	res := new(response)
 	data := weather.NewData()
+	tz := time.Local.String()
+	switch tz {
+	case "UTC", "":
+		tz = time.FixedZone("UTC", 0).String()
+	case "Local":
+		tz = "auto"
+	default:
+	}
 
-	// latitude=52.52&longitude=13.41&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m
 	query := url.Values{}
 	query.Set("latitude", fmt.Sprintf("%f", coords.Lat))
 	query.Set("longitude", fmt.Sprintf("%f", coords.Lon))
 	query.Set("current", strings.Join(dataFields, ","))
 	query.Set("hourly", strings.Join(dataFields, ","))
-	query.Set("timezone", "auto")
+	query.Set("timezone", tz)
 	query.Set("past_days", "1")
 	if strings.ToLower(o.unit) == "imperial" {
 		query.Set("temperature_unit", "fahrenheit")
@@ -202,7 +209,9 @@ func (r *resTime) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse time: %w", err)
 	}
-	r.Time = apiTime
+	localApiTime := time.Date(apiTime.Year(), apiTime.Month(), apiTime.Day(), apiTime.Hour(), apiTime.Minute(),
+		apiTime.Second(), 0, time.Local)
+	r.Time = localApiTime
 
 	return nil
 }
