@@ -25,7 +25,7 @@ const (
 
 var dataFields = []string{
 	"temperature_2m", "apparent_temperature", "weather_code", "wind_speed_10m", "is_day",
-	"wind_direction_10m", "relative_humidity_2m", "pressure_msl",
+	"wind_direction_10m", "relative_humidity_2m", "pressure_msl", "wind_gusts_10m",
 }
 
 type OpenMeteo struct {
@@ -53,13 +53,13 @@ type response struct {
 	CurrentUnits         struct {
 		Time                string `json:"time"`
 		Interval            string `json:"interval"`
-		Temperature2M       string `json:"temperature_2m"`
+		Temperature         string `json:"temperature_2m"`
 		ApparentTemperature string `json:"apparent_temperature"`
 		WeatherCode         string `json:"weather_code"`
-		WindSpeed10M        string `json:"wind_speed_10m"`
+		WindSpeed           string `json:"wind_speed_10m"`
 		IsDay               string `json:"is_day"`
-		WindDirection10M    string `json:"wind_direction_10m"`
-		RelativeHumidity2M  string `json:"relative_humidity_2m"`
+		WindDirection       string `json:"wind_direction_10m"`
+		RelativeHumidity    string `json:"relative_humidity_2m"`
 		PressureMsl         string `json:"pressure_msl"`
 	} `json:"current_units"`
 	Current struct {
@@ -69,6 +69,7 @@ type response struct {
 		ApparentTemperature float64 `json:"apparent_temperature"`
 		WeatherCode         int     `json:"weather_code"`
 		WindSpeed           float64 `json:"wind_speed_10m"`
+		WindGusts           float64 `json:"wind_gusts_10m"`
 		IsDay               resBool `json:"is_day"`
 		WindDirection       int     `json:"wind_direction_10m"`
 		RelativeHumidity    int     `json:"relative_humidity_2m"`
@@ -91,6 +92,7 @@ type response struct {
 		ApparentTemperature []float64 `json:"apparent_temperature"`
 		WeatherCode         []int     `json:"weather_code"`
 		WindSpeed           []float64 `json:"wind_speed_10m"`
+		WindGusts           []float64 `json:"wind_gusts_10m"`
 		IsDay               []resBool `json:"is_day"`
 		WindDirection       []int     `json:"wind_direction_10m"`
 		RelativeHumidity    []int     `json:"relative_humidity_2m"`
@@ -159,16 +161,17 @@ func (o *OpenMeteo) GetWeather(ctx context.Context, coords geobus.Coordinate) (*
 		ApparentTemperature: res.Current.ApparentTemperature,
 		WeatherCode:         res.Current.WeatherCode,
 		WindSpeed:           res.Current.WindSpeed,
+		WindGusts:           res.Current.WindGusts,
 		WindDirection:       float64(res.Current.WindDirection),
 		RelativeHumidity:    float64(res.Current.RelativeHumidity),
 		PressureMSL:         res.Current.PressureMSL,
 		IsDay:               res.Current.IsDay.bool,
 		Units: weather.Units{
-			Temperature:   res.CurrentUnits.Temperature2M,
-			WindSpeed:     res.CurrentUnits.WindSpeed10M,
-			Humidity:      res.CurrentUnits.RelativeHumidity2M,
+			Temperature:   res.CurrentUnits.Temperature,
+			WindSpeed:     res.CurrentUnits.WindSpeed,
+			Humidity:      res.CurrentUnits.RelativeHumidity,
 			Pressure:      res.CurrentUnits.PressureMsl,
-			WindDirection: res.CurrentUnits.WindDirection10M,
+			WindDirection: res.CurrentUnits.WindDirection,
 		},
 	}
 	for i := range res.Hourly.Time {
@@ -179,6 +182,7 @@ func (o *OpenMeteo) GetWeather(ctx context.Context, coords geobus.Coordinate) (*
 			ApparentTemperature: res.Hourly.ApparentTemperature[i],
 			WeatherCode:         res.Hourly.WeatherCode[i],
 			WindSpeed:           res.Hourly.WindSpeed[i],
+			WindGusts:           res.Hourly.WindGusts[i],
 			WindDirection:       float64(res.Hourly.WindDirection[i]),
 			RelativeHumidity:    float64(res.Hourly.RelativeHumidity[i]),
 			PressureMSL:         res.Hourly.PressureMsl[i],

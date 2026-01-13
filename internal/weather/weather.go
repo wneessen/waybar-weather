@@ -27,6 +27,7 @@ type Instant struct {
 	ApparentTemperature float64
 	WeatherCode         int
 	WindSpeed           float64
+	WindGusts           float64
 	WindDirection       float64
 	RelativeHumidity    float64
 	PressureMSL         float64
