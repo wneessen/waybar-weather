@@ -19,6 +19,8 @@ func (p *Presenter) templateFuncMap() template.FuncMap {
 		"lc":              strings.ToLower,
 		"uc":              strings.ToUpper,
 		"fcastHourOffset": p.forecastByOffset,
+		"windDir":         p.degToString,
+		"windDirIcon":     p.windDirIcon,
 	}
 }
 
@@ -58,4 +60,34 @@ func (p *Presenter) forecastByOffset(ctx TemplateContext, offset int) WeatherVie
 	}
 
 	return WeatherView{}
+}
+
+func (p *Presenter) degToString(deg float64) string {
+	switch {
+	case deg < 22.5:
+		return "N"
+	case deg < 67.5:
+		return "NE"
+	case deg < 112.5:
+		return "E"
+	case deg < 157.5:
+		return "SE"
+	case deg < 202.5:
+		return "S"
+	case deg < 247.5:
+		return "SW"
+	case deg < 292.5:
+		return "W"
+	case deg < 337.5:
+		return "NW"
+	default:
+		return "N"
+	}
+}
+
+func (p *Presenter) windDirIcon(dir string) string {
+	if icon, ok := windDirIcons[strings.ToUpper(dir)]; ok {
+		return icon
+	}
+	return ""
 }

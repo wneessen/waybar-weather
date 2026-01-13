@@ -171,6 +171,7 @@ var i18nVars = map[string]localize.MsgID{
 	"humidity":        "Humidity",
 	"winddir":         "Wind direction",
 	"windspeed":       "Wind speed",
+	"wind":            "Wind",
 	"pressure":        "Pressure",
 	"apparent":        "Feels like",
 	"weathercode":     "Weather code",
@@ -187,4 +188,15 @@ var i18nVars = map[string]localize.MsgID{
 	"waning gibbous":  "Waning gibbous",
 	"third quarter":   "Third quarter",
 	"waning crescent": "Waning crescent",
+}
+
+var windDirIcons = map[string]string{
+	"N":  "↑",
+	"NE": "↗",
+	"E":  "→",
+	"SE": "↘",
+	"S":  "↓",
+	"SW": "↙",
+	"W":  "←",
+	"NW": "↖",
 }
