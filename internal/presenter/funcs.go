@@ -12,12 +12,13 @@ import (
 
 func (p *Presenter) templateFuncMap() template.FuncMap {
 	return template.FuncMap{
-		"timeFormat":    p.timeFormat,
-		"localizedTime": p.localizedTime,
-		"floatFormat":   p.floatFormat,
-		"loc":           p.loc,
-		"lc":            strings.ToLower,
-		"uc":            strings.ToUpper,
+		"timeFormat":      p.timeFormat,
+		"localizedTime":   p.localizedTime,
+		"floatFormat":     p.floatFormat,
+		"loc":             p.loc,
+		"lc":              strings.ToLower,
+		"uc":              strings.ToUpper,
+		"fcastHourOffset": p.forecastByOffset,
 	}
 }
 
@@ -43,14 +44,18 @@ func (p *Presenter) floatFormat(val float64, precision int) string {
 }
 
 // forecast returns the forecast at the given offset (0-based).
-func forecast(ctx TemplateContext, offset int) WeatherView {
+func (p *Presenter) forecastByOffset(ctx TemplateContext, offset int) WeatherView {
 	if offset < 0 || offset >= len(ctx.Forecasts) {
-		return WeatherView{} // zero value; templates will see empty fields
+		return WeatherView{}
 	}
-	return ctx.Forecasts[offset]
-}
 
-// firstForecast returns the earliest forecast entry, if any.
-func firstForecast(ctx TemplateContext) WeatherView {
-	return forecast(ctx, 0)
+	currentUTC := ctx.Current.InstantTime.Truncate(time.Hour)
+	want := currentUTC.In(time.Local).Add(time.Hour * time.Duration(offset))
+	for _, fcast := range ctx.Forecasts {
+		if fcast.InstantTime.Equal(want) {
+			return fcast
+		}
+	}
+
+	return WeatherView{}
 }

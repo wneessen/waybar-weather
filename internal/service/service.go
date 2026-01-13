@@ -176,13 +176,13 @@ func (s *Service) printWeather(context.Context) {
 
 	// Moonphase and sunrise/sunset times
 	now := time.Now()
-	moon := moonphase.New(time.Now())
+	moon := moonphase.New(time.Now().In(time.Local))
 	sunriseTimeUTC, sunsetTimeUTC := sunrise.SunriseSunset(addr.Latitude, addr.Longitude, now.Year(),
 		now.Month(), now.Day())
 
 	// Render the weather data
-	tplCtx := s.presenter.BuildContext(addr, weathr, sunriseTimeUTC.In(now.Location()),
-		sunsetTimeUTC.In(now.Location()), moon.PhaseName())
+	tplCtx := s.presenter.BuildContext(addr, weathr, sunriseTimeUTC.In(time.Local), sunsetTimeUTC.In(time.Local),
+		moon.PhaseName())
 	renderMap, err := s.presenter.Render(tplCtx)
 	if err != nil {
 		s.logger.Error("failed to render weather template", logger.Err(err))
