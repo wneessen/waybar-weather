@@ -23,6 +23,7 @@ const (
 		"{{loc \"apparent\"}}: {{.Current.ApparentTemperature}}{{.Current.Units.Temperature}}\n" +
 		"{{loc \"humidity\"}}: {{.Current.RelativeHumidity}}%\n" +
 		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.Current.Units.Pressure}}\n" +
+		"{{loc \"wind\"}}: {{.Current.WindSpeed}} → {{.Current.WindGusts}} {{.Current.Units.WindSpeed}} ({{windDir .Current.WindDirection}})\n" +
 		"\n" +
 		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
 	DefaultAltTooltipTpl = "{{ .Address.City }}, {{ .Address.Country }}\n" +
@@ -30,6 +31,7 @@ const (
 		"{{loc \"apparent\"}}: {{.Forecast.ApparentTemperature}}{{.Forecast.Units.Temperature}}\n" +
 		"{{loc \"humidity\"}}: {{.Forecast.RelativeHumidity}}%\n" +
 		"{{loc \"pressure\"}}: {{.Forecast.PressureMSL}} {{.Forecast.Units.Pressure}}\n" +
+		"{{loc \"wind\"}}: {{.Forecast.WindSpeed}} → {{.Forecast.WindGusts}} {{.Forecast.Units.WindSpeed}} ({{windDir .Forecast.WindDirection}})\n" +
 		"\n" +
 		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
 )
