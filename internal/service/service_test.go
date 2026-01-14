@@ -10,11 +10,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	stdhttp "net/http"
 	"strings"
 	"testing"
 	"testing/synctest"
-	// tt "text/template"
+	tt "text/template"
+	"time"
 
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/geobus"
@@ -22,7 +24,9 @@ import (
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/i18n"
 	"github.com/wneessen/waybar-weather/internal/logger"
+	"github.com/wneessen/waybar-weather/internal/presenter"
 	"github.com/wneessen/waybar-weather/internal/testhelper"
+	"github.com/wneessen/waybar-weather/internal/weather"
 	openmeteo "github.com/wneessen/waybar-weather/internal/weather/provider/open-meteo"
 )
 
@@ -256,80 +260,180 @@ func TestService_printWeather(t *testing.T) {
 		serv.weatherIsSet = true
 		serv.printWeather(t.Context())
 	})
-	/*
-		t.Run("printing weather fails on different template errors", func(t *testing.T) {
-			tests := []struct {
-				name   string
-				confFn func(*config.Config)
-				tplFn  func(*template.Templates, *config.Config) error
-			}{
-				{
-					name: "text template",
-					confFn: func(c *config.Config) {
-						c.Templates.Text = "{{.Data}}"
-					},
-					tplFn: func(tpls *template.Templates, conf *config.Config) error {
-						tpl, err := tt.New("text").Parse(conf.Templates.Text)
-						if err != nil {
-							return err
-						}
-						tpls.Text = tpl
-						return nil
-					},
+	t.Run("printing weather fails on template rendering", func(t *testing.T) {
+		tests := []struct {
+			name    string
+			confFn  func(*config.Config)
+			tplFn   func(pres *presenter.Presenter, conf *config.Config) error
+			wantErr string
+		}{
+			{
+				name: "text template",
+				confFn: func(c *config.Config) {
+					c.Templates.Text = "{{.AbsolutelyInvalid}}"
 				},
-				{
-					name: "tooltip template",
-					confFn: func(c *config.Config) {
-						c.Templates.Tooltip = "{{.Data}}"
-					},
-					tplFn: func(tpls *template.Templates, conf *config.Config) error {
-						tpl, err := tt.New("tooltip").Parse(conf.Templates.Tooltip)
-						if err != nil {
-							return err
-						}
-						tpls.Tooltip = tpl
-						return nil
-					},
-				},
-				{
-					name: "alt text template",
-					confFn: func(c *config.Config) {
-						c.Templates.AltText = "{{.Data}}"
-					},
-					tplFn: func(tpls *template.Templates, conf *config.Config) error {
-						tpl, err := tt.New("alt_text").Parse(conf.Templates.AltText)
-						if err != nil {
-							return err
-						}
-						tpls.AltText = tpl
-						return nil
-					},
-				},
-			}
-
-			for _, tc := range tests {
-				t.Run(tc.name, func(t *testing.T) {
-					serv, err := testService(t, false)
+				tplFn: func(pres *presenter.Presenter, conf *config.Config) error {
+					tpl, err := tt.New("text").Parse(conf.Templates.Text)
 					if err != nil {
-						t.Fatalf("failed to create service: %s", err)
+						return err
 					}
-					tc.confFn(serv.config)
-					if err = tc.tplFn(serv.templates, serv.config); err != nil {
-						t.Fatalf("failed to parse override template: %s", err)
+					pres.TextTemplate = tpl
+					return nil
+				},
+				wantErr: "text template",
+			},
+			{
+				name: "alternative text template",
+				confFn: func(c *config.Config) {
+					c.Templates.AltText = "{{.AbsolutelyInvalid}}"
+				},
+				tplFn: func(pres *presenter.Presenter, conf *config.Config) error {
+					tpl, err := tt.New("alt_text").Parse(conf.Templates.AltText)
+					if err != nil {
+						return err
 					}
+					pres.AltTextTemplate = tpl
+					return nil
+				},
+				wantErr: "alt text template",
+			},
+			{
+				name: "tooltip template",
+				confFn: func(c *config.Config) {
+					c.Templates.Tooltip = "{{.AbsolutelyInvalid}}"
+				},
+				tplFn: func(pres *presenter.Presenter, conf *config.Config) error {
+					tpl, err := tt.New("tooltip").Parse(conf.Templates.Tooltip)
+					if err != nil {
+						return err
+					}
+					pres.TooltipTemplate = tpl
+					return nil
+				},
+				wantErr: "tooltip template",
+			},
+			{
+				name: "alternative tooltip template",
+				confFn: func(c *config.Config) {
+					c.Templates.AltTooltip = "{{.AbsolutelyInvalid}}"
+				},
+				tplFn: func(pres *presenter.Presenter, conf *config.Config) error {
+					tpl, err := tt.New("alt_tooltip").Parse(conf.Templates.AltTooltip)
+					if err != nil {
+						return err
+					}
+					pres.AltTooltipTemplate = tpl
+					return nil
+				},
+				wantErr: "alt tooltip template",
+			},
+		}
 
-					buf := bytes.NewBuffer(nil)
-					serv.output = buf
-					serv.weatherIsSet = true
-					serv.printWeather(t.Context())
-					if buf.Len() != 0 {
-						t.Errorf("expected output buffer to be empty, got %q", buf.String())
-					}
-				})
+		for _, tc := range tests {
+			serv, err := testService(t, false)
+			if err != nil {
+				t.Fatalf("failed to create service: %s", err)
 			}
-		})
+			tc.confFn(serv.config)
+			if err = tc.tplFn(serv.presenter, serv.config); err != nil {
+				t.Fatalf("failed to update presenter template: %s", err)
+			}
+			serv.weatherIsSet = true
 
-	*/
+			logBuf := bytes.NewBuffer(nil)
+			serv.logger = logger.NewLogger(slog.LevelError, logBuf)
+
+			buf := bytes.NewBuffer(nil)
+			serv.output = buf
+			serv.printWeather(t.Context())
+			wantErr1 := `msg="failed to render weather template" error="failed to render ` + tc.wantErr
+			wantErr2 := `can't evaluate field AbsolutelyInvalid in type presenter.TemplateContext`
+			if !strings.Contains(logBuf.String(), wantErr1) || !strings.Contains(logBuf.String(), wantErr2) {
+				t.Errorf("expected error to contain %q and %q, got %q", wantErr1, wantErr2, logBuf.String())
+			}
+		}
+	})
+	t.Run("hot and cold thresholds return correct output classes", func(t *testing.T) {
+		tests := []struct {
+			name        string
+			weatherData *weather.Data
+			altMode     bool
+			wantClass   string
+		}{
+			{
+				name: "it is hot",
+				weatherData: &weather.Data{
+					Current:  weather.Instant{Temperature: 25},
+					Forecast: make(map[weather.DayHour]weather.Instant),
+				},
+				altMode:   false,
+				wantClass: "hot",
+			},
+			{
+				name: "it is cold",
+				weatherData: &weather.Data{
+					Current:  weather.Instant{Temperature: -25},
+					Forecast: make(map[weather.DayHour]weather.Instant),
+				},
+				altMode:   false,
+				wantClass: "cold",
+			},
+			{
+				name: "it is hot (alt)",
+				weatherData: &weather.Data{
+					Current:  weather.Instant{Temperature: 25},
+					Forecast: make(map[weather.DayHour]weather.Instant),
+				},
+				altMode:   true,
+				wantClass: "hot",
+			},
+			{
+				name: "it is cold (alt)",
+				weatherData: &weather.Data{
+					Current:  weather.Instant{Temperature: -25},
+					Forecast: make(map[weather.DayHour]weather.Instant),
+				},
+				altMode:   true,
+				wantClass: "cold",
+			},
+		}
+
+		for _, tc := range tests {
+			serv, err := testService(t, false)
+			if err != nil {
+				t.Fatalf("failed to create service: %s", err)
+			}
+			serv.config.Weather.HotThreshold = 10
+			serv.config.Weather.ColdThreshold = -10
+			now := time.Now()
+			fcastNow := now.Add(time.Hour * time.Duration(serv.config.Weather.ForecastHours))
+			tc.weatherData.Current.InstantTime = now
+			fcast := tc.weatherData.Current
+			fcast.InstantTime = fcastNow
+			tc.weatherData.Forecast[weather.NewDayHour(fcastNow)] = fcast
+			serv.weatherIsSet = true
+			serv.weather = tc.weatherData
+			serv.displayAltText = tc.altMode
+			buf := bytes.NewBuffer(nil)
+			serv.output = buf
+			serv.printWeather(t.Context())
+
+			var output outputData
+			if err = json.Unmarshal(buf.Bytes(), &output); err != nil {
+				t.Fatalf("failed to unmarshal JSON: %s", err)
+			}
+
+			found := false
+			for _, class := range output.Classes {
+				if class == tc.wantClass {
+					found = true
+				}
+			}
+			if !found {
+				t.Errorf("expected output class to be %q, got %#v", tc.wantClass, output.Classes)
+			}
+		}
+	})
 }
 
 /*

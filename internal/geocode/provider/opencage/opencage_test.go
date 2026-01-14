@@ -247,8 +247,9 @@ func TestOpenCage_Reverse_integration(t *testing.T) {
 		if !addr.AddressFound {
 			t.Fatal("expected address to be found")
 		}
-		if !strings.EqualFold(addr.DisplayName, cityExpected) {
-			t.Errorf("expected address to be %q, got %q", cityExpected, addr.DisplayName)
+		want := "A.T. Kearney, Charlottenstraße 57, 10117 Berlin, Germany"
+		if !strings.EqualFold(addr.DisplayName, want) {
+			t.Errorf("expected address to be %q, got %q", want, addr.DisplayName)
 		}
 	})
 }

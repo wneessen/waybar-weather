@@ -240,8 +240,9 @@ func TestNominatim_Reverse_integration(t *testing.T) {
 		if !addr.AddressFound {
 			t.Fatal("expected address to be found")
 		}
-		if !strings.EqualFold(addr.DisplayName, cityExpected) {
-			t.Errorf("expected address to be %q, got %q", cityExpected, addr.DisplayName)
+		want := "A.T. Kearney, 57, Charlottenstraße, Friedrichstadt, Mitte, Berlin, 10117, Germany"
+		if !strings.EqualFold(addr.DisplayName, want) {
+			t.Errorf("expected address to be %q, got %q", want, addr.DisplayName)
 		}
 	})
 }

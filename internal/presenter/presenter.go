@@ -139,7 +139,7 @@ func (p *Presenter) Render(tplCtx TemplateContext) (map[string]string, error) {
 	buf.Reset()
 
 	if err := p.AltTooltipTemplate.Execute(buf, tplCtx); err != nil {
-		return valMap, fmt.Errorf("failed to render tooltip template: %w", err)
+		return valMap, fmt.Errorf("failed to render alt tooltip template: %w", err)
 	}
 	valMap["alt_tooltip"] = buf.String()
 	buf.Reset()
