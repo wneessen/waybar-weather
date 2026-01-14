@@ -221,6 +221,14 @@ OpenStreetMap Nominatim is the default reverse geocoding provider. It is a free 
 service that provides geocoding results based on OpenStreetMap data. OSM Nominatim uses sensible rate limits 
 and might result in longer response times, which in turn might result delayed display of weather data.
 
+#### Privacy considerations
+When using OpenStreetMap Nominatim as the geocoding provider, waybar-weather sends geographic coordinates to the public
+Nominatim API to resolve them into a human-readable address. This requires making network requests to servers operated
+by the OpenStreetMap community or their hosting providers.
+
+These requests may include your IP address and request metadata, which may be logged by the service. The OSM foundation
+publishes their privacy policy at: [https://osmfoundation.org/wiki/Privacy_Policy](https://osmfoundation.org/wiki/Privacy_Policy)
+
 ### OpenCage
 OpenCage is a commercial geocoding provider based in Germany. They offer a free API key that can be used 
 for up to 2500 requests per day (which should be more than enough for most users). OpenCage offers a dedicated
@@ -233,6 +241,15 @@ To use OpenCage with your waybar-weather installation first [obtain a free API k
 then change the `provider` key in the `geocoding` section of your configuration file to `opencage` and add the 
 `apikey` key with your API key accordingly.
 
+#### Privacy considerations
+When using OpenCage as the geocoding provider, waybar-weather sends geographic coordinates to OpenCage’s API to obtain
+address information. Requests are made over the network and may include your IP address and request metadata.
+
+OpenCage publishes their privacy policy at: [https://opencagedata.com/gdpr](https://opencagedata.com/gdpr) and is
+operated in Germany and therefore has to adhere to european data privacy laws (GDPR). Together with the "no location 
+data logging" feature, which we use by default, OpenCage is currently the most privacy-preserving geocoding provider 
+that waybar-weather supports.
+
 ### Geocode Earth
 Geocode Earth is a commercial geocoding provider based in New York. They offer a free 14-day trial plan that can 
 be used for up to 1000 requests per day (which should also be more than enough for most users). Geocode Earth offers
@@ -243,6 +260,14 @@ your support!
 To use Geocode Earth with your waybar-weather installation first [start a free trial](https://app.geocode.earth/users/sign_up),
 then change the `provider` key in the `geocoding` section of your configuration file to `geocode-earth` and add the
 `apikey` key with your API key accordingly.
+
+#### Privacy considerations
+When using Geocode Earth as the geocoding provider, waybar-weather sends geographic coordinates to Geocode Earth’s API
+to perform reverse geocoding. This involves network requests to servers operated by Geocode Earth and may expose your IP
+address and request metadata to the provider.
+
+Geocode Earth publishes their privacy policy at: [https://geocode.earth/privacy/](https://geocode.earth/privacy/) and
+is operated in the USA and therefore has to adhere to US data privacy laws.
 
 ## Sleep/suspend and resume detection
 waybar-weather will automatically detect when your computer goes to sleep and resumes from sleep
