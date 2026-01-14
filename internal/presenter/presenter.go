@@ -98,6 +98,7 @@ func (p *Presenter) BuildContext(addr geocode.Address, data *weather.Data, sunri
 	if data == nil {
 		return TemplateContext{}
 	}
+
 	fcastHour := weather.NewDayHour(time.Now().Add(time.Hour * time.Duration(p.forecastHours)))
 	return TemplateContext{
 		Latitude:      data.Coordinates.Lat,
@@ -217,7 +218,6 @@ func (p *Presenter) viewSliceFromMap(m map[weather.DayHour]weather.Instant) []We
 // weatherCategory categorizes a weather code into general weather conditions such as clear, cloudy, rain, snow, etc.
 func weatherCategory(code int) string {
 	switch code {
-
 	case 0, 1:
 		return "clear"
 	case 2, 3:
