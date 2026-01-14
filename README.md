@@ -112,8 +112,8 @@ killall waybar && waybar
 
 ## Privacy statement
 
-waybar-weather does not collect, store, or process personal data on its own. However, to provide weather information and
-optional location lookup functionality, it communicates with third-party services.
+waybar-weather does not collect, or store personal data on its own. However, to provide weather information and
+geolocation lookup functionality, it may communicate with third-party services.
 
 ### Third-party services
 
@@ -129,14 +129,10 @@ not limited to:
 - Location coordinates or place names, depending on the feature used
 
 waybar-weather does not control how third-party services handle or retain this data. Each provider operates under its
-own privacy policy and terms of service.
-
-### Provider-specific privacy policies
-
-For transparency, in our README, we provide links to the privacy policies or data usage statements of all supported
-weather, geocoding, and geolocation providers. Users are encouraged to review these links to understand how each 
-service processes data and to make informed decisions about which providers to enable or if to use waybar-weather in
-their environment.
+own privacy policy and terms of service. For transparency, in our README, we provide links to the privacy policies 
+or data usage statements of all supported weather, geocoding, and geolocation providers. Users are encouraged to 
+review these links to understand how each service processes data and to make informed decisions about which providers 
+to enable or if to use waybar-weather in their environment.
 
 ## Geolocation lookup
 waybar-weather tries to automatically determine your location using its built-in geolocation lookup
