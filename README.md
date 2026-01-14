@@ -186,8 +186,8 @@ be. For most users, this will be the most accurate location source.
 #### Privacy considerations
 The ICHNAEA provider uses the Mozilla Location Service protocol and relies on nearby WiFi network information to
 determine your location. To do this, waybar-weather scans for local WiFi networks and transmits their hardware (MAC)
-addresses to the Mozilla beacon database. These addresses are used solely to estimate your location and do not include
-information about the networks you connect to. This data and your IP is sent to beaconDB.
+addresses as well as your IP to the beaconDB service. These addresses are used solely to estimate your location and 
+do not include information about the networks you connect to.
 
 beaconDB publishes a very open and transparent privacy statement at: [https://beacondb.net/privacy](https://beacondb.net/privacy).
 The service is operated from Australia, but servers might be located in other countries due to geographic proximity.
