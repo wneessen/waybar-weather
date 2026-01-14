@@ -16,22 +16,22 @@ import (
 
 const (
 	configEnv         = "WAYBARWEATHER"
-	DefaultTextTpl    = "{{.Current.ConditionIcon}} {{.Current.Temperature}}{{.Current.Units.Temperature}}"
-	DefaultAltTextTpl = "{{.Forecast.ConditionIcon}} {{.Forecast.Temperature}}{{.Forecast.Units.Temperature}}"
-	DefaultTooltipTpl = "{{ .Address.City }}, {{ .Address.Country }}\n" +
+	DefaultTextTpl    = "{{.Current.ConditionIcon}} {{hum .Current.Temperature}}{{.Current.Units.Temperature}}"
+	DefaultAltTextTpl = "{{.Forecast.ConditionIcon}} {{hum .Forecast.Temperature}}{{.Forecast.Units.Temperature}}"
+	DefaultTooltipTpl = "{{.Address.City}}, {{.Address.Country}}\n" +
 		"{{.Current.Condition}}\n" +
-		"{{loc \"apparent\"}}: {{.Current.ApparentTemperature}}{{.Current.Units.Temperature}}\n" +
+		"{{loc \"apparent\"}}: {{hum .Current.ApparentTemperature}}{{.Current.Units.Temperature}}\n" +
 		"{{loc \"humidity\"}}: {{.Current.RelativeHumidity}}%\n" +
-		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.Current.Units.Pressure}}\n" +
-		"{{loc \"wind\"}}: {{.Current.WindSpeed}} → {{.Current.WindGusts}} {{.Current.Units.WindSpeed}} ({{windDir .Current.WindDirection}})\n" +
+		"{{loc \"pressure\"}}: {{hum .Current.PressureMSL}} {{.Current.Units.Pressure}}\n" +
+		"{{loc \"wind\"}}: {{hum .Current.WindSpeed}} → {{hum .Current.WindGusts}} {{.Current.Units.WindSpeed}} ({{windDir .Current.WindDirection}})\n" +
 		"\n" +
 		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
-	DefaultAltTooltipTpl = "{{ .Address.City }}, {{ .Address.Country }}\n" +
+	DefaultAltTooltipTpl = "{{.Address.City}}, {{.Address.Country}}\n" +
 		"{{.Forecast.Condition}}\n" +
-		"{{loc \"apparent\"}}: {{.Forecast.ApparentTemperature}}{{.Forecast.Units.Temperature}}\n" +
+		"{{loc \"apparent\"}}: {{hum .Forecast.ApparentTemperature}}{{.Forecast.Units.Temperature}}\n" +
 		"{{loc \"humidity\"}}: {{.Forecast.RelativeHumidity}}%\n" +
-		"{{loc \"pressure\"}}: {{.Forecast.PressureMSL}} {{.Forecast.Units.Pressure}}\n" +
-		"{{loc \"wind\"}}: {{.Forecast.WindSpeed}} → {{.Forecast.WindGusts}} {{.Forecast.Units.WindSpeed}} ({{windDir .Forecast.WindDirection}})\n" +
+		"{{loc \"pressure\"}}: {{hum .Forecast.PressureMSL}} {{.Forecast.Units.Pressure}}\n" +
+		"{{loc \"wind\"}}: {{hum .Forecast.WindSpeed}} → {{hum .Forecast.WindGusts}} {{.Forecast.Units.WindSpeed}} ({{windDir .Forecast.WindDirection}})\n" +
 		"\n" +
 		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
 )
@@ -49,9 +49,10 @@ type Config struct {
 		// Allowed value: 1 to 24
 		ForecastHours uint `fig:"forecast_hours" default:"3"`
 
-		// Cold and hot class thresholds
+		// Cold and hot class thresholds (Defaults are based on °C)
+		// Defaults are based on suggestions for dangerous driving conditions and uncomfortable heat.
 		ColdThreshold float64 `fig:"cold_threshold" default:"2"`
-		HotThreshold  float64 `fig:"hot_threshold" default:"24"`
+		HotThreshold  float64 `fig:"hot_threshold" default:"30"`
 	} `fig:"weather"`
 
 	Intervals struct {

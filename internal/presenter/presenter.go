@@ -13,7 +13,9 @@ import (
 
 	"github.com/vorlif/humanize"
 	"github.com/vorlif/humanize/locale/de"
+	"github.com/vorlif/humanize/locale/tr"
 	"github.com/vorlif/spreak"
+	"golang.org/x/text/message"
 
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/geocode"
@@ -54,11 +56,12 @@ type Presenter struct {
 
 	localizer     *spreak.Localizer
 	humanizer     *humanize.Humanizer
+	printer       *message.Printer
 	forecastHours uint
 }
 
 // Supported languages for humanize
-var supportedHumanizers = []*humanize.LocaleData{de.New()}
+var supportedHumanizers = []*humanize.LocaleData{de.New(), tr.New()}
 
 // New initializes and returns a new Presenter instance with the provided configuration and localizer.
 // It parses templates, creates a humanizer, and validates the templates for rendering.
@@ -77,6 +80,9 @@ func New(conf *config.Config, loc *spreak.Localizer) (*Presenter, error) {
 		return presenter, fmt.Errorf("failed to create humanizer: %w", err)
 	}
 	presenter.humanizer = collection.CreateHumanizer(loc.Language())
+
+	// Create localized/humanized printer
+	presenter.printer = message.NewPrinter(loc.Language())
 
 	// Validate that the templates can be rendered
 	if err = presenter.validateTemplates(); err != nil {
@@ -191,7 +197,7 @@ func (p *Presenter) viewFromInstant(in weather.Instant) WeatherView {
 		Instant: in,
 
 		Category:      weatherCategory(in.WeatherCode),
-		Condition:     WMOWeatherCodes[in.WeatherCode],
+		Condition:     p.localizer.Get(WMOWeatherCodes[in.WeatherCode]),
 		ConditionIcon: WMOWeatherIcons[in.WeatherCode][in.IsDay],
 	}
 }

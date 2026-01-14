@@ -16,6 +16,7 @@ func (p *Presenter) templateFuncMap() template.FuncMap {
 		"localizedTime":   p.localizedTime,
 		"floatFormat":     p.floatFormat,
 		"loc":             p.loc,
+		"hum":             p.hum,
 		"lc":              strings.ToLower,
 		"uc":              strings.ToUpper,
 		"fcastHourOffset": p.forecastByOffset,
@@ -30,6 +31,10 @@ func (p *Presenter) loc(val string) string {
 		return p.localizer.Get(raw)
 	}
 	return val
+}
+
+func (p *Presenter) hum(val float64) string {
+	return p.printer.Sprintf("%.1f", val)
 }
 
 func (p *Presenter) localizedTime(val time.Time) string {
