@@ -110,6 +110,34 @@ Once complete, restart Waybar and you should be good to go:
 killall waybar && waybar
 ```
 
+## Privacy statement
+
+waybar-weather does not collect, store, or process personal data on its own. However, to provide weather information and
+optional location lookup functionality, it communicates with third-party services.
+
+### Third-party services
+
+Retrieving weather data requires network requests to external weather providers such as Open-Meteo. Depending on your
+configuration, geocoding and reverse-geocoding requests may also be sent to external services such as Nominatim to
+resolve place names or coordinates.
+
+When making these requests, certain technical information may be transmitted to the respective service, including but
+not limited to:
+
+- Your IP address
+- Request metadata (for example headers or timestamps)
+- Location coordinates or place names, depending on the feature used
+
+waybar-weather does not control how third-party services handle or retain this data. Each provider operates under its
+own privacy policy and terms of service.
+
+### Provider-specific privacy policies
+
+For transparency, in our README, we provide links to the privacy policies or data usage statements of all supported
+weather, geocoding, and geolocation providers. Users are encouraged to review these links to understand how each 
+service processes data and to make informed decisions about which providers to enable or if to use waybar-weather in
+their environment.
+
 ## Geolocation lookup
 waybar-weather tries to automatically determine your location using its built-in geolocation lookup
 service (geobus). The geobus is a simple sub-pub service that utilizes different geolocation providers
@@ -117,20 +145,40 @@ to find your location. The most accurate result will be taken for looking up the
 disable every geobus provider in your config file. By default all providers are enabled, to provide the
 best possible location lookup.
 
+The geolocation lookup methods come with different privacy characteristics. Which providers you enable determines 
+what data may leave your system and who it is shared with. We provide a brief privacy overview for each provider in
+our README.
+
 ### Geolocation file
 A geolocation file is a simple static file in the format `<latitude>,<logitude>` that you can place
 in you local home directory at `~/.config/waybar-weather/geolocation`. If the provider is enabled and
 the file is present, waybar-weather will consider the coordinates in this file as best possible result.
 
+#### Privacy considerations
+Using a static geolocation file is the most privacy-preserving option. No network requests are made to look up your
+coordinates and no location data is shared with any third party (geocoding might still require third-party sharing). 
+The coordinates are read locally from disk and used as-is.
+
 ### GeoIP lookup
-The GeoIP lookup provider uses  [https://reallyfreegeoip.org](https://reallyfreegeoip.org) to look up
+The GeoIP lookup provider uses [https://reallyfreegeoip.org](https://reallyfreegeoip.org) to look up
 your IP and the resulting location based of that IP address. Depending on your ISP, the result might 
 be very inaccurate
+
+#### Privacy considerations
+The GeoIP provider determines your location based on your public IP address by querying an external GeoIP service. This
+requires sending your IP address to [https://reallyfreegeoip.org](https://reallyfreegeoip.org), which may log the 
+request. reallyfreegeoip.org does not publish a privacy statement, therefore user discretion is advised.
 
 ### GeoAPI lookup
 The GeoAPI lookup provider uses the [GeoAPI](https://geoapi.info/) to look up your location. It has 
 shown to be more accurate than the GeoIP lookup provider but will not be as accurate as the ICHNAEA
 provider.
+
+#### Privacy considerations
+The GeoAPI provider queries an external geolocation API to determine your approximate location. Similar to GeoIP, this
+involves network requests to a third-party service and may expose your IP address and request metadata.
+GeoAPI publishes a privacy statement in their terms at: [https://geoapi.info/terms](https://geoapi.info/terms).
+GeoAPI is operated in the USA and therefore may be subject to US data privacy laws.
 
 ### ICHNAEA
 The ICHNAEA location provider uses the Mozilla Location Service protocol to look up your location at
@@ -139,11 +187,26 @@ and scan for local networks in the area. The hardware addresses of these network
 to beaconDB. The more WiFi networks waybar-weather is able to identify, the more accurate the results will
 be. For most users, this will be the most accurate location source.
 
+#### Privacy considerations
+The ICHNAEA provider uses the Mozilla Location Service protocol and relies on nearby WiFi network information to
+determine your location. To do this, waybar-weather scans for local WiFi networks and transmits their hardware (MAC)
+addresses to the Mozilla beacon database. These addresses are used solely to estimate your location and do not include
+information about the networks you connect to. This data and your IP is sent to beaconDB.
+
+beaconDB publishes a very open and transparent privacy statement at: [https://beacondb.net/privacy](https://beacondb.net/privacy).
+The service is operated from Australia, but servers might be located in other countries due to geographic proximity.
+
 ### GPSd
 The GPSd location provider uses the [GPSd](https://gpsd.gitlab.io/gpsd/index.html) daemon to look up your location. If your
 computer has a GPS device connected and GPSd is running, waybar-weather will use the data provided by GPSd to
 look up your location. Since GPS is generally more accurate than WiFi, this provider is usually the most accurate
 location source.
+
+#### Privacy considerations
+The GPSd provider uses location data from a local GPS device via the GPSd daemon. No location data is transmitted over
+the network by waybar-weather itself for the coordinate lookup. If GPSd is properly configured and does not forward 
+data externally. Same as with the geolocation file provider, your coordinates might be sent to a third party during 
+the geocoding process.
 
 ## Geocoding provider
 waybar-weather uses geocoding providers to convert the coordinates of your location into a human readable
