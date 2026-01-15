@@ -115,19 +115,19 @@ func (s *Service) Run(ctx context.Context) (err error) {
 	}
 	s.geocoder = geocodeProvider
 
-	// Select the geobus providers and track them in the geobus
-	geobusProvider, err := s.selectGeobusProviders()
-	if err != nil {
-		return fmt.Errorf("failed to create geobus orchestrator: %w", err)
-	}
-	geobus.TrackProviders(ctx, s.geobus, SubID, geobusProvider...)
-
 	// Select the weather provider
 	weatherProv, err := s.selectWeatherProvider()
 	if err != nil {
 		return fmt.Errorf("failed to create weather provider: %w", err)
 	}
 	s.weatherProv = weatherProv
+
+	// Select the geobus providers and track them in the geobus
+	geobusProvider, err := s.selectGeobusProviders()
+	if err != nil {
+		return fmt.Errorf("failed to create geobus orchestrator: %w", err)
+	}
+	geobus.TrackProviders(ctx, s.geobus, SubID, geobusProvider...)
 
 	// Subscribe to geolocation updates from the geobus
 	sub, unsub := s.geobus.Subscribe(SubID, 1)

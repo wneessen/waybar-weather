@@ -13,7 +13,9 @@ import (
 	"io"
 	"log/slog"
 	stdhttp "net/http"
+	"os"
 	"strings"
+	"syscall"
 	"testing"
 	"testing/synctest"
 	tt "text/template"
@@ -29,10 +31,6 @@ import (
 	"github.com/wneessen/waybar-weather/internal/testhelper"
 	"github.com/wneessen/waybar-weather/internal/weather"
 	openmeteo "github.com/wneessen/waybar-weather/internal/weather/provider/open-meteo"
-)
-
-const (
-	weatherDataFile = "../../testdata/weatherdata.json"
 )
 
 func TestNew(t *testing.T) {
@@ -166,6 +164,7 @@ func TestService_Run(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to create service: %s", err)
 			}
+			serv.jobs = append(serv.jobs, nil)
 
 			go func() {
 				if err = serv.Run(ctx); err != nil {
@@ -177,6 +176,61 @@ func TestService_Run(t *testing.T) {
 			synctest.Wait()
 			if !afterFuncCalled {
 				t.Fatalf("before context is canceled: AfterFunc not called")
+			}
+		})
+	})
+	t.Run("starting service fails due to invalid geocoding provider", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			serv, err := testService(t, false)
+			if err != nil {
+				t.Fatalf("failed to create service: %s", err)
+			}
+			serv.config.GeoCoder.Provider = "invalid"
+			err = serv.Run(t.Context())
+			if err == nil {
+				t.Fatal("expected service to fail")
+			}
+			wantErr := `failed to create geocode provider: unsupported geocoder type: invalid`
+			if !strings.Contains(err.Error(), wantErr) {
+				t.Errorf("expected error to contain %q, got %q", wantErr, err)
+			}
+		})
+	})
+	t.Run("starting service fails due to invalid geobus provider", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			serv, err := testService(t, false)
+			if err != nil {
+				t.Fatalf("failed to create service: %s", err)
+			}
+			serv.config.GeoLocation.DisableGeoAPI = true
+			serv.config.GeoLocation.DisableGeoIP = true
+			serv.config.GeoLocation.DisableGPSD = true
+			serv.config.GeoLocation.DisableGeolocationFile = true
+			serv.config.GeoLocation.DisableICHNAEA = true
+			err = serv.Run(t.Context())
+			if err == nil {
+				t.Fatal("expected service to fail")
+			}
+			wantErr := `failed to create geobus orchestrator: no geolocation providers enabled`
+			if !strings.Contains(err.Error(), wantErr) {
+				t.Errorf("expected error to contain %q, got %q", wantErr, err)
+			}
+		})
+	})
+	t.Run("starting service fails due to invalid weather provider", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			serv, err := testService(t, false)
+			if err != nil {
+				t.Fatalf("failed to create service: %s", err)
+			}
+			serv.config.Weather.Provider = "invalid"
+			err = serv.Run(t.Context())
+			if err == nil {
+				t.Fatal("expected service to fail")
+			}
+			wantErr := `failed to create weather provider: unsupported weather provider: invalid`
+			if !strings.Contains(err.Error(), wantErr) {
+				t.Errorf("expected error to contain %q, got %q", wantErr, err)
 			}
 		})
 	})
@@ -750,6 +804,56 @@ func TestService_updateLocation(t *testing.T) {
 		if !strings.Contains(err.Error(), wantErr) {
 			t.Errorf("expected error to contain %q, got %q", wantErr, err)
 		}
+	})
+}
+
+func TestService_HandleSignals(t *testing.T) {
+	t.Run("USR1 signal is handled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		serv, err := testService(t, false)
+		if err != nil {
+			t.Fatalf("failed to create service: %s", err)
+		}
+		sigChan := make(chan os.Signal, 1)
+		serv.SignalSrc.Notify(sigChan, syscall.SIGUSR1, syscall.SIGUSR2)
+		go func() {
+			defer serv.SignalSrc.Stop(sigChan)
+			serv.HandleSignals(ctx, sigChan)
+		}()
+
+		sigChan <- syscall.SIGUSR1
+		time.Sleep(time.Millisecond * 100)
+		if !serv.displayAltText {
+			t.Errorf("expected alt mode to be enabled, got %t", serv.displayAltText)
+		}
+		cancel()
+	})
+	t.Run("USR2 signal is handled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		serv, err := testService(t, false)
+		if err != nil {
+			t.Fatalf("failed to create service: %s", err)
+		}
+		buf := bytes.NewBuffer(nil)
+		serv.logger = logger.NewLogger(slog.LevelInfo, buf)
+		sigChan := make(chan os.Signal, 1)
+		serv.SignalSrc.Notify(sigChan, syscall.SIGUSR1, syscall.SIGUSR2)
+		go func() {
+			defer serv.SignalSrc.Stop(sigChan)
+			serv.HandleSignals(ctx, sigChan)
+		}()
+
+		sigChan <- syscall.SIGUSR2
+		time.Sleep(time.Millisecond * 100)
+		wantLog := `msg="currently resolved address" address="" latitude=0 longitude=0`
+		if !strings.Contains(buf.String(), wantLog) {
+			t.Errorf("expected log to contain %q, got %q", wantLog, buf.String())
+		}
+		cancel()
 	})
 }
 
