@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -436,104 +437,46 @@ func TestService_printWeather(t *testing.T) {
 	})
 }
 
-/*
-func TestService_fillDisplayData(t *testing.T) {
-	type currentWeather struct {
-		Temperature   float64 `json:"temperature"`
-		WeatherCode   float64 `json:"weather_code"`
-		WindDirection float64 `json:"wind_direction"`
-		WindSpeed     float64 `json:"wind_speed"`
-	}
-	type forecast struct {
-		Latitude       float64              `json:"latitude"`
-		Longitude      float64              `json:"longitude"`
-		Elevation      float64              `json:"elevation"`
-		CurrentWeather currentWeather       `json:"currentWeather"`
-		HourlyUnits    map[string]string    `json:"hourly_units"`
-		HourlyMetrics  map[string][]float64 `json:"hourlyMetrics"`
-		HourlyTimes    []time.Time          `json:"hourlyTimes"`
-		DailyUnits     map[string]string    `json:"daily_units"`
-		DailyMetrics   map[string][]float64 `json:"dailyMetrics"`
-		DailyTimes     []time.Time          `json:"dailyTimes"`
-	}
-	weatherJSON := new(forecast)
-	data, err := os.Open(weatherDataFile)
-	if err != nil {
-		t.Fatalf("failed to open JSON response file: %s", err)
-	}
-	defer func() {
-		_ = data.Close()
-	}()
-	if err = json.NewDecoder(data).Decode(weatherJSON); err != nil {
-		t.Fatalf("failed to decode JSON response: %s", err)
-	}
-	weatherData := &omgo.Forecast{
-		Latitude:  weatherJSON.Latitude,
-		Longitude: weatherJSON.Longitude,
-		Elevation: weatherJSON.Elevation,
-		CurrentWeather: omgo.CurrentWeather{
-			Temperature:   weatherJSON.CurrentWeather.Temperature,
-			WeatherCode:   weatherJSON.CurrentWeather.WeatherCode,
-			WindDirection: weatherJSON.CurrentWeather.WindDirection,
-			WindSpeed:     weatherJSON.CurrentWeather.WindSpeed,
-		},
-		HourlyUnits:   weatherJSON.HourlyUnits,
-		HourlyMetrics: weatherJSON.HourlyMetrics,
-		HourlyTimes:   weatherJSON.HourlyTimes,
-		DailyUnits:    weatherJSON.DailyUnits,
-		DailyMetrics:  weatherJSON.DailyMetrics,
-		DailyTimes:    weatherJSON.DailyTimes,
-	}
-
-	t.Run("fill display data with weather data", func(t *testing.T) {
+func TestService_fetchWeather(t *testing.T) {
+	t.Run("fetching weather with mock providers succeeds", func(t *testing.T) {
 		serv, err := testService(t, false)
 		if err != nil {
 			t.Fatalf("failed to create service: %s", err)
 		}
-		serv.weather = weatherData
-		m := moonphase.New(time.Now())
-
-		displaydata := new(template.DisplayData)
-		serv.fillDisplayData(displaydata)
-		if displaydata.Latitude != 44.4375 {
-			t.Errorf("expected Latitude to be %f, got %f", 44.4375, displaydata.Latitude)
+		serv.weatherProv = &weatherProv{}
+		serv.fetchWeather(t.Context())
+		if serv.weather == nil {
+			t.Error("expected weather to be set")
 		}
-		if displaydata.Longitude != 26.125 {
-			t.Errorf("expected Longitude to be %f, got %f", 26.125, displaydata.Longitude)
+		if serv.weather.Current.InstantTime.IsZero() {
+			t.Errorf("expected weather instant time to be set, got %s", serv.weather.Current.InstantTime)
 		}
-		if displaydata.Elevation != 85 {
-			t.Errorf("expected Elevation to be %f, got %f", 85., displaydata.Elevation)
+		if serv.weather.GeneratedAt.IsZero() {
+			t.Errorf("expected weather generated at to be set, got %s", serv.weather.GeneratedAt)
 		}
-		if displaydata.Address.AddressFound {
-			t.Error("expected AddressFound to be false")
+		wantTemp := 20.0
+		if serv.weather.Current.Temperature != wantTemp {
+			t.Errorf("expected weather temperature to be %f, got %f", wantTemp, serv.weather.Current.Temperature)
 		}
-		if displaydata.SunsetTime.IsZero() {
-			t.Errorf("expected SunsetTime to be set, got %s", displaydata.SunsetTime)
-		}
-		if displaydata.SunriseTime.IsZero() {
-			t.Errorf("expected SunriseTime to be set, got %s", displaydata.SunsetTime)
-		}
-		if displaydata.Moonphase != m.PhaseName() {
-			t.Errorf("expected Moonphase to be %q, got %q", m.PhaseName(), displaydata.Moonphase)
-		}
-		if displaydata.MoonphaseIcon != presenter.MoonPhaseIcon[displaydata.Moonphase] {
-			t.Errorf("expected MoonphaseIcon to be %q, got %q", presenter.MoonPhaseIcon[displaydata.Moonphase], displaydata.MoonphaseIcon)
-		}
-		if displaydata.Current.Temperature != 9.1 {
-			t.Errorf("expected Current.Temperature to be %f, got %f", 9.1, displaydata.Current.Temperature)
-		}
-
 	})
-	t.Run("filling a nil target returns nothing", func(t *testing.T) {
+	t.Run("fetching weather with mock providers fails", func(t *testing.T) {
 		serv, err := testService(t, false)
 		if err != nil {
 			t.Fatalf("failed to create service: %s", err)
 		}
-		serv.weather = weatherData
-		serv.fillDisplayData(nil)
+		buf := bytes.NewBuffer(nil)
+		serv.logger = logger.NewLogger(slog.LevelError, buf)
+		serv.weatherProv = &weatherProv{shouldFail: true}
+		serv.fetchWeather(t.Context())
+		if serv.weather != nil {
+			t.Errorf("expected weather to not bet set, got: %+v", serv.weather)
+		}
+		wantErr := `msg="failed to fetch weather data" error="intentionally failing" source="mock weather provider"`
+		if !strings.Contains(buf.String(), wantErr) {
+			t.Errorf("expected error to contain %q, got %q", wantErr, buf.String())
+		}
 	})
 }
-*/
 
 func TestService_selectProvider(t *testing.T) {
 	tests := []struct {
@@ -651,17 +594,178 @@ func testService(_ *testing.T, nilLogger bool) (*Service, error) {
 	return serv, nil
 }
 
-type failWriter struct{}
+func TestService_updateLocation(t *testing.T) {
+	t.Run("different coordinates are updated", func(t *testing.T) {
+		tests := []struct {
+			name      string
+			latitude  float64
+			longitude float64
+			wantErr   bool
+		}{
+			{
+				name:      "positive lat positive lon",
+				latitude:  44.4375,
+				longitude: 26.125,
+				wantErr:   false,
+			},
+			{
+				name:      "negative lat positive lon",
+				latitude:  -33.8688,
+				longitude: 151.2093,
+				wantErr:   false,
+			},
+			{
+				name:      "positive lat negative lon",
+				latitude:  40.7128,
+				longitude: -74.0060,
+				wantErr:   false,
+			},
+			{
+				name:      "negative lat negative lon",
+				latitude:  -22.9068,
+				longitude: -43.1729,
+				wantErr:   false,
+			},
+			{
+				name:      "zero lat zero lon",
+				latitude:  0.0,
+				longitude: 0.0,
+				wantErr:   false,
+			},
+			{
+				name:      "extreme north east",
+				latitude:  90.0,
+				longitude: 180.0,
+				wantErr:   false,
+			},
+			{
+				name:      "extreme south west",
+				latitude:  -90.0,
+				longitude: -180.0,
+				wantErr:   false,
+			},
+			{
+				name:      "invalid positive latitude",
+				latitude:  91.0,
+				longitude: 180.0,
+				wantErr:   true,
+			},
+			{
+				name:      "invalid positive longitude",
+				latitude:  90.0,
+				longitude: 181.0,
+				wantErr:   true,
+			},
+			{
+				name:      "invalid positive values",
+				latitude:  91.0,
+				longitude: 181.0,
+				wantErr:   true,
+			},
+			{
+				name:      "invalid negative latitude",
+				latitude:  -91.0,
+				longitude: 180.0,
+				wantErr:   true,
+			},
+			{
+				name:      "invalid negative longitude",
+				latitude:  90.0,
+				longitude: -181.0,
+				wantErr:   true,
+			},
+			{
+				name:      "invalid negative values",
+				latitude:  -91.0,
+				longitude: -181.0,
+				wantErr:   true,
+			},
+			{
+				name:      "equator prime meridian",
+				latitude:  0.0,
+				longitude: 0.0,
+				wantErr:   false,
+			},
+			{
+				name:      "small positive values",
+				latitude:  0.000001,
+				longitude: 0.000001,
+				wantErr:   false,
+			},
+			{
+				name:      "small negative values",
+				latitude:  -0.000001,
+				longitude: -0.000001,
+				wantErr:   false,
+			},
+		}
+
+		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			return &stdhttp.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(bytes.NewBufferString("{}")),
+				Header:     make(stdhttp.Header),
+			}, nil
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				serv, err := testService(t, false)
+				if err != nil {
+					t.Fatalf("failed to create service: %s", err)
+				}
+				serv.output = io.Discard
+				serv.geocoder = &mockGeocoder{}
+
+				httpclient := http.New(serv.logger)
+				httpclient.Transport = testhelper.MockRoundTripper{Fn: rtFn}
+				weatherProv, err := openmeteo.New(httpclient, serv.logger, serv.config.Units)
+				serv.weatherProv = weatherProv
+				err = serv.updateLocation(t.Context(), geobus.Coordinate{Lat: tc.latitude, Lon: tc.longitude})
+
+				if tc.wantErr && err == nil {
+					t.Error("expected error but got none")
+				}
+				if !tc.wantErr && err != nil {
+					t.Errorf("unexpected error: %s", err)
+				}
+			})
+		}
+	})
+	t.Run("geocoder fails", func(t *testing.T) {
+		serv, err := testService(t, false)
+		if err != nil {
+			t.Fatalf("failed to create service: %s", err)
+		}
+		serv.output = io.Discard
+		serv.geocoder = &mockGeocoder{shouldFail: true}
+		err = serv.updateLocation(t.Context(), geobus.Coordinate{Lat: 44.4375, Lon: 26.125})
+		if err == nil {
+			t.Error("expected error but got none")
+		}
+		wantErr := `failed reverse geocode coordinates: intentionally failing`
+		if !strings.Contains(err.Error(), wantErr) {
+			t.Errorf("expected error to contain %q, got %q", wantErr, err)
+		}
+	})
+}
+
+type (
+	weatherProv  struct{ shouldFail bool }
+	failWriter   struct{}
+	mockGeocoder struct{ shouldFail bool }
+)
 
 func (f failWriter) Write([]byte) (int, error) { return 0, fmt.Errorf("failed to write") }
-
-type mockGeocoder struct{}
 
 func (m *mockGeocoder) Name() string {
 	return "mock geocoder"
 }
 
 func (m *mockGeocoder) Reverse(_ context.Context, coords geobus.Coordinate) (geocode.Address, error) {
+	if m.shouldFail {
+		return geocode.Address{}, errors.New("intentionally failing")
+	}
 	return geocode.Address{
 		AddressFound: true,
 		Latitude:     coords.Lat,
@@ -670,140 +774,20 @@ func (m *mockGeocoder) Reverse(_ context.Context, coords geobus.Coordinate) (geo
 	}, nil
 }
 
-func TestService_updateLocation(t *testing.T) {
-	tests := []struct {
-		name      string
-		latitude  float64
-		longitude float64
-		wantErr   bool
-	}{
-		{
-			name:      "positive lat positive lon",
-			latitude:  44.4375,
-			longitude: 26.125,
-			wantErr:   false,
-		},
-		{
-			name:      "negative lat positive lon",
-			latitude:  -33.8688,
-			longitude: 151.2093,
-			wantErr:   false,
-		},
-		{
-			name:      "positive lat negative lon",
-			latitude:  40.7128,
-			longitude: -74.0060,
-			wantErr:   false,
-		},
-		{
-			name:      "negative lat negative lon",
-			latitude:  -22.9068,
-			longitude: -43.1729,
-			wantErr:   false,
-		},
-		{
-			name:      "zero lat zero lon",
-			latitude:  0.0,
-			longitude: 0.0,
-			wantErr:   false,
-		},
-		{
-			name:      "extreme north east",
-			latitude:  90.0,
-			longitude: 180.0,
-			wantErr:   false,
-		},
-		{
-			name:      "extreme south west",
-			latitude:  -90.0,
-			longitude: -180.0,
-			wantErr:   false,
-		},
-		{
-			name:      "invalid positive latitude",
-			latitude:  91.0,
-			longitude: 180.0,
-			wantErr:   true,
-		},
-		{
-			name:      "invalid positive longitude",
-			latitude:  90.0,
-			longitude: 181.0,
-			wantErr:   true,
-		},
-		{
-			name:      "invalid positive values",
-			latitude:  91.0,
-			longitude: 181.0,
-			wantErr:   true,
-		},
-		{
-			name:      "invalid negative latitude",
-			latitude:  -91.0,
-			longitude: 180.0,
-			wantErr:   true,
-		},
-		{
-			name:      "invalid negative longitude",
-			latitude:  90.0,
-			longitude: -181.0,
-			wantErr:   true,
-		},
-		{
-			name:      "invalid negative values",
-			latitude:  -91.0,
-			longitude: -181.0,
-			wantErr:   true,
-		},
-		{
-			name:      "equator prime meridian",
-			latitude:  0.0,
-			longitude: 0.0,
-			wantErr:   false,
-		},
-		{
-			name:      "small positive values",
-			latitude:  0.000001,
-			longitude: 0.000001,
-			wantErr:   false,
-		},
-		{
-			name:      "small negative values",
-			latitude:  -0.000001,
-			longitude: -0.000001,
-			wantErr:   false,
-		},
+func (w *weatherProv) Name() string {
+	return "mock weather provider"
+}
+
+func (w *weatherProv) GetWeather(_ context.Context, coords geobus.Coordinate) (*weather.Data, error) {
+	if w.shouldFail {
+		return nil, errors.New("intentionally failing")
 	}
-
-	rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
-		return &stdhttp.Response{
-			StatusCode: 200,
-			Body:       io.NopCloser(bytes.NewBufferString("{}")),
-			Header:     make(stdhttp.Header),
-		}, nil
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			serv, err := testService(t, false)
-			if err != nil {
-				t.Fatalf("failed to create service: %s", err)
-			}
-			serv.output = io.Discard
-			serv.geocoder = &mockGeocoder{}
-
-			httpclient := http.New(serv.logger)
-			httpclient.Transport = testhelper.MockRoundTripper{Fn: rtFn}
-			weatherProv, err := openmeteo.New(httpclient, serv.logger, serv.config.Units)
-			serv.weatherProv = weatherProv
-			err = serv.updateLocation(t.Context(), geobus.Coordinate{Lat: tc.latitude, Lon: tc.longitude})
-
-			if tc.wantErr && err == nil {
-				t.Error("expected error but got none")
-			}
-			if !tc.wantErr && err != nil {
-				t.Errorf("unexpected error: %s", err)
-			}
-		})
-	}
+	return &weather.Data{
+		GeneratedAt: time.Now(),
+		Coordinates: coords,
+		Current: weather.Instant{
+			InstantTime: time.Now(),
+			Temperature: 20.0,
+		},
+	}, nil
 }
