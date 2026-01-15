@@ -88,7 +88,7 @@ func main() {
 	serv.SignalSrc.Notify(sigChan, syscall.SIGUSR1, syscall.SIGUSR2)
 	go func() {
 		defer serv.SignalSrc.Stop(sigChan)
-		serv.HandleAltTextToggleSignal(ctx, sigChan)
+		serv.HandleSignals(ctx, sigChan)
 	}()
 
 	// Start the service loop

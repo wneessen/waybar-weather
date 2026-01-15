@@ -28,8 +28,8 @@ func (stdLibSignalSource) Stop(c chan<- os.Signal) {
 	signal.Stop(c)
 }
 
-// HandleAltTextToggleSignal toggles the module text display when a signal is received
-func (s *Service) HandleAltTextToggleSignal(ctx context.Context, sigChan chan os.Signal) {
+// HandleSignals handles received signals and updates.
+func (s *Service) HandleSignals(ctx context.Context, sigChan chan os.Signal) {
 	for {
 		select {
 		case <-ctx.Done():
