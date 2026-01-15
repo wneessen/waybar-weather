@@ -720,6 +720,9 @@ func TestService_updateLocation(t *testing.T) {
 				httpclient := http.New(serv.logger)
 				httpclient.Transport = testhelper.MockRoundTripper{Fn: rtFn}
 				weatherProv, err := openmeteo.New(httpclient, serv.logger, serv.config.Units)
+				if err != nil {
+					t.Fatalf("failed to create weather provider: %s", err)
+				}
 				serv.weatherProv = weatherProv
 				err = serv.updateLocation(t.Context(), geobus.Coordinate{Lat: tc.latitude, Lon: tc.longitude})
 
