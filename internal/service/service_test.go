@@ -15,6 +15,7 @@ import (
 	stdhttp "net/http"
 	"os"
 	"strings"
+	"sync"
 	"syscall"
 	"testing"
 	"testing/synctest"
@@ -825,6 +826,8 @@ func TestService_HandleSignals(t *testing.T) {
 
 		sigChan <- syscall.SIGUSR1
 		time.Sleep(time.Millisecond * 100)
+		serv.displayAltLock.RLock()
+		defer serv.displayAltLock.RUnlock()
 		if !serv.displayAltText {
 			t.Errorf("expected alt mode to be enabled, got %t", serv.displayAltText)
 		}
@@ -838,7 +841,7 @@ func TestService_HandleSignals(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to create service: %s", err)
 		}
-		buf := bytes.NewBuffer(nil)
+		buf := &syncBuffer{buf: bytes.NewBuffer(nil)}
 		serv.logger = logger.NewLogger(slog.LevelInfo, buf)
 		sigChan := make(chan os.Signal, 1)
 		serv.SignalSrc.Notify(sigChan, syscall.SIGUSR1, syscall.SIGUSR2)
@@ -854,6 +857,7 @@ func TestService_HandleSignals(t *testing.T) {
 			t.Errorf("expected log to contain %q, got %q", wantLog, buf.String())
 		}
 		cancel()
+		time.Sleep(time.Millisecond * 100)
 	})
 }
 
@@ -861,6 +865,10 @@ type (
 	weatherProv  struct{ shouldFail bool }
 	failWriter   struct{}
 	mockGeocoder struct{ shouldFail bool }
+	syncBuffer   struct {
+		mu  sync.Mutex
+		buf *bytes.Buffer
+	}
 )
 
 func (f failWriter) Write([]byte) (int, error) { return 0, fmt.Errorf("failed to write") }
@@ -897,4 +905,16 @@ func (w *weatherProv) GetWeather(_ context.Context, coords geobus.Coordinate) (*
 			Temperature: 20.0,
 		},
 	}, nil
+}
+
+func (s *syncBuffer) Write(p []byte) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.buf.Write(p)
+}
+
+func (s *syncBuffer) String() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.buf.String()
 }
