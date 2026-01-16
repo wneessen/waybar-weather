@@ -305,6 +305,58 @@ func TestOpenMeteo_GetWeather(t *testing.T) {
 				data.Current.Units.WindDirection)
 		}
 	})
+	t.Run("weather lookup with different timezones succeeds", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			tz     string
+			offset int
+			want   time.Time
+		}{
+			{"UTC", "UTC", 0, time.Date(2026, 1, 16, 22, 15, 0, 0, time.UTC)},
+			{"Local", "Local", 0, time.Date(2026, 1, 16, 22, 15, 0, 0, time.Local)},
+			{
+				"Europe/Berlin",
+				"Europe/Berlin",
+				3600,
+				time.Date(2026, 1, 16, 22, 15, 0, 0,
+					time.FixedZone("Europe/Berlin", 3600)),
+			},
+		}
+
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				time.Local = time.FixedZone(tc.tz, tc.offset)
+				client := testClient(t, "", false)
+				fn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+					data, err := os.Open(testDataImperial)
+					if err != nil {
+						t.Fatalf("failed to open JSON response file: %s", err)
+					}
+
+					return &stdhttp.Response{
+						StatusCode: 200,
+						Body:       data,
+						Header:     make(stdhttp.Header),
+					}, nil
+				}
+				client.http.Transport = testhelper.MockRoundTripper{Fn: fn}
+				data, err := client.GetWeather(t.Context(), geobus.Coordinate{Lat: testLat, Lon: testLon})
+				if err != nil {
+					t.Fatalf("weather lookup failed: %s", err)
+				}
+				if data.GeneratedAt.IsZero() {
+					t.Error("expected generated at to be set")
+				}
+				if data.Current.InstantTime.Location().String() != tc.tz {
+					t.Errorf("expected current time to be in %q, got %q", tc.tz,
+						data.Current.InstantTime.Location().String())
+				}
+				if !data.Current.InstantTime.Equal(tc.want) {
+					t.Errorf("expected current time to be %s, got %s", tc.want, data.Current.InstantTime)
+				}
+			})
+		}
+	})
 	t.Run("http request fails with a 401", func(t *testing.T) {
 		client := testClient(t, "", false)
 		fn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
@@ -361,16 +413,18 @@ func TestResBool_UnmarshalJSON(t *testing.T) {
 		}
 
 		for _, tc := range tests {
-			type data struct {
-				Value resBool `json:"value"`
-			}
-			var output data
-			if err := json.Unmarshal(tc.json, &output); err != nil {
-				t.Fatalf("failed to unmarshal JSON: %s", err)
-			}
-			if tc.want != output.Value.bool {
-				t.Errorf("expected value to be %t, got %t", tc.want, output.Value.bool)
-			}
+			t.Run(tc.name, func(t *testing.T) {
+				type data struct {
+					Value resBool `json:"value"`
+				}
+				var output data
+				if err := json.Unmarshal(tc.json, &output); err != nil {
+					t.Fatalf("failed to unmarshal JSON: %s", err)
+				}
+				if tc.want != output.Value.bool {
+					t.Errorf("expected value to be %t, got %t", tc.want, output.Value.bool)
+				}
+			})
 		}
 	})
 }
@@ -404,19 +458,22 @@ func TestResTime_UnmarshalJSON(t *testing.T) {
 		}
 
 		for _, tc := range tests {
-			type data struct {
-				Value resTime `json:"value"`
-			}
-			var output data
-			if err := json.Unmarshal(tc.json, &output); err != nil && !tc.fails {
-				t.Fatalf("failed to unmarshal JSON: %s", err)
-			}
-			if tc.fails {
-				continue
-			}
-			if !output.Value.Time.Equal(tc.want) {
-				t.Errorf("expected value to be %s, got %s", tc.want, output.Value.Time)
-			}
+			t.Run(tc.name, func(t *testing.T) {
+				time.Local = time.UTC
+				type data struct {
+					Value resTime `json:"value"`
+				}
+				var output data
+				if err := json.Unmarshal(tc.json, &output); err != nil && !tc.fails {
+					t.Fatalf("failed to unmarshal JSON: %s", err)
+				}
+				if tc.fails {
+					return
+				}
+				if !output.Value.Time.Equal(tc.want) {
+					t.Errorf("expected value to be %s, got %s", tc.want, output.Value.Time)
+				}
+			})
 		}
 	})
 }
