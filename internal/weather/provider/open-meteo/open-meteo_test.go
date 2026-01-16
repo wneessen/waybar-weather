@@ -375,6 +375,52 @@ func TestResBool_UnmarshalJSON(t *testing.T) {
 	})
 }
 
+func TestResTime_UnmarshalJSON(t *testing.T) {
+	t.Run("unmarshalling diferent times succeeds", func(t *testing.T) {
+		tests := []struct {
+			name  string
+			json  []byte
+			want  time.Time
+			fails bool
+		}{
+			{
+				"2006-01-02T15:04",
+				[]byte(`{"value":"2006-01-02T15:04"}`),
+				time.Date(2006, 1, 2, 15, 4, 0, 0, time.UTC),
+				false,
+			},
+			{
+				"2006-01-02T15:04:00 (extra text fails)",
+				[]byte(`{"value":"2006-01-02T15:04:00"}`),
+				time.Time{},
+				true,
+			},
+			{
+				"nil",
+				[]byte(`{"value":null}`),
+				time.Time{},
+				true,
+			},
+		}
+
+		for _, tc := range tests {
+			type data struct {
+				Value resTime `json:"value"`
+			}
+			var output data
+			if err := json.Unmarshal(tc.json, &output); err != nil && !tc.fails {
+				t.Fatalf("failed to unmarshal JSON: %s", err)
+			}
+			if tc.fails {
+				continue
+			}
+			if !output.Value.Time.Equal(tc.want) {
+				t.Errorf("expected value to be %s, got %s", tc.want, output.Value.Time)
+			}
+		}
+	})
+}
+
 func testClient(t *testing.T, unit string, nilLogger bool) *OpenMeteo {
 	var output io.Writer = os.Stdout
 	if nilLogger {
