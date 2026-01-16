@@ -470,7 +470,7 @@ func TestResTime_UnmarshalJSON(t *testing.T) {
 				if tc.fails {
 					return
 				}
-				if !output.Value.Time.Equal(tc.want) {
+				if !output.Value.Equal(tc.want) {
 					t.Errorf("expected value to be %s, got %s", tc.want, output.Value.Time)
 				}
 			})
