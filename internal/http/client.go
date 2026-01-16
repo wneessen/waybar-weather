@@ -106,6 +106,7 @@ func (h *Client) PerformReq(ctx context.Context, method string, endpoint string,
 	for k, v := range headers {
 		request.Header.Set(k, v)
 	}
+
 	// Execute HTTP request
 	response, err := h.Do(request)
 	if err != nil {

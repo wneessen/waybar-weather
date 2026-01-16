@@ -202,9 +202,6 @@ func (o *OpenMeteo) GetWeather(ctx context.Context, coords geobus.Coordinate) (*
 }
 
 func (r *resTime) UnmarshalJSON(b []byte) error {
-	if len(b) == 0 {
-		return fmt.Errorf("empty time")
-	}
 	if b[0] != '"' {
 		return fmt.Errorf("invalid time format: %s", string(b))
 	}
@@ -221,9 +218,6 @@ func (r *resTime) UnmarshalJSON(b []byte) error {
 }
 
 func (r *resBool) UnmarshalJSON(b []byte) error {
-	if len(b) == 0 {
-		return fmt.Errorf("empty bool")
-	}
 	if b[0] == '0' {
 		return nil
 	}
