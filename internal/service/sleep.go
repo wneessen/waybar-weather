@@ -23,7 +23,7 @@ const (
 	signalBufferSize = 8
 
 	busReconnectDelay   = 5 * time.Second
-	networkWakeupDelay  = 10 * time.Second
+	networkWakeupDelay  = 20 * time.Second
 	reconnectDelay      = 2 * time.Second
 	subscribeRetryDelay = 10 * time.Second
 )
