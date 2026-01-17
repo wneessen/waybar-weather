@@ -22,10 +22,10 @@ import (
 const (
 	apiEndpoint   = "https://api.beacondb.net/v1/geolocate"
 	lookupTimeout = time.Second * 5
-	wifiScanTime  = time.Minute * 2
+	wifiScanTime  = time.Second * 5
 	name          = "ichnaea"
 	ttlTime       = time.Hour * 1
-	pollTime      = time.Second * 150
+	pollTime      = time.Second * 30
 )
 
 type GeolocationICHNAEAProvider struct {
@@ -78,8 +78,7 @@ func (p *GeolocationICHNAEAProvider) Name() string {
 	return p.name
 }
 
-// LookupStream continuously streams geolocation results from a file, emitting updates when data changes
-// or context ends.
+// LookupStream continuously streams from the ICHNAEA API, emitting updates when data changes or context ends.
 func (p *GeolocationICHNAEAProvider) LookupStream(ctx context.Context, key string) <-chan geobus.Result {
 	out := make(chan geobus.Result)
 	go p.monitorWifiAccessPoints(ctx)
@@ -141,7 +140,7 @@ func (p *GeolocationICHNAEAProvider) monitorWifiAccessPoints(ctx context.Context
 		}
 		firstRun = false
 
-		list, err := p.wifiAccessPoints()
+		list, err := p.wifiAccessPoints(ctx)
 		if err != nil {
 			continue
 		}
@@ -151,7 +150,7 @@ func (p *GeolocationICHNAEAProvider) monitorWifiAccessPoints(ctx context.Context
 	}
 }
 
-func (p *GeolocationICHNAEAProvider) wifiAccessPoints() ([]WirelessNetwork, error) {
+func (p *GeolocationICHNAEAProvider) wifiAccessPoints(ctx context.Context) ([]WirelessNetwork, error) {
 	var checkIfaces []*wifi.Interface
 	var list []WirelessNetwork
 
@@ -170,6 +169,12 @@ func (p *GeolocationICHNAEAProvider) wifiAccessPoints() ([]WirelessNetwork, erro
 	}
 
 	for _, iface := range checkIfaces {
+		err = p.wlan.Scan(ctx, iface)
+		if err != nil {
+			continue
+		}
+		time.Sleep(wifiScanTime)
+
 		aps, err := p.wlan.AccessPoints(iface)
 		if err != nil {
 			continue

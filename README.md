@@ -181,7 +181,16 @@ The ICHNAEA location provider uses the Mozilla Location Service protocol to look
 [beaconDB](https://beacondb.net/). To get your location it will look for WiFi interfaces on your computer
 and scan for local networks in the area. The hardware addresses of these networks will then be transmitted
 to beaconDB. The more WiFi networks waybar-weather is able to identify, the more accurate the results will
-be. For most users, this will be the most accurate location source.
+be. For most users, this will be the most accurate location source. 
+
+#### WiFi scanning
+Please note that for ICHNAEA to work, waybar-weather needs to scan for WiFi networks, which might take up to 30 
+seconds for the first run. Also for the WiFi scanning to work, waybar-weather needs the `CAP_NET_ADMIN` capability. 
+To enable this, you need to run the following command as sudo/root:
+
+```shell
+setcap cap_net_admin+ep /usr/bin/waybar-weather
+```
 
 #### Privacy considerations
 The ICHNAEA provider uses the Mozilla Location Service protocol and relies on nearby WiFi network information to
