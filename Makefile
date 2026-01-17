@@ -12,3 +12,12 @@ run-ichnaea:
 	@sudo setcap cap_net_admin+ep tmp/waybar-weather-ichnaea
 	@./tmp/waybar-weather-ichnaea
 	@rm tmp/waybar-weather-ichnaea
+
+.PHONY: release
+release:
+	$(eval TMPDIR := $(shell mktemp -d))
+	@go build -o $(TMPDIR)/waybar-weather cmd/waybar-weather/main.go
+	@killall waybar-weather 2>/dev/null && true || true
+	@sudo cp $(TMPDIR)/waybar-weather /usr/bin/waybar-weather
+	@sudo setcap cap_net_admin+ep /usr/bin/waybar-weather
+	@rm -rf $(TMPDIR)
