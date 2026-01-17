@@ -177,8 +177,8 @@ func TestGeolocationFileProvider_LookupStream(t *testing.T) {
 			if result.Lon != testLon {
 				t.Errorf("expected longitude to be %f, got %f", testLon, result.Lon)
 			}
-			if result.AccuracyMeters != float64(geobus.AccuracyZip) {
-				t.Errorf("expected accuracy to be %d, got %f", geobus.AccuracyZip, result.AccuracyMeters)
+			if result.AccuracyMeters != float64(geobus.AccuracyExact) {
+				t.Errorf("expected accuracy to be %d, got %f", geobus.AccuracyExact, result.AccuracyMeters)
 			}
 			if result.Source != provider.Name() {
 				t.Errorf("expected source to be %s, got %s", provider.Name(), result.Source)
@@ -225,8 +225,8 @@ func TestGeolocationFileProvider_LookupStream(t *testing.T) {
 			if result.Lon != 2.0 {
 				t.Errorf("expected longitude to be %f, got %f", 2.0, result.Lon)
 			}
-			if result.AccuracyMeters != geobus.AccuracyZip {
-				t.Errorf("expected accuracy to be %d, got %f", geobus.AccuracyZip, result.AccuracyMeters)
+			if result.AccuracyMeters != geobus.AccuracyExact {
+				t.Errorf("expected accuracy to be %d, got %f", geobus.AccuracyExact, result.AccuracyMeters)
 			}
 		})
 	})

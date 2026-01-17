@@ -76,7 +76,7 @@ func (p *GeolocationFileProvider) LookupStream(ctx context.Context, key string) 
 			if err != nil {
 				continue
 			}
-			coord := geobus.Coordinate{Lat: lat, Lon: lon, Acc: geobus.AccuracyZip}
+			coord := geobus.Coordinate{Lat: lat, Lon: lon, Acc: geobus.AccuracyExact}
 			state.Update(coord)
 			r := p.createResult(key, coord)
 

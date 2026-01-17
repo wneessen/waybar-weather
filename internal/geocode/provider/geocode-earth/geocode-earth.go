@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-package geocode_earth
+package geocodeearth
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 
 	"golang.org/x/text/language"
 
+	"github.com/wneessen/waybar-weather/internal/geobus"
 	"github.com/wneessen/waybar-weather/internal/geocode"
 	"github.com/wneessen/waybar-weather/internal/http"
 )
@@ -66,13 +67,13 @@ func (o *GeocodeEarth) Name() string {
 	return name
 }
 
-func (o *GeocodeEarth) Reverse(ctx context.Context, lat, lon float64) (geocode.Address, error) {
+func (o *GeocodeEarth) Reverse(ctx context.Context, coords geobus.Coordinate) (geocode.Address, error) {
 	var response Response
 
 	query := url.Values{}
 	query.Set("api_key", o.apikey)
-	query.Set("point.lat", fmt.Sprintf("%f", lat))
-	query.Set("point.lon", fmt.Sprintf("%f", lon))
+	query.Set("point.lat", fmt.Sprintf("%f", coords.Lat))
+	query.Set("point.lon", fmt.Sprintf("%f", coords.Lon))
 	query.Set("lang", o.lang.String())
 
 	code, err := o.http.GetWithTimeout(ctx, APIEndpoint, &response, query, nil, APITimeout)
@@ -90,8 +91,8 @@ func (o *GeocodeEarth) Reverse(ctx context.Context, lat, lon float64) (geocode.A
 	result := response.Features[0].Properties
 	address := geocode.Address{
 		AddressFound: true,
-		Latitude:     lat,
-		Longitude:    lon,
+		Latitude:     coords.Lat,
+		Longitude:    coords.Lon,
 		DisplayName:  result.DisplayName,
 		Country:      result.Country,
 		State:        result.State,

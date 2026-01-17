@@ -49,3 +49,18 @@ paths = [
   'builtin$',
   'examples$'
 ]
+
+## Cannot overflow, since check this value at config initialization
+[[linters.exclusions.rules]]
+linters = [
+  'gosec'
+]
+path = 'internal/presenter/presenter.go'
+text = 'G115:'
+
+[[linters.exclusions.rules]]
+linters = [
+  'gosec'
+]
+path = 'internal/service/service_test.go'
+text = 'G115:'

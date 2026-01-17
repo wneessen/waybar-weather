@@ -4,7 +4,11 @@
 
 package geocode
 
-import "context"
+import (
+	"context"
+
+	"github.com/wneessen/waybar-weather/internal/geobus"
+)
 
 type Address struct {
 	AddressFound bool
@@ -27,5 +31,5 @@ type Address struct {
 
 type Geocoder interface {
 	Name() string
-	Reverse(ctx context.Context, lat, lon float64) (Address, error)
+	Reverse(context.Context, geobus.Coordinate) (Address, error)
 }

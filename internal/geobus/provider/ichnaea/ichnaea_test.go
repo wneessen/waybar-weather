@@ -71,7 +71,7 @@ func TestNewGeolocationICHNAEAProvider_wifiList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create ICHNAEA provider: %s", err)
 	}
-	list, err := provider.wifiAccessPoints()
+	list, err := provider.wifiAccessPoints(t.Context())
 	if err != nil {
 		t.Fatalf("failed to get WiFi list: %s", err)
 	}
