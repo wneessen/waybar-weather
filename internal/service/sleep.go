@@ -165,4 +165,5 @@ func (s *Service) handleResumeEvent(ctx context.Context, lastResumeUnix *int64) 
 
 	s.logger.Debug("resuming from sleep, fetching latest weather data")
 	s.fetchWeather(ctx)
+	s.printWeather(ctx)
 }
