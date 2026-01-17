@@ -153,6 +153,7 @@ func (s *Service) fetchWeather(ctx context.Context) {
 	if err != nil {
 		s.logger.Error("failed to fetch weather data", logger.Err(err),
 			slog.String("source", s.weatherProv.Name()))
+		return
 	}
 	s.weather = data
 	s.weatherIsSet = true
