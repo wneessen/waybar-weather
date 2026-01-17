@@ -143,9 +143,6 @@ func (s *Service) processSleepSignal(ctx context.Context, sgn *dbus.Signal, last
 	if !ok || sleeping {
 		return
 	}
-	s.weatherLock.Lock()
-	defer s.weatherLock.Unlock()
-	s.weatherIsSet = false
 	s.handleResumeEvent(ctx, lastResumeUnix)
 }
 
@@ -164,6 +161,11 @@ func (s *Service) handleResumeEvent(ctx context.Context, lastResumeUnix *int64) 
 	time.Sleep(networkWakeupDelay)
 
 	s.logger.Debug("resuming from sleep, fetching latest weather data")
+
+	s.weatherLock.Lock()
+	s.weatherIsSet = false
+	s.weatherLock.Unlock()
+
 	s.fetchWeather(ctx)
 	s.printWeather(ctx)
 }
