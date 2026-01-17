@@ -17,8 +17,7 @@ run-ichnaea:
 release:
 	$(eval TMPDIR := $(shell mktemp -d))
 	@go build -o $(TMPDIR)/waybar-weather cmd/waybar-weather/main.go
-	@pkill waybar-weather 2>/dev/null && true || true
-	@sleep 1
+	@sudo pkill waybar-weather 2>/dev/null && true || true
 	@sudo cp $(TMPDIR)/waybar-weather /usr/bin/waybar-weather
 	@sudo setcap cap_net_admin+ep /usr/bin/waybar-weather
 	@rm -rf $(TMPDIR)
