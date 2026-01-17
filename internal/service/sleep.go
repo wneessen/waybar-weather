@@ -143,6 +143,9 @@ func (s *Service) processSleepSignal(ctx context.Context, sgn *dbus.Signal, last
 	if !ok || sleeping {
 		return
 	}
+	s.weatherLock.Lock()
+	defer s.weatherLock.Unlock()
+	s.weatherIsSet = false
 	s.handleResumeEvent(ctx, lastResumeUnix)
 }
 
