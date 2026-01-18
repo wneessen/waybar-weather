@@ -188,6 +188,9 @@ func (p *Presenter) validateTemplates() error {
 	if err := p.TooltipTemplate.Execute(bytes.NewBuffer(nil), data); err != nil {
 		return fmt.Errorf("failed to render tooltip template: %w", err)
 	}
+	if err := p.AltTooltipTemplate.Execute(bytes.NewBuffer(nil), data); err != nil {
+		return fmt.Errorf("failed to render alternative tooltip template: %w", err)
+	}
 
 	return nil
 }
