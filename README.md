@@ -17,7 +17,7 @@ allowing you to always see the weather data for your current location.
 ## Features
 * [Uses different geolocation providers to find your current location](#geolocation-lookup)
 * [Supports different geocoding providers for the reverse location lookup via coordinates](#geocoding-provider)
-* Fetch weather data from [Open-Meteo](https://open-meteo.com/) (free, no API key required)
+* [Supports different weather providers](#weather-providers)
 * Integrates with [Waybar](https://github.com/Alexays/Waybar) as a custom module
 * Display conditions, temperature and moon phase for your current location
 * [Fully customizable via its integrated template engine](#templating)
@@ -273,6 +273,25 @@ address and request metadata to the provider.
 
 Geocode Earth publishes their privacy policy at: [https://geocode.earth/privacy/](https://geocode.earth/privacy/) and
 is operated in the USA and therefore has to adhere to US data privacy laws.
+
+## Weather providers
+With release v0.3.0 waybar-weather introduced a new weather provider architecture, that allows us to easily add
+support for new weather providers. The weather providers are configured in the `weather` section of the configuration
+file.
+
+### Open-Meteo
+Currently, Open-Meteo is the only weather provider that waybar-weather supports out of the box. It is a free 
+and open weather API that provides weather data without the need of an API key. Open-Meteo provides a vast amount
+of data points and is therefore a very good choice for most users. No specific configuration is required for 
+Open-Meteo and the provider will be chosen automatically as default.
+
+#### Privacy considerations
+When using Open-Meteo as the weather provider, waybar-weather sends geographic coordinates to the Open-Meteo API
+to retrieve weather data. Requests are made over the network and may include your IP address and request metadata.
+
+Open-Meteo publishes their privacy policy at: [https://open-meteo.com/en/terms#privacy](https://open-meteo.com/en/terms#privacy). 
+According to their statement, Open-Meteo only collects limited non-personal technical data for operational purposes 
+and does not share request data with third parties.
 
 ## Sleep/suspend and resume detection
 waybar-weather will automatically detect when your computer goes to sleep and resumes from sleep
