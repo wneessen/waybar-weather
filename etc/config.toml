@@ -127,13 +127,16 @@
 ## =============================================================================
 [geolocation]
 
-## Path to a static geolocation file.
-## If set, this file may be used as a location source.
+## Path to a static geolocation file for the geolocation_file provider.
+## If set, this file is used with the highest accuracy.
 #
 # geolocation_file = ""
 
 ## Disable individual geolocation providers.
-## All providers are enabled by default.
+## All providers are enabled by default - they might not provide data, though (e. g. if no gpsd is running,
+## the gpsd provider will not be able to provide location data).
+##
+## For details on the different geolocation providers, please refer the README.
 #
 # disable_geoip = false
 # disable_geoapi = false
@@ -146,6 +149,8 @@
 ## Geocoder Configuration
 ## =============================================================================
 [geocoder]
+
+## For details on the different geocoder providers, please refer the README.
 
 ## Reverse geocoding provider used to resolve human-readable locations.
 ## Default: "nominatim"
