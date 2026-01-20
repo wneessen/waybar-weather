@@ -32,7 +32,7 @@ func (s *Service) selectGeobusProviders() ([]geobus.Provider, error) {
 	var provider []geobus.Provider
 
 	if !s.config.GeoLocation.DisableGeolocationFile {
-		provider = append(provider, geolocation_file.NewGeolocationFileProvider(s.config.GeoLocation.File))
+		provider = append(provider, geolocation_file.NewGeolocationFileProvider(s.config.GeoLocation.GeoLocationFile))
 	}
 
 	if !s.config.GeoLocation.DisableGPSD {

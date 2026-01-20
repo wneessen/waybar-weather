@@ -68,7 +68,7 @@ type Config struct {
 	} `fig:"templates"`
 
 	GeoLocation struct {
-		File                   string `fig:"file"`
+		GeoLocationFile        string `fig:"geolocation_file"`
 		DisableGeoIP           bool   `fig:"disable_geoip"`
 		DisableGeoAPI          bool   `fig:"disable_geoapi"`
 		DisableGeolocationFile bool   `fig:"disable_geolocation_file"`
@@ -123,9 +123,9 @@ func (c *Config) Validate() error {
 	if c.Templates.AltTooltip == "" {
 		c.Templates.AltTooltip = DefaultAltTooltipTpl
 	}
-	if c.GeoLocation.File == "" {
+	if c.GeoLocation.GeoLocationFile == "" {
 		home, _ := os.UserHomeDir()
-		c.GeoLocation.File = filepath.Join(home, ".config", "waybar-weather", "geolocation")
+		c.GeoLocation.GeoLocationFile = filepath.Join(home, ".config", "waybar-weather", "geolocation")
 	}
 
 	return nil
