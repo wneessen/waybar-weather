@@ -71,14 +71,14 @@ func TestNew(t *testing.T) {
 
 func TestNewFromFile(t *testing.T) {
 	const (
-		expectDefaultUnits          = "imperial"
+		expectDefaultUnits          = "metric"
 		expectLogLevel              = slog.LevelInfo
-		expectWeatherForecastHours  = 5
-		expectIntervalWeatherUpdate = time.Minute * 30
-		expectIntervalOutput        = time.Second * 15
+		expectWeatherForecastHours  = 3
+		expectIntervalWeatherUpdate = time.Minute * 15
+		expectIntervalOutput        = time.Second * 30
 	)
 	t.Run("reading config from valid file succeeds", func(t *testing.T) {
-		conf, err := NewFromFile("../../etc", "waybar-weather.toml")
+		conf, err := NewFromFile("../../etc", "config.toml")
 		if err != nil {
 			t.Fatalf("failed to load config: %s", err)
 		}
