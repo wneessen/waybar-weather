@@ -24,3 +24,8 @@ SPDX-License-Identifier = "MIT"
 path = "testdata/*"
 SPDX-FileCopyrightText = "Winni Neessen <wn@neessen.dev>"
 SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "contrib/***"
+SPDX-FileCopyrightText = "Winni Neessen <wn@neessen.dev>"
+SPDX-License-Identifier = "MIT"
