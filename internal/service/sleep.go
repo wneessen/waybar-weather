@@ -23,7 +23,7 @@ const (
 	signalBufferSize = 8
 
 	busReconnectDelay   = 5 * time.Second
-	networkWakeupDelay  = 10 * time.Second
+	networkWakeupDelay  = 20 * time.Second
 	reconnectDelay      = 2 * time.Second
 	subscribeRetryDelay = 10 * time.Second
 )
@@ -161,5 +161,11 @@ func (s *Service) handleResumeEvent(ctx context.Context, lastResumeUnix *int64) 
 	time.Sleep(networkWakeupDelay)
 
 	s.logger.Debug("resuming from sleep, fetching latest weather data")
+
+	s.weatherLock.Lock()
+	s.weatherIsSet = false
+	s.weatherLock.Unlock()
+
 	s.fetchWeather(ctx)
+	s.printWeather(ctx)
 }

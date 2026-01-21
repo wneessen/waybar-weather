@@ -85,15 +85,15 @@ func main() {
 
 	// Set up signal handler
 	sigChan := make(chan os.Signal, 1)
-	serv.SignalSrc.Notify(sigChan, syscall.SIGUSR1)
+	serv.SignalSrc.Notify(sigChan, syscall.SIGUSR1, syscall.SIGUSR2)
 	go func() {
 		defer serv.SignalSrc.Stop(sigChan)
-		serv.HandleAltTextToggleSignal(ctx, sigChan)
+		serv.HandleSignals(ctx, sigChan)
 	}()
 
 	// Start the service loop
 	log.Info(t.Get("starting waybar-weather service"), slog.String("version", version),
-		slog.String("commit", commit), slog.String("date", date))
+		slog.String("commit", commit), slog.String("date", date), slog.Int("process_id", os.Getpid()))
 	if err = serv.Run(ctx); err != nil {
 		log.Error(t.Get("failed to start waybar-weather service"), logger.Err(err))
 	}

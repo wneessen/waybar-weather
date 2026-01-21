@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Winni Neessen <wn@neessen.dev>
+// SPDX-FileCopyrightText: Winni Neessen <wn@neessen.de
 //
 // SPDX-License-Identifier: MIT
 
@@ -16,13 +16,22 @@ import (
 
 const (
 	configEnv         = "WAYBARWEATHER"
-	DefaultTextTpl    = "{{.Current.ConditionIcon}} {{.Current.Temperature}}{{.TempUnit}}"
-	DefaultAltTextTpl = "{{.Forecast.ConditionIcon}} {{.Forecast.Temperature}}{{.TempUnit}}"
+	DefaultTextTpl    = "{{.Current.ConditionIcon}} {{hum .Current.Temperature}}{{.Current.Units.Temperature}}"
+	DefaultAltTextTpl = "{{.Forecast.ConditionIcon}} {{hum .Forecast.Temperature}}{{.Forecast.Units.Temperature}}"
 	DefaultTooltipTpl = "{{.Address.City}}, {{.Address.Country}}\n" +
 		"{{.Current.Condition}}\n" +
-		"{{loc \"apparent\"}}: {{.Current.ApparentTemperature}}{{.TempUnit}}\n" +
-		"{{loc \"humidity\"}}: {{.Current.Humidity}}%\n" +
-		"{{loc \"pressure\"}}: {{.Current.PressureMSL}} {{.PressureUnit}}\n" +
+		"{{loc \"apparent\"}}: {{hum .Current.ApparentTemperature}}{{.Current.Units.Temperature}}\n" +
+		"{{loc \"humidity\"}}: {{.Current.RelativeHumidity}}%\n" +
+		"{{loc \"pressure\"}}: {{hum .Current.PressureMSL}} {{.Current.Units.Pressure}}\n" +
+		"{{loc \"wind\"}}: {{hum .Current.WindSpeed}} → {{hum .Current.WindGusts}} {{.Current.Units.WindSpeed}} ({{windDir .Current.WindDirection}})\n" +
+		"\n" +
+		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
+	DefaultAltTooltipTpl = "{{.Address.City}}, {{.Address.Country}}\n" +
+		"{{.Forecast.Condition}}\n" +
+		"{{loc \"apparent\"}}: {{hum .Forecast.ApparentTemperature}}{{.Forecast.Units.Temperature}}\n" +
+		"{{loc \"humidity\"}}: {{.Forecast.RelativeHumidity}}%\n" +
+		"{{loc \"pressure\"}}: {{hum .Forecast.PressureMSL}} {{.Forecast.Units.Pressure}}\n" +
+		"{{loc \"wind\"}}: {{hum .Forecast.WindSpeed}} → {{hum .Forecast.WindGusts}} {{.Forecast.Units.WindSpeed}} ({{windDir .Forecast.WindDirection}})\n" +
 		"\n" +
 		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
 )
@@ -35,8 +44,15 @@ type Config struct {
 	LogLevel slog.Level `fig:"loglevel" default:"0"`
 
 	Weather struct {
+		Provider string `fig:"provider" default:"open-meteo"`
+
 		// Allowed value: 1 to 24
 		ForecastHours uint `fig:"forecast_hours" default:"3"`
+
+		// Cold and hot class thresholds (Defaults are based on °C)
+		// Defaults are based on suggestions for dangerous driving conditions and uncomfortable heat.
+		ColdThreshold float64 `fig:"cold_threshold" default:"2"`
+		HotThreshold  float64 `fig:"hot_threshold" default:"30"`
 	} `fig:"weather"`
 
 	Intervals struct {
@@ -45,13 +61,14 @@ type Config struct {
 	} `fig:"intervals"`
 
 	Templates struct {
-		Text    string `fig:"text"`
-		AltText string `fig:"alt_text"`
-		Tooltip string `fig:"tooltip"`
+		Text       string `fig:"text"`
+		AltText    string `fig:"alt_text"`
+		Tooltip    string `fig:"tooltip"`
+		AltTooltip string `fig:"alt_tooltip"`
 	} `fig:"templates"`
 
 	GeoLocation struct {
-		File                   string `fig:"file"`
+		GeoLocationFile        string `fig:"geolocation_file"`
 		DisableGeoIP           bool   `fig:"disable_geoip"`
 		DisableGeoAPI          bool   `fig:"disable_geoapi"`
 		DisableGeolocationFile bool   `fig:"disable_geolocation_file"`
@@ -103,9 +120,12 @@ func (c *Config) Validate() error {
 	if c.Templates.Tooltip == "" {
 		c.Templates.Tooltip = DefaultTooltipTpl
 	}
-	if c.GeoLocation.File == "" {
+	if c.Templates.AltTooltip == "" {
+		c.Templates.AltTooltip = DefaultAltTooltipTpl
+	}
+	if c.GeoLocation.GeoLocationFile == "" {
 		home, _ := os.UserHomeDir()
-		c.GeoLocation.File = filepath.Join(home, ".config", "waybar-weather", "geolocation")
+		c.GeoLocation.GeoLocationFile = filepath.Join(home, ".config", "waybar-weather", "geolocation")
 	}
 
 	return nil

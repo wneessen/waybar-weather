@@ -12,6 +12,7 @@ import (
 
 	"golang.org/x/text/language"
 
+	"github.com/wneessen/waybar-weather/internal/geobus"
 	"github.com/wneessen/waybar-weather/internal/geocode"
 	"github.com/wneessen/waybar-weather/internal/http"
 )
@@ -75,12 +76,12 @@ func (o *OpenCage) Name() string {
 	return name
 }
 
-func (o *OpenCage) Reverse(ctx context.Context, lat, lon float64) (geocode.Address, error) {
+func (o *OpenCage) Reverse(ctx context.Context, coords geobus.Coordinate) (geocode.Address, error) {
 	var response Response
 
 	query := url.Values{}
 	query.Set("key", o.apikey)
-	query.Set("q", fmt.Sprintf("%f,%f", lat, lon))
+	query.Set("q", fmt.Sprintf("%f,%f", coords.Lat, coords.Lon))
 	query.Set("no_annotations", "1")
 	query.Set("no_record", "1")
 	query.Set("language", o.lang.String())

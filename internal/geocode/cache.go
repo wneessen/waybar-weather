@@ -9,6 +9,8 @@ import (
 	"math"
 	"sync"
 	"time"
+
+	"github.com/wneessen/waybar-weather/internal/geobus"
 )
 
 // coordPrecision is the precision used to quantize coordinates (0.01 degrees ≈ 1.1 km)
@@ -47,8 +49,8 @@ func (c *CachedGeocoder) Name() string {
 	return "geocoder cache using " + c.coder.Name()
 }
 
-func (c *CachedGeocoder) Reverse(ctx context.Context, lat, lon float64) (Address, error) {
-	key := newKey(c.coder.Name(), lat, lon)
+func (c *CachedGeocoder) Reverse(ctx context.Context, coords geobus.Coordinate) (Address, error) {
+	key := newKey(c.coder.Name(), coords.Lat, coords.Lon)
 
 	c.mu.RLock()
 	entry, ok := c.cache[key]
@@ -60,7 +62,7 @@ func (c *CachedGeocoder) Reverse(ctx context.Context, lat, lon float64) (Address
 	}
 	c.mu.RUnlock()
 
-	addr, err := c.coder.Reverse(ctx, lat, lon)
+	addr, err := c.coder.Reverse(ctx, coords)
 	if err != nil {
 		return addr, err
 	}

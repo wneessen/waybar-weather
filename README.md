@@ -17,7 +17,7 @@ allowing you to always see the weather data for your current location.
 ## Features
 * [Uses different geolocation providers to find your current location](#geolocation-lookup)
 * [Supports different geocoding providers for the reverse location lookup via coordinates](#geocoding-provider)
-* Fetch weather data from [Open-Meteo](https://open-meteo.com/) (free, no API key required)
+* [Supports different weather providers](#weather-providers)
 * Integrates with [Waybar](https://github.com/Alexays/Waybar) as a custom module
 * Display conditions, temperature and moon phase for your current location
 * [Fully customizable via its integrated template engine](#templating)
@@ -110,6 +110,30 @@ Once complete, restart Waybar and you should be good to go:
 killall waybar && waybar
 ```
 
+## Privacy statement
+
+waybar-weather does not collect, or store personal data on its own. However, to provide weather information and
+geolocation lookup functionality, it may communicate with third-party services.
+
+### Third-party services
+
+Retrieving weather data requires network requests to external weather providers such as Open-Meteo. Depending on your
+configuration, geocoding and reverse-geocoding requests may also be sent to external services such as Nominatim to
+resolve place names or coordinates.
+
+When making these requests, certain technical information may be transmitted to the respective service, including but
+not limited to:
+
+- Your IP address
+- Request metadata (for example headers or timestamps)
+- Location coordinates or place names, depending on the feature used
+
+waybar-weather does not control how third-party services handle or retain this data. Each provider operates under its
+own privacy policy and terms of service. For transparency, in our README, we provide links to the privacy policies 
+or data usage statements of all supported weather, geocoding, and geolocation providers. Users are encouraged to 
+review these links to understand how each service processes data and to make informed decisions about which providers 
+to enable or if to use waybar-weather in their environment.
+
 ## Geolocation lookup
 waybar-weather tries to automatically determine your location using its built-in geolocation lookup
 service (geobus). The geobus is a simple sub-pub service that utilizes different geolocation providers
@@ -117,33 +141,77 @@ to find your location. The most accurate result will be taken for looking up the
 disable every geobus provider in your config file. By default all providers are enabled, to provide the
 best possible location lookup.
 
+The geolocation lookup methods come with different privacy characteristics. Which providers you enable determines 
+what data may leave your system and who it is shared with. We provide a brief privacy overview for each provider in
+our README.
+
 ### Geolocation file
 A geolocation file is a simple static file in the format `<latitude>,<logitude>` that you can place
 in you local home directory at `~/.config/waybar-weather/geolocation`. If the provider is enabled and
 the file is present, waybar-weather will consider the coordinates in this file as best possible result.
 
+#### Privacy considerations
+Using a static geolocation file is the most privacy-preserving option. No network requests are made to look up your
+coordinates and no location data is shared with any third party (geocoding might still require third-party sharing). 
+The coordinates are read locally from disk and used as-is.
+
 ### GeoIP lookup
-The GeoIP lookup provider uses  [https://reallyfreegeoip.org](https://reallyfreegeoip.org) to look up
+The GeoIP lookup provider uses [https://reallyfreegeoip.org](https://reallyfreegeoip.org) to look up
 your IP and the resulting location based of that IP address. Depending on your ISP, the result might 
 be very inaccurate
+
+#### Privacy considerations
+The GeoIP provider determines your location based on your public IP address by querying an external GeoIP service. This
+requires sending your IP address to [https://reallyfreegeoip.org](https://reallyfreegeoip.org), which may log the 
+request. reallyfreegeoip.org does not publish a privacy statement, therefore user discretion is advised.
 
 ### GeoAPI lookup
 The GeoAPI lookup provider uses the [GeoAPI](https://geoapi.info/) to look up your location. It has 
 shown to be more accurate than the GeoIP lookup provider but will not be as accurate as the ICHNAEA
 provider.
 
+#### Privacy considerations
+The GeoAPI provider queries an external geolocation API to determine your approximate location. Similar to GeoIP, this
+involves network requests to a third-party service and may expose your IP address and request metadata.
+GeoAPI publishes a privacy statement in their terms at: [https://geoapi.info/terms](https://geoapi.info/terms).
+GeoAPI is operated in the USA and therefore may be subject to US data privacy laws.
+
 ### ICHNAEA
 The ICHNAEA location provider uses the Mozilla Location Service protocol to look up your location at
 [beaconDB](https://beacondb.net/). To get your location it will look for WiFi interfaces on your computer
 and scan for local networks in the area. The hardware addresses of these networks will then be transmitted
 to beaconDB. The more WiFi networks waybar-weather is able to identify, the more accurate the results will
-be. For most users, this will be the most accurate location source.
+be. For most users, this will be the most accurate location source. 
+
+#### WiFi scanning
+Please note that for ICHNAEA to work, waybar-weather needs to scan for WiFi networks, which might take up to 30 
+seconds for the first run. Also for the WiFi scanning to work, waybar-weather needs the `CAP_NET_ADMIN` capability. 
+To enable this, you need to run the following command as sudo/root:
+
+```shell
+setcap cap_net_admin+ep /usr/bin/waybar-weather
+```
+
+#### Privacy considerations
+The ICHNAEA provider uses the Mozilla Location Service protocol and relies on nearby WiFi network information to
+determine your location. To do this, waybar-weather scans for local WiFi networks and transmits their hardware (MAC)
+addresses as well as your IP to the beaconDB service. These addresses are used solely to estimate your location and 
+do not include information about the networks you connect to.
+
+beaconDB publishes a very open and transparent privacy statement at: [https://beacondb.net/privacy](https://beacondb.net/privacy).
+The service is operated from Australia, but servers might be located in other countries due to geographic proximity.
 
 ### GPSd
 The GPSd location provider uses the [GPSd](https://gpsd.gitlab.io/gpsd/index.html) daemon to look up your location. If your
 computer has a GPS device connected and GPSd is running, waybar-weather will use the data provided by GPSd to
 look up your location. Since GPS is generally more accurate than WiFi, this provider is usually the most accurate
 location source.
+
+#### Privacy considerations
+The GPSd provider uses location data from a local GPS device via the GPSd daemon. No location data is transmitted over
+the network by waybar-weather itself for the coordinate lookup. If GPSd is properly configured and does not forward 
+data externally. Same as with the geolocation file provider, your coordinates might be sent to a third party during 
+the geocoding process.
 
 ## Geocoding provider
 waybar-weather uses geocoding providers to convert the coordinates of your location into a human readable
@@ -158,6 +226,14 @@ OpenStreetMap Nominatim is the default reverse geocoding provider. It is a free 
 service that provides geocoding results based on OpenStreetMap data. OSM Nominatim uses sensible rate limits 
 and might result in longer response times, which in turn might result delayed display of weather data.
 
+#### Privacy considerations
+When using OpenStreetMap Nominatim as the geocoding provider, waybar-weather sends geographic coordinates to the public
+Nominatim API to resolve them into a human-readable address. This requires making network requests to servers operated
+by the OpenStreetMap community or their hosting providers.
+
+These requests may include your IP address and request metadata, which may be logged by the service. The OSM foundation
+publishes their privacy policy at: [https://osmfoundation.org/wiki/Privacy_Policy](https://osmfoundation.org/wiki/Privacy_Policy)
+
 ### OpenCage
 OpenCage is a commercial geocoding provider based in Germany. They offer a free API key that can be used 
 for up to 2500 requests per day (which should be more than enough for most users). OpenCage offers a dedicated
@@ -170,6 +246,15 @@ To use OpenCage with your waybar-weather installation first [obtain a free API k
 then change the `provider` key in the `geocoding` section of your configuration file to `opencage` and add the 
 `apikey` key with your API key accordingly.
 
+#### Privacy considerations
+When using OpenCage as the geocoding provider, waybar-weather sends geographic coordinates to OpenCage’s API to obtain
+address information. Requests are made over the network and may include your IP address and request metadata.
+
+OpenCage publishes their privacy policy at: [https://opencagedata.com/gdpr](https://opencagedata.com/gdpr) and is
+operated in Germany and therefore has to adhere to european data privacy laws (GDPR). Together with the "no location 
+data logging" feature, which we use by default, OpenCage is currently the most privacy-preserving geocoding provider 
+that waybar-weather supports.
+
 ### Geocode Earth
 Geocode Earth is a commercial geocoding provider based in New York. They offer a free 14-day trial plan that can 
 be used for up to 1000 requests per day (which should also be more than enough for most users). Geocode Earth offers
@@ -180,6 +265,33 @@ your support!
 To use Geocode Earth with your waybar-weather installation first [start a free trial](https://app.geocode.earth/users/sign_up),
 then change the `provider` key in the `geocoding` section of your configuration file to `geocode-earth` and add the
 `apikey` key with your API key accordingly.
+
+#### Privacy considerations
+When using Geocode Earth as the geocoding provider, waybar-weather sends geographic coordinates to Geocode Earth’s API
+to perform reverse geocoding. This involves network requests to servers operated by Geocode Earth and may expose your IP
+address and request metadata to the provider.
+
+Geocode Earth publishes their privacy policy at: [https://geocode.earth/privacy/](https://geocode.earth/privacy/) and
+is operated in the USA and therefore has to adhere to US data privacy laws.
+
+## Weather providers
+With release v0.3.0 waybar-weather introduced a new weather provider architecture, that allows us to easily add
+support for new weather providers. The weather providers are configured in the `weather` section of the configuration
+file.
+
+### Open-Meteo
+Currently, Open-Meteo is the only weather provider that waybar-weather supports out of the box. It is a free 
+and open weather API that provides weather data without the need of an API key. Open-Meteo provides a vast amount
+of data points and is therefore a very good choice for most users. No specific configuration is required for 
+Open-Meteo and the provider will be chosen automatically as default.
+
+#### Privacy considerations
+When using Open-Meteo as the weather provider, waybar-weather sends geographic coordinates to the Open-Meteo API
+to retrieve weather data. Requests are made over the network and may include your IP address and request metadata.
+
+Open-Meteo publishes their privacy policy at: [https://open-meteo.com/en/terms#privacy](https://open-meteo.com/en/terms#privacy). 
+According to their statement, Open-Meteo only collects limited non-personal technical data for operational purposes 
+and does not share request data with third parties.
 
 ## Sleep/suspend and resume detection
 waybar-weather will automatically detect when your computer goes to sleep and resumes from sleep
