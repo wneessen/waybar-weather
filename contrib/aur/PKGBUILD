@@ -53,9 +53,11 @@ package() {
     install -Dm755 "build/${pkgname}" \
         "${pkgdir}/usr/bin/${pkgname}"
 
-    # example config
+    # example files
     install -Dm644 "etc/config.toml" \
         "${pkgdir}/usr/share/${pkgname}/config.toml"
+    install -Dm644 "etc/geolocation" \
+        "${pkgdir}/usr/share/${pkgname}/geolocation"
 
     # documentation
     install -Dm644 "README.md" \

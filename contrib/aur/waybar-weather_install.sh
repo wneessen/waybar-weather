@@ -4,10 +4,10 @@ post_install() {
     echo "The documentation can be found at:"
     echo "    /usr/share/doc/waybar-weather/README.md"
     echo
-    echo "An example configuration has been installed to:"
-    echo "    /usr/share/waybar-weather/config.toml"
-    echo "To use it, copy the file to:"
-    echo "    ~/.config/waybar-weather/config.toml"
+    echo "Example config files are located at:"
+    echo "    /usr/share/waybar-weather/"
+    echo "To use them, copy the desired files to:"
+    echo "    ~/.config/waybar-weather/"
     echo
     echo "The waybar-weather binary requires the 'cap_net_admin' capability."
     echo "This capability has been set automatically."
