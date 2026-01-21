@@ -1,0 +1,67 @@
+# Maintainer: Winni Neessen <wn@neessen.dev>
+
+pkgname=waybar-weather
+pkgver=0.2.6
+pkgrel=1
+pkgdesc='A waybar weather module with automatic geolocation lookup'
+arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
+url='https://github.com/wneessen/waybar-weather'
+license=('MIT')
+options=('!debug')
+makedepends=('go')
+install="${pkgname}_install.sh"
+
+source=(
+    "${url}/archive/refs/tags/v${pkgver}.tar.gz"
+)
+sha256sums=(
+    '400ae7b0d4aaa946d2b5d4c1079806a19c28406ff25698c6a55ca507b45604fb'
+)
+
+prepare() {
+    cd "${pkgname}-${pkgver}"
+    mkdir -p build
+}
+
+build() {
+    cd "${pkgname}-${pkgver}"
+
+    export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-$(stat -c %Y .)}"
+    local _build_date
+    _build_date="$(date -u -d "@${SOURCE_DATE_EPOCH}" +'%Y-%m-%dT%H:%M:%SZ')"
+
+    local _ldflags="
+        -s -w
+        -extldflags '-static'
+        -X main.version=${pkgver}
+        -X main.commit=main-via-aur
+        -X main.date=${_build_date}
+        -X github.com/wneessen/waybar-weather/internal/http.version=${pkgver}
+    "
+
+    go build \
+        -trimpath \
+        -ldflags "${_ldflags}" \
+        -o "build/${pkgname}" \
+        ./cmd/waybar-weather
+}
+
+package() {
+    cd "${pkgname}-${pkgver}"
+
+    # binary
+    install -Dm755 "build/${pkgname}" \
+        "${pkgdir}/usr/bin/${pkgname}"
+
+    # example config
+    install -Dm644 "etc/config.toml" \
+        "${pkgdir}/usr/share/${pkgname}/config.toml"
+
+    # documentation
+    install -Dm644 "README.md" \
+        "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+
+    # license
+    install -Dm644 LICENSE \
+        "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}
