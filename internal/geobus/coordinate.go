@@ -19,6 +19,9 @@ type Coordinate struct {
 	Lat float64
 	Lon float64
 	Acc float64
+
+	CacheHit bool
+	Found    bool
 }
 
 // PosHasSignificantChange checks if the geographic position differs significantly from
