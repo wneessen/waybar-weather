@@ -30,8 +30,8 @@ type Nominatim struct {
 	http *http.Client
 	lang language.Tag
 
-	cacheLock sync.RWMutex
-	cache     map[string]geobus.Coordinate
+	cacheLock   sync.RWMutex
+	searchCache map[string]geobus.Coordinate
 }
 
 type ReverseResult struct {
@@ -135,7 +135,7 @@ func (n *Nominatim) Search(ctx context.Context, address string) (geobus.Coordina
 
 	// Return cached result if available
 	n.cacheLock.RLock()
-	cached, ok := n.cache[address]
+	cached, ok := n.searchCache[address]
 	n.cacheLock.RUnlock()
 	if ok {
 		n.cacheLock.RUnlock()
@@ -157,7 +157,7 @@ func (n *Nominatim) Search(ctx context.Context, address string) (geobus.Coordina
 		Lon: result.Longitude,
 	}
 	n.cacheLock.Lock()
-	n.cache[address] = coords
+	n.searchCache[address] = coords
 	n.cacheLock.Unlock()
 
 	return coords, nil
