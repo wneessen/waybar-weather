@@ -53,6 +53,10 @@ func (c *mockCache) Reverse(_ context.Context, coords geobus.Coordinate) (Addres
 	return addr, nil
 }
 
+func (c *mockCache) Search(_ context.Context, _ string) (geobus.Coordinate, error) {
+	return geobus.Coordinate{}, errors.New("not implemented")
+}
+
 func TestNewCachedGeocoder(t *testing.T) {
 	t.Run("a new geocoder should be returned", func(t *testing.T) {
 		coder := NewCachedGeocoder(&mockCache{}, testHitTTL, testMissTTL)

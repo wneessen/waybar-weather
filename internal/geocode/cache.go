@@ -6,6 +6,7 @@ package geocode
 
 import (
 	"context"
+	"errors"
 	"math"
 	"sync"
 	"time"
@@ -80,6 +81,10 @@ func (c *CachedGeocoder) Reverse(ctx context.Context, coords geobus.Coordinate) 
 	}
 
 	return addr, nil
+}
+
+func (c *CachedGeocoder) Search(_ context.Context, _ string) (geobus.Coordinate, error) {
+	return geobus.Coordinate{}, errors.New("not implemented")
 }
 
 func quantizeCoord(val float64) int32 {
