@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
-	"sync"
 	"time"
 
 	"golang.org/x/text/language"
@@ -29,9 +28,6 @@ const (
 type Nominatim struct {
 	http *http.Client
 	lang language.Tag
-
-	cacheLock   sync.RWMutex
-	searchCache map[string]geobus.Coordinate
 }
 
 type ReverseResult struct {
@@ -66,9 +62,8 @@ type Address struct {
 
 func New(client *http.Client, lang language.Tag) *Nominatim {
 	return &Nominatim{
-		lang:        lang,
-		http:        client,
-		searchCache: make(map[string]geobus.Coordinate),
+		lang: lang,
+		http: client,
 	}
 }
 
@@ -126,15 +121,6 @@ func (n *Nominatim) Search(ctx context.Context, address string) (geobus.Coordina
 	var result []SearchResult
 	var err error
 
-	// Return cached result if available
-	n.cacheLock.RLock()
-	cached, ok := n.searchCache[address]
-	n.cacheLock.RUnlock()
-	if ok {
-		n.cacheLock.RUnlock()
-		return cached, nil
-	}
-
 	query := url.Values{}
 	query.Set("format", "jsonv2")
 	query.Set("q", fmt.Sprintf("%s", address))
@@ -157,9 +143,6 @@ func (n *Nominatim) Search(ctx context.Context, address string) (geobus.Coordina
 	if err != nil {
 		return coords, fmt.Errorf("failed to parse longitude from Nominatim API response: %w", err)
 	}
-	n.cacheLock.Lock()
-	n.searchCache[address] = coords
-	n.cacheLock.Unlock()
 
 	return coords, nil
 }
