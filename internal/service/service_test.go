@@ -889,6 +889,10 @@ func (m *mockGeocoder) Reverse(_ context.Context, coords geobus.Coordinate) (geo
 	}, nil
 }
 
+func (c *mockGeocoder) Search(_ context.Context, _ string) (geobus.Coordinate, error) {
+	return geobus.Coordinate{}, errors.New("not implemented")
+}
+
 func (w *weatherProv) Name() string {
 	return "mock weather provider"
 }
