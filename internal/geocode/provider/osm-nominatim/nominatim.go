@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	"golang.org/x/text/language"
@@ -19,22 +20,40 @@ import (
 )
 
 const (
-	APIEndpoint = "https://nominatim.openstreetmap.org/reverse"
-	APITimeout  = time.Second * 10
-	name        = "osm-nominatim"
+	APISearchEndpoint  = "https://nominatim.openstreetmap.org/search"
+	APIReverseEndpoint = "https://nominatim.openstreetmap.org/reverse"
+	APITimeout         = time.Second * 10
+	name               = "osm-nominatim"
 )
 
 type Nominatim struct {
 	http *http.Client
 	lang language.Tag
+
+	cacheLock sync.RWMutex
+	cache     map[string]geobus.Coordinate
 }
 
-type Result struct {
+type ReverseResult struct {
 	APILat      string  `json:"lat"`
 	APILon      string  `json:"lon"`
 	Name        string  `json:"name"`
 	DisplayName string  `json:"display_name"`
 	Address     Address `json:"address"`
+}
+
+type SearchResult struct {
+	PlaceID     int     `json:"place_id"`
+	OSMType     string  `json:"osm_type"`
+	OSMID       int     `json:"osm_id"`
+	Latitude    float64 `json:"lat"`
+	Longitude   float64 `json:"lon"`
+	Category    string  `json:"category"`
+	Type        string  `json:"type"`
+	PlaceRank   int     `json:"place_rank"`
+	Importance  float64 `json:"importance"`
+	Addresstype string  `json:"addresstype"`
+	DisplayName string  `json:"display_name"`
 }
 
 type Address struct {
@@ -65,7 +84,7 @@ func (n *Nominatim) Name() string {
 }
 
 func (n *Nominatim) Reverse(ctx context.Context, coords geobus.Coordinate) (geocode.Address, error) {
-	var result Result
+	var result ReverseResult
 	var err error
 
 	query := url.Values{}
@@ -74,8 +93,8 @@ func (n *Nominatim) Reverse(ctx context.Context, coords geobus.Coordinate) (geoc
 	query.Set("lon", fmt.Sprintf("%f", coords.Lon))
 	query.Set("accept-language", n.lang.String())
 
-	if _, err = n.http.GetWithTimeout(ctx, APIEndpoint, &result, query, nil, APITimeout); err != nil {
-		return geocode.Address{}, fmt.Errorf("failed to address details from Nominatim API: %w", err)
+	if _, err = n.http.GetWithTimeout(ctx, APIReverseEndpoint, &result, query, nil, APITimeout); err != nil {
+		return geocode.Address{}, fmt.Errorf("failed to fetch reverse address details from Nominatim API: %w", err)
 	}
 
 	// Fill the geocode.Address struct
@@ -108,4 +127,38 @@ func (n *Nominatim) Reverse(ctx context.Context, coords geobus.Coordinate) (geoc
 	}
 
 	return address, nil
+}
+
+func (n *Nominatim) Search(ctx context.Context, address string) (geobus.Coordinate, error) {
+	var result SearchResult
+	var err error
+
+	// Return cached result if available
+	n.cacheLock.RLock()
+	cached, ok := n.cache[address]
+	n.cacheLock.RUnlock()
+	if ok {
+		n.cacheLock.RUnlock()
+		return cached, nil
+	}
+
+	query := url.Values{}
+	query.Set("format", "jsonv2")
+	query.Set("q", fmt.Sprintf("%s", address))
+	query.Set("accept-language", n.lang.String())
+
+	if _, err = n.http.GetWithTimeout(ctx, APISearchEndpoint, &result, query, nil, APITimeout); err != nil {
+		return geobus.Coordinate{}, fmt.Errorf("failed to fetch address details from Nominatim API: %w", err)
+	}
+
+	// Fill the geobus.Coordinate struct
+	coords := geobus.Coordinate{
+		Lat: result.Latitude,
+		Lon: result.Longitude,
+	}
+	n.cacheLock.Lock()
+	n.cache[address] = coords
+	n.cacheLock.Unlock()
+
+	return coords, nil
 }
