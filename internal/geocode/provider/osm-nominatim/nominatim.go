@@ -43,17 +43,9 @@ type ReverseResult struct {
 }
 
 type SearchResult struct {
-	PlaceID     int     `json:"place_id"`
-	OSMType     string  `json:"osm_type"`
-	OSMID       int     `json:"osm_id"`
-	Latitude    float64 `json:"lat"`
-	Longitude   float64 `json:"lon"`
-	Category    string  `json:"category"`
-	Type        string  `json:"type"`
-	PlaceRank   int     `json:"place_rank"`
-	Importance  float64 `json:"importance"`
-	Addresstype string  `json:"addresstype"`
-	DisplayName string  `json:"display_name"`
+	APILat      string `json:"lat"`
+	APILon      string `json:"lon"`
+	DisplayName string `json:"display_name"`
 }
 
 type Address struct {
@@ -74,8 +66,9 @@ type Address struct {
 
 func New(client *http.Client, lang language.Tag) *Nominatim {
 	return &Nominatim{
-		lang: lang,
-		http: client,
+		lang:        lang,
+		http:        client,
+		searchCache: make(map[string]geobus.Coordinate),
 	}
 }
 
@@ -130,7 +123,7 @@ func (n *Nominatim) Reverse(ctx context.Context, coords geobus.Coordinate) (geoc
 }
 
 func (n *Nominatim) Search(ctx context.Context, address string) (geobus.Coordinate, error) {
-	var result SearchResult
+	var result []SearchResult
 	var err error
 
 	// Return cached result if available
@@ -152,9 +145,17 @@ func (n *Nominatim) Search(ctx context.Context, address string) (geobus.Coordina
 	}
 
 	// Fill the geobus.Coordinate struct
-	coords := geobus.Coordinate{
-		Lat: result.Latitude,
-		Lon: result.Longitude,
+	if len(result) < 1 {
+		return geobus.Coordinate{}, fmt.Errorf("no coordinates found for address %q", address)
+	}
+	var coords geobus.Coordinate
+	coords.Lat, err = strconv.ParseFloat(result[0].APILat, 64)
+	if err != nil {
+		return coords, fmt.Errorf("failed to parse latitude from Nominatim API response: %w", err)
+	}
+	coords.Lon, err = strconv.ParseFloat(result[0].APILon, 64)
+	if err != nil {
+		return coords, fmt.Errorf("failed to parse longitude from Nominatim API response: %w", err)
 	}
 	n.cacheLock.Lock()
 	n.searchCache[address] = coords

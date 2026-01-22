@@ -245,6 +245,18 @@ func TestNominatim_Reverse_integration(t *testing.T) {
 			t.Errorf("expected address to be %q, got %q", want, addr.DisplayName)
 		}
 	})
+	t.Run("geocoding forward-search succeeds", func(t *testing.T) {
+		coder := testCoder(t)
+		addr := "A.T. Kearney, 57, Charlottenstraße, Friedrichstadt, Mitte, Berlin, 10117, Germany"
+		coords, err := coder.Search(t.Context(), addr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := geobus.Coordinate{Lat: 52.5128745, Lon: 13.3911058}
+		if coords.Lat != want.Lat || coords.Lon != want.Lon {
+			t.Errorf("expected coordinates to be %v, got %v", want, coords)
+		}
+	})
 }
 
 func testCoder(_ *testing.T) geocode.Geocoder {
