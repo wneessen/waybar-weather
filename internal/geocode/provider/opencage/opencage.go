@@ -124,3 +124,7 @@ func (o *OpenCage) Reverse(ctx context.Context, coords geobus.Coordinate) (geoco
 
 	return address, nil
 }
+
+func (o *OpenCage) Search(ctx context.Context, address string) (geobus.Coordinate, error) {
+	return geobus.Coordinate{}, fmt.Errorf("not implemented")
+}

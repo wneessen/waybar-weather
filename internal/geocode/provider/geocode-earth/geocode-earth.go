@@ -63,20 +63,20 @@ func New(client *http.Client, lang language.Tag, apikey string) *GeocodeEarth {
 	}
 }
 
-func (o *GeocodeEarth) Name() string {
+func (g *GeocodeEarth) Name() string {
 	return name
 }
 
-func (o *GeocodeEarth) Reverse(ctx context.Context, coords geobus.Coordinate) (geocode.Address, error) {
+func (g *GeocodeEarth) Reverse(ctx context.Context, coords geobus.Coordinate) (geocode.Address, error) {
 	var response Response
 
 	query := url.Values{}
-	query.Set("api_key", o.apikey)
+	query.Set("api_key", g.apikey)
 	query.Set("point.lat", fmt.Sprintf("%f", coords.Lat))
 	query.Set("point.lon", fmt.Sprintf("%f", coords.Lon))
-	query.Set("lang", o.lang.String())
+	query.Set("lang", g.lang.String())
 
-	code, err := o.http.GetWithTimeout(ctx, APIEndpoint, &response, query, nil, APITimeout)
+	code, err := g.http.GetWithTimeout(ctx, APIEndpoint, &response, query, nil, APITimeout)
 	if err != nil {
 		return geocode.Address{}, fmt.Errorf("failed to retrieve address details from geocode.earth API: %w", err)
 	}
@@ -105,4 +105,8 @@ func (o *GeocodeEarth) Reverse(ctx context.Context, coords geobus.Coordinate) (g
 	}
 
 	return address, nil
+}
+
+func (g *GeocodeEarth) Search(ctx context.Context, address string) (geobus.Coordinate, error) {
+	return geobus.Coordinate{}, fmt.Errorf("not implemented")
 }
