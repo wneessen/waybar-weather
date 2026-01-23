@@ -53,8 +53,15 @@ func (c *mockCache) Reverse(_ context.Context, coords geobus.Coordinate) (Addres
 	return addr, nil
 }
 
-func (c *mockCache) Search(_ context.Context, _ string) (geobus.Coordinate, error) {
-	return geobus.Coordinate{}, errors.New("not implemented")
+func (c *mockCache) Search(_ context.Context, address string) (geobus.Coordinate, error) {
+	coords := testCoords
+	if strings.Contains(address, "10117") {
+		coords.Found = true
+	}
+	if address == "invalid" {
+		return geobus.Coordinate{}, errors.New("lookup intentionally failed")
+	}
+	return coords, nil
 }
 
 func TestNewCachedGeocoder(t *testing.T) {
@@ -143,7 +150,7 @@ func TestCachedGeocoder_Reverse(t *testing.T) {
 			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
 		}
 	})
-	t.Run("fetching an unknow address causes a cache miss", func(t *testing.T) {
+	t.Run("fetching an unknown address causes a cache miss", func(t *testing.T) {
 		addr, err := coder.Reverse(t.Context(), geobus.Coordinate{Lat: 2, Lon: -2})
 		if err != nil {
 			t.Fatal(err)
@@ -155,7 +162,7 @@ func TestCachedGeocoder_Reverse(t *testing.T) {
 			t.Error("expected cache miss")
 		}
 	})
-	t.Run("fetching failes during lookup should return an error", func(t *testing.T) {
+	t.Run("fetching fails during lookup should return an error", func(t *testing.T) {
 		_, err := coder.Reverse(t.Context(), geobus.Coordinate{Lat: 1, Lon: -1})
 		if err == nil {
 			t.Fatal("expected an error")
@@ -199,6 +206,124 @@ func TestCachedGeocoder_Reverse(t *testing.T) {
 		}
 		if !strings.EqualFold(addr.DisplayName, testAddress.DisplayName) {
 			t.Errorf("expected address to be %q, got %q", testAddress.DisplayName, addr.DisplayName)
+		}
+	})
+}
+
+func TestCachedGeocoder_Search(t *testing.T) {
+	coder := NewCachedGeocoder(&mockCache{}, testHitTTL, testMissTTL)
+	t.Run("cached coordinates should be returned", func(t *testing.T) {
+		coords, err := coder.Search(t.Context(), "10117 Berlin")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !coords.Found {
+			t.Fatal("expected coordinates to be found")
+		}
+		if coords.CacheHit {
+			t.Fatal("expected cache miss")
+		}
+		if coords.Lat != testCoords.Lat {
+			t.Errorf("expected latitude to be %f, got %f", testCoords.Lat, coords.Lat)
+		}
+		if coords.Lon != testCoords.Lon {
+			t.Errorf("expected longitude to be %f, got %f", testCoords.Lon, coords.Lon)
+		}
+	})
+	t.Run("fetching results twice should hit the cache", func(t *testing.T) {
+		got := "10117 Berlin"
+		coords, err := coder.Search(t.Context(), got)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if coords.Lat != testCoords.Lat {
+			t.Errorf("expected latitude to be %f, got %f", testCoords.Lat, coords.Lat)
+		}
+		if coords.Lon != testCoords.Lon {
+			t.Errorf("expected longitude to be %f, got %f", testCoords.Lon, coords.Lon)
+		}
+		coords, err = coder.Search(t.Context(), got)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !coords.CacheHit {
+			t.Error("expected cached result")
+		}
+		if coords.Lat != testCoords.Lat {
+			t.Errorf("expected latitude to be %f, got %f", testCoords.Lat, coords.Lat)
+		}
+		if coords.Lon != testCoords.Lon {
+			t.Errorf("expected longitude to be %f, got %f", testCoords.Lon, coords.Lon)
+		}
+	})
+	t.Run("fetching an unknown address causes a cache miss", func(t *testing.T) {
+		coords, err := coder.Search(t.Context(), "unknown")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if coords.Found {
+			t.Fatal("expected address to be not found")
+		}
+		if coords.CacheHit {
+			t.Error("expected cache miss")
+		}
+	})
+	t.Run("fetching fails during lookup should return an error", func(t *testing.T) {
+		_, err := coder.Search(t.Context(), "invalid")
+		if err == nil {
+			t.Fatal("expected an error")
+		}
+	})
+	t.Run("cache should not trigger on expired TTL", func(t *testing.T) {
+		coords, err := coder.Search(t.Context(), testAddress.DisplayName)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if coords.Lat != testCoords.Lat {
+			t.Errorf("expected latitude to be %f, got %f", testCoords.Lat, coords.Lat)
+		}
+		if coords.Lon != testCoords.Lon {
+			t.Errorf("expected longitude to be %f, got %f", testCoords.Lon, coords.Lon)
+		}
+		time.Sleep(testHitTTL * 2)
+		coords, err = coder.Search(t.Context(), testAddress.DisplayName)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if coords.CacheHit {
+			t.Error("expected cache miss")
+		}
+		if coords.Lat != testCoords.Lat {
+			t.Errorf("expected latitude to be %f, got %f", testCoords.Lat, coords.Lat)
+		}
+		if coords.Lon != testCoords.Lon {
+			t.Errorf("expected longitude to be %f, got %f", testCoords.Lon, coords.Lon)
+		}
+	})
+	t.Run("cache should hit on non-expired TTL", func(t *testing.T) {
+		coords, err := coder.Search(t.Context(), testAddress.DisplayName)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if coords.Lat != testCoords.Lat {
+			t.Errorf("expected latitude to be %f, got %f", testCoords.Lat, coords.Lat)
+		}
+		if coords.Lon != testCoords.Lon {
+			t.Errorf("expected longitude to be %f, got %f", testCoords.Lon, coords.Lon)
+		}
+		time.Sleep(testHitTTL - 5*time.Millisecond)
+		coords, err = coder.Search(t.Context(), testAddress.DisplayName)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !coords.CacheHit {
+			t.Error("expected cache hit")
+		}
+		if coords.Lat != testCoords.Lat {
+			t.Errorf("expected latitude to be %f, got %f", testCoords.Lat, coords.Lat)
+		}
+		if coords.Lon != testCoords.Lon {
+			t.Errorf("expected longitude to be %f, got %f", testCoords.Lon, coords.Lon)
 		}
 	})
 }

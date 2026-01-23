@@ -48,6 +48,7 @@ func NewCachedGeocoder(coder Geocoder, ttlHit, ttlMiss time.Duration) *CachedGeo
 		ttlHit:       ttlHit,
 		ttlMiss:      ttlMiss,
 		reverseCache: make(map[reverseKey]reverseCacheEntry),
+		searchCache:  make(map[string]searchCacheEntry),
 	}
 }
 
