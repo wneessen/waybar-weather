@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	APISearchEndpoint  = "https://nominatim.openstreetmap.org/search"
-	APIReverseEndpoint = "https://nominatim.openstreetmap.org/reverse"
+	searchAPIEndpoint  = "https://nominatim.openstreetmap.org/search"
+	reverseAPIEndpoint = "https://nominatim.openstreetmap.org/reverse"
 	APITimeout         = time.Second * 10
 	name               = "osm-nominatim"
 )
@@ -81,7 +81,7 @@ func (n *Nominatim) Reverse(ctx context.Context, coords geobus.Coordinate) (geoc
 	query.Set("lon", fmt.Sprintf("%f", coords.Lon))
 	query.Set("accept-language", n.lang.String())
 
-	if _, err = n.http.GetWithTimeout(ctx, APIReverseEndpoint, &result, query, nil, APITimeout); err != nil {
+	if _, err = n.http.GetWithTimeout(ctx, reverseAPIEndpoint, &result, query, nil, APITimeout); err != nil {
 		return geocode.Address{}, fmt.Errorf("failed to fetch reverse address details from Nominatim API: %w", err)
 	}
 
@@ -126,7 +126,7 @@ func (n *Nominatim) Search(ctx context.Context, address string) (geobus.Coordina
 	query.Set("q", fmt.Sprintf("%s", address))
 	query.Set("accept-language", n.lang.String())
 
-	if _, err = n.http.GetWithTimeout(ctx, APISearchEndpoint, &result, query, nil, APITimeout); err != nil {
+	if _, err = n.http.GetWithTimeout(ctx, searchAPIEndpoint, &result, query, nil, APITimeout); err != nil {
 		return geobus.Coordinate{}, fmt.Errorf("failed to fetch address details from Nominatim API: %w", err)
 	}
 
