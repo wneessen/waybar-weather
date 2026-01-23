@@ -23,12 +23,16 @@ import (
 )
 
 const (
-	cityExpected      = "Quartier 205, 67, Friedrichstrasse, Friedrichstadt, Mitte, Berlin, 10117, Germany"
-	cityFile          = "../../../../testdata/nominatim_berlin.json"
-	cityFileBrokenLat = "../../../../testdata/nominatim_berlin_brokenlat.json"
-	cityFileBrokenLon = "../../../../testdata/nominatim_berlin_brokenlon.json"
-	testHitTTL        = 1 * time.Second
-	testMissTTL       = 1 * time.Second
+	cityExpected             = "Quartier 205, 67, Friedrichstrasse, Friedrichstadt, Mitte, Berlin, 10117, Germany"
+	cityFile                 = "../../../../testdata/nominatim_berlin.json"
+	cityFileForward          = "../../../../testdata/nominatim_berlin_forward.json"
+	emptyArray               = "../../../../testdata/empty_array.json"
+	cityFileBrokenLat        = "../../../../testdata/nominatim_berlin_brokenlat.json"
+	cityFileBrokenLon        = "../../../../testdata/nominatim_berlin_brokenlon.json"
+	cityFileForwardBrokenLat = "../../../../testdata/nominatim_berlin_forward_brokenlat.json"
+	cityFileForwardBrokenLon = "../../../../testdata/nominatim_berlin_forward_brokenlon.json"
+	testHitTTL               = 1 * time.Second
+	testMissTTL              = 1 * time.Second
 
 	villageExpected = "Marshfield"
 	villageFile     = "../../../../testdata/nominatim_marshfield.json"
@@ -38,9 +42,10 @@ const (
 )
 
 var (
-	cityCoords    = geobus.Coordinate{Lat: 52.5129, Lon: 13.3910}
-	villageCoords = geobus.Coordinate{Lat: 51.46292, Lon: -2.31850}
-	townCoords    = geobus.Coordinate{Lat: 53.90712, Lon: -1.69404}
+	cityCoords        = geobus.Coordinate{Lat: 52.5129, Lon: 13.3910}
+	cityCoordsForward = geobus.Coordinate{Lat: 52.5126051, Lon: 13.3898616}
+	villageCoords     = geobus.Coordinate{Lat: 51.46292, Lon: -2.31850}
+	townCoords        = geobus.Coordinate{Lat: 53.90712, Lon: -1.69404}
 )
 
 func TestNew(t *testing.T) {
@@ -220,6 +225,115 @@ func TestNominatim_Reverse(t *testing.T) {
 
 		coder := testCoderWithRoundtripFunc(t, rtFn)
 		_, err := coder.Reverse(t.Context(), villageCoords)
+		if err == nil {
+			t.Fatal("expected API request to fail")
+		}
+		if !strings.Contains(err.Error(), "failed to parse longitude") {
+			t.Errorf("expected error to contain 'failed to parse longitude', got %s", err)
+		}
+	})
+}
+
+func TestNominatim_Search(t *testing.T) {
+	t.Run("forward geocoding succeeds", func(t *testing.T) {
+		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			data, err := os.Open(cityFileForward)
+			if err != nil {
+				t.Fatalf("failed to open JSON response file: %s", err)
+			}
+
+			return &stdhttp.Response{
+				StatusCode: 200,
+				Body:       data,
+				Header:     make(stdhttp.Header),
+			}, nil
+		}
+
+		coder := testCoderWithRoundtripFunc(t, rtFn)
+		coords, err := coder.Search(t.Context(), cityExpected)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !coords.Found {
+			t.Fatal("expected address to be found")
+		}
+		if coords.Lat != cityCoordsForward.Lat {
+			t.Errorf("expected latitude to be %f, got %f", cityCoordsForward.Lat, coords.Lat)
+		}
+		if coords.Lon != cityCoordsForward.Lon {
+			t.Errorf("expected longitude to be %f, got %f", cityCoordsForward.Lon, coords.Lon)
+		}
+	})
+	t.Run("forward geocoding fails", func(t *testing.T) {
+		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			return nil, errors.New("intentionally failing")
+		}
+
+		coder := testCoderWithRoundtripFunc(t, rtFn)
+		_, err := coder.Search(t.Context(), cityExpected)
+		if err == nil {
+			t.Fatal("expected API request to fail")
+		}
+	})
+	t.Run("forward geocoding fails on empty array response", func(t *testing.T) {
+		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			data, err := os.Open(emptyArray)
+			if err != nil {
+				t.Fatalf("failed to open JSON response file: %s", err)
+			}
+
+			return &stdhttp.Response{
+				StatusCode: 200,
+				Body:       data,
+				Header:     make(stdhttp.Header),
+			}, nil
+		}
+
+		coder := testCoderWithRoundtripFunc(t, rtFn)
+		_, err := coder.Search(t.Context(), cityExpected)
+		if err == nil {
+			t.Fatal("expected API request to fail")
+		}
+	})
+	t.Run("forward geocoding fails on NaN latitude response", func(t *testing.T) {
+		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			data, err := os.Open(cityFileForwardBrokenLat)
+			if err != nil {
+				t.Fatalf("failed to open JSON response file: %s", err)
+			}
+
+			return &stdhttp.Response{
+				StatusCode: 200,
+				Body:       data,
+				Header:     make(stdhttp.Header),
+			}, nil
+		}
+
+		coder := testCoderWithRoundtripFunc(t, rtFn)
+		_, err := coder.Search(t.Context(), cityExpected)
+		if err == nil {
+			t.Fatal("expected API request to fail")
+		}
+		if !strings.Contains(err.Error(), "failed to parse latitude") {
+			t.Errorf("expected error to contain 'failed to parse latitude', got %s", err)
+		}
+	})
+	t.Run("forward geocoding fails on NaN longitue response", func(t *testing.T) {
+		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			data, err := os.Open(cityFileForwardBrokenLon)
+			if err != nil {
+				t.Fatalf("failed to open JSON response file: %s", err)
+			}
+
+			return &stdhttp.Response{
+				StatusCode: 200,
+				Body:       data,
+				Header:     make(stdhttp.Header),
+			}, nil
+		}
+
+		coder := testCoderWithRoundtripFunc(t, rtFn)
+		_, err := coder.Search(t.Context(), cityExpected)
 		if err == nil {
 			t.Fatal("expected API request to fail")
 		}
