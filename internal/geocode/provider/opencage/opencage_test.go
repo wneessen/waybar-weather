@@ -354,7 +354,7 @@ func TestOpenCage_Search(t *testing.T) {
 	})
 }
 
-func TestOpenCage_Reverse_integration(t *testing.T) {
+func TestOpenCage_integration(t *testing.T) {
 	testhelper.PerformIntegrationTests(t)
 	t.Run("reverse geocoding succeeds", func(t *testing.T) {
 		coder := testCoder(t)

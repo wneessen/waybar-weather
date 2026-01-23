@@ -343,7 +343,7 @@ func TestNominatim_Search(t *testing.T) {
 	})
 }
 
-func TestNominatim_Reverse_integration(t *testing.T) {
+func TestNominatim_integration(t *testing.T) {
 	testhelper.PerformIntegrationTests(t)
 	t.Run("reverse geocoding succeeds", func(t *testing.T) {
 		coder := testCoder(t)
