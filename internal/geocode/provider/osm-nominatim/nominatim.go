@@ -143,6 +143,7 @@ func (n *Nominatim) Search(ctx context.Context, address string) (geobus.Coordina
 	if err != nil {
 		return coords, fmt.Errorf("failed to parse longitude from Nominatim API response: %w", err)
 	}
+	coords.Found = true
 
 	return coords, nil
 }
