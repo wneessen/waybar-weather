@@ -119,6 +119,10 @@ func (p *CitynameFileProvider) readFile() (coords geobus.Coordinate, err error) 
 	}
 	lines := strings.Split(string(data), "\n")
 	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "#") {
 			continue
@@ -126,7 +130,7 @@ func (p *CitynameFileProvider) readFile() (coords geobus.Coordinate, err error) 
 
 		coords, err = p.coder.Search(context.Background(), line)
 		if err != nil {
-			continue
+			return coords, fmt.Errorf("failed to look up city %q: %w", line, err)
 		}
 		return coords, nil
 	}
