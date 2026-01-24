@@ -118,6 +118,7 @@ jobs:
         env:
           PERFORM_INTEGRATION_TEST: ${{ vars.PERFORM_INTEGRATION_TEST }}
           OPENCAGE_APIKEY: ${{ secrets.OPENCAGE_APIKEY }}
+          GEOCODEEARTH_APIKEY: ${{ secrets.GEOCODEEARTH_APIKEY }}
         concurrency:
             group: ci-codecov-${{ matrix.os }}-${{ matrix.go }}
             cancel-in-progress: true
