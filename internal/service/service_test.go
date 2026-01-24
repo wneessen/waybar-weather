@@ -207,6 +207,7 @@ func TestService_Run(t *testing.T) {
 			serv.config.GeoLocation.DisableGeoIP = true
 			serv.config.GeoLocation.DisableGPSD = true
 			serv.config.GeoLocation.DisableGeolocationFile = true
+			serv.config.GeoLocation.DisableCitynameFile = true
 			serv.config.GeoLocation.DisableICHNAEA = true
 			err = serv.Run(t.Context())
 			if err == nil {
@@ -545,6 +546,7 @@ func TestService_selectProvider(t *testing.T) {
 				c.GeoLocation.DisableGeoAPI = false
 				c.GeoLocation.DisableGeoIP = false
 				c.GeoLocation.DisableGeolocationFile = false
+				c.GeoLocation.DisableCitynameFile = false
 				c.GeoLocation.DisableGPSD = false
 				c.GeoLocation.DisableICHNAEA = false
 			},
@@ -556,6 +558,7 @@ func TestService_selectProvider(t *testing.T) {
 				c.GeoLocation.DisableGeoAPI = false
 				c.GeoLocation.DisableGeoIP = true
 				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableCitynameFile = true
 				c.GeoLocation.DisableGPSD = true
 				c.GeoLocation.DisableICHNAEA = true
 			},
@@ -567,6 +570,7 @@ func TestService_selectProvider(t *testing.T) {
 				c.GeoLocation.DisableGeoAPI = true
 				c.GeoLocation.DisableGeoIP = false
 				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableCitynameFile = true
 				c.GeoLocation.DisableGPSD = true
 				c.GeoLocation.DisableICHNAEA = true
 			},
@@ -578,6 +582,19 @@ func TestService_selectProvider(t *testing.T) {
 				c.GeoLocation.DisableGeoAPI = true
 				c.GeoLocation.DisableGeoIP = true
 				c.GeoLocation.DisableGeolocationFile = false
+				c.GeoLocation.DisableCitynameFile = true
+				c.GeoLocation.DisableGPSD = true
+				c.GeoLocation.DisableICHNAEA = true
+			},
+			shouldFail: false,
+		},
+		{
+			name: "only cityname file",
+			confFn: func(c *config.Config) {
+				c.GeoLocation.DisableGeoAPI = true
+				c.GeoLocation.DisableGeoIP = true
+				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableCitynameFile = false
 				c.GeoLocation.DisableGPSD = true
 				c.GeoLocation.DisableICHNAEA = true
 			},
@@ -589,6 +606,7 @@ func TestService_selectProvider(t *testing.T) {
 				c.GeoLocation.DisableGeoAPI = true
 				c.GeoLocation.DisableGeoIP = true
 				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableCitynameFile = true
 				c.GeoLocation.DisableGPSD = false
 				c.GeoLocation.DisableICHNAEA = true
 			},
@@ -600,6 +618,7 @@ func TestService_selectProvider(t *testing.T) {
 				c.GeoLocation.DisableGeoAPI = true
 				c.GeoLocation.DisableGeoIP = true
 				c.GeoLocation.DisableGeolocationFile = true
+				c.GeoLocation.DisableCitynameFile = true
 				c.GeoLocation.DisableGPSD = true
 				c.GeoLocation.DisableICHNAEA = true
 			},
@@ -614,6 +633,7 @@ func TestService_selectProvider(t *testing.T) {
 				t.Fatalf("failed to create service: %s", err)
 			}
 			tc.confFn(serv.config)
+			serv.geocoder = new(mockGeocoder)
 
 			_, err = serv.selectGeobusProviders()
 			if !tc.shouldFail && err != nil {
@@ -887,6 +907,10 @@ func (m *mockGeocoder) Reverse(_ context.Context, coords geobus.Coordinate) (geo
 		Longitude:    coords.Lon,
 		DisplayName:  fmt.Sprintf("Test Location %.6f,%.6f", coords.Lat, coords.Lon),
 	}, nil
+}
+
+func (c *mockGeocoder) Search(_ context.Context, _ string) (geobus.Coordinate, error) {
+	return geobus.Coordinate{}, errors.New("not implemented")
 }
 
 func (w *weatherProv) Name() string {

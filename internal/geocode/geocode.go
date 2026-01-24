@@ -32,4 +32,5 @@ type Address struct {
 type Geocoder interface {
 	Name() string
 	Reverse(context.Context, geobus.Coordinate) (Address, error)
+	Search(context.Context, string) (geobus.Coordinate, error)
 }

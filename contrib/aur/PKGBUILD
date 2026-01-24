@@ -58,6 +58,8 @@ package() {
         "${pkgdir}/usr/share/${pkgname}/config.toml"
     install -Dm644 "etc/geolocation" \
         "${pkgdir}/usr/share/${pkgname}/geolocation"
+    install -Dm644 "etc/cityname" \
+        "${pkgdir}/usr/share/${pkgname}/cityname"
 
     # documentation
     install -Dm644 "README.md" \

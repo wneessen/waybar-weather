@@ -19,9 +19,10 @@ import (
 )
 
 const (
-	APIEndpoint = "https://nominatim.openstreetmap.org/reverse"
-	APITimeout  = time.Second * 10
-	name        = "osm-nominatim"
+	searchAPIEndpoint  = "https://nominatim.openstreetmap.org/search"
+	reverseAPIEndpoint = "https://nominatim.openstreetmap.org/reverse"
+	APITimeout         = time.Second * 10
+	name               = "osm-nominatim"
 )
 
 type Nominatim struct {
@@ -29,12 +30,18 @@ type Nominatim struct {
 	lang language.Tag
 }
 
-type Result struct {
+type ReverseResult struct {
 	APILat      string  `json:"lat"`
 	APILon      string  `json:"lon"`
 	Name        string  `json:"name"`
 	DisplayName string  `json:"display_name"`
 	Address     Address `json:"address"`
+}
+
+type SearchResult struct {
+	APILat      string `json:"lat"`
+	APILon      string `json:"lon"`
+	DisplayName string `json:"display_name"`
 }
 
 type Address struct {
@@ -65,7 +72,7 @@ func (n *Nominatim) Name() string {
 }
 
 func (n *Nominatim) Reverse(ctx context.Context, coords geobus.Coordinate) (geocode.Address, error) {
-	var result Result
+	var result ReverseResult
 	var err error
 
 	query := url.Values{}
@@ -74,8 +81,8 @@ func (n *Nominatim) Reverse(ctx context.Context, coords geobus.Coordinate) (geoc
 	query.Set("lon", fmt.Sprintf("%f", coords.Lon))
 	query.Set("accept-language", n.lang.String())
 
-	if _, err = n.http.GetWithTimeout(ctx, APIEndpoint, &result, query, nil, APITimeout); err != nil {
-		return geocode.Address{}, fmt.Errorf("failed to address details from Nominatim API: %w", err)
+	if _, err = n.http.GetWithTimeout(ctx, reverseAPIEndpoint, &result, query, nil, APITimeout); err != nil {
+		return geocode.Address{}, fmt.Errorf("failed to fetch reverse address details from Nominatim API: %w", err)
 	}
 
 	// Fill the geocode.Address struct
@@ -108,4 +115,35 @@ func (n *Nominatim) Reverse(ctx context.Context, coords geobus.Coordinate) (geoc
 	}
 
 	return address, nil
+}
+
+func (n *Nominatim) Search(ctx context.Context, address string) (geobus.Coordinate, error) {
+	var result []SearchResult
+	var err error
+
+	query := url.Values{}
+	query.Set("format", "jsonv2")
+	query.Set("q", address)
+	query.Set("accept-language", n.lang.String())
+
+	if _, err = n.http.GetWithTimeout(ctx, searchAPIEndpoint, &result, query, nil, APITimeout); err != nil {
+		return geobus.Coordinate{}, fmt.Errorf("failed to fetch address details from Nominatim API: %w", err)
+	}
+
+	// Fill the geobus.Coordinate struct
+	if len(result) < 1 {
+		return geobus.Coordinate{}, fmt.Errorf("no coordinates found for address %q", address)
+	}
+	var coords geobus.Coordinate
+	coords.Lat, err = strconv.ParseFloat(result[0].APILat, 64)
+	if err != nil {
+		return coords, fmt.Errorf("failed to parse latitude from Nominatim API response: %w", err)
+	}
+	coords.Lon, err = strconv.ParseFloat(result[0].APILon, 64)
+	if err != nil {
+		return coords, fmt.Errorf("failed to parse longitude from Nominatim API response: %w", err)
+	}
+	coords.Found = true
+
+	return coords, nil
 }

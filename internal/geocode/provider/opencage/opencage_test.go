@@ -26,10 +26,12 @@ import (
 )
 
 const (
-	cityExpected = "Quartier 205, Friedrichstrasse 67, 10117 Berlin, Germany"
-	cityFile     = "../../../../testdata/opencage_berlin.json"
-	testHitTTL   = 1 * time.Second
-	testMissTTL  = 1 * time.Second
+	cityExpected    = "Quartier 205, Friedrichstrasse 67, 10117 Berlin, Germany"
+	cityFile        = "../../../../testdata/opencage_berlin.json"
+	cityForwardFile = "../../../../testdata/opencage_berlin_forward.json"
+	emptyArray      = "../../../../testdata/empty_array.json"
+	testHitTTL      = 1 * time.Second
+	testMissTTL     = 1 * time.Second
 
 	villageExpected = "Marshfield"
 	villageFile     = "../../../../testdata/opencage_marshfield.json"
@@ -40,6 +42,7 @@ const (
 
 var (
 	cityCoords    = geobus.Coordinate{Lat: 52.5129, Lon: 13.3910}
+	cityForward   = geobus.Coordinate{Lat: 52.5126051, Lon: 13.3898616}
 	villageCoords = geobus.Coordinate{Lat: 51.46292, Lon: -2.31850}
 	townCoords    = geobus.Coordinate{Lat: 53.90712, Lon: -1.69404}
 )
@@ -183,7 +186,7 @@ func TestOpenCage_Reverse(t *testing.T) {
 		}
 	})
 	t.Run("API responding with more than one result should fail", func(t *testing.T) {
-		response := Response{TotalResults: 2}
+		response := ReverseResponse{TotalResults: 2}
 		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
 			buf := bytes.NewBuffer(nil)
 			if err := json.NewEncoder(buf).Encode(response); err != nil {
@@ -209,7 +212,7 @@ func TestOpenCage_Reverse(t *testing.T) {
 		}
 	})
 	t.Run("API responding with a non-200 reponse", func(t *testing.T) {
-		response := Response{TotalResults: 1}
+		response := ReverseResponse{TotalResults: 1}
 		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
 			buf := bytes.NewBuffer(nil)
 			if err := json.NewEncoder(buf).Encode(response); err != nil {
@@ -236,7 +239,122 @@ func TestOpenCage_Reverse(t *testing.T) {
 	})
 }
 
-func TestOpenCage_Reverse_integration(t *testing.T) {
+func TestOpenCage_Search(t *testing.T) {
+	t.Run("forward geocoding succeeds", func(t *testing.T) {
+		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			data, err := os.Open(cityForwardFile)
+			if err != nil {
+				t.Fatalf("failed to open JSON response file: %s", err)
+			}
+
+			return &stdhttp.Response{
+				StatusCode: 200,
+				Body:       data,
+				Header:     make(stdhttp.Header),
+			}, nil
+		}
+
+		coder := testCoderWithRoundtripFunc(t, rtFn)
+		coords, err := coder.Search(t.Context(), cityExpected)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !coords.Found {
+			t.Fatal("expected address to be found")
+		}
+		if coords.Lat != cityForward.Lat {
+			t.Errorf("expected latitude to be %f, got %f", cityForward.Lat, coords.Lat)
+		}
+		if coords.Lon != cityForward.Lon {
+			t.Errorf("expected longitude to be %f, got %f", cityForward.Lon, coords.Lon)
+		}
+	})
+	t.Run("forward geocoding fails", func(t *testing.T) {
+		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			return nil, errors.New("intentionally failing")
+		}
+
+		coder := testCoderWithRoundtripFunc(t, rtFn)
+		_, err := coder.Search(t.Context(), cityExpected)
+		if err == nil {
+			t.Fatal("expected API request to fail")
+		}
+	})
+	t.Run("forward geocoding returning empty array fails", func(t *testing.T) {
+		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			data, err := os.Open(emptyArray)
+			if err != nil {
+				t.Fatalf("failed to open JSON response file: %s", err)
+			}
+
+			return &stdhttp.Response{
+				StatusCode: 200,
+				Body:       data,
+				Header:     make(stdhttp.Header),
+			}, nil
+		}
+
+		coder := testCoderWithRoundtripFunc(t, rtFn)
+		_, err := coder.Search(t.Context(), cityExpected)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+	})
+	t.Run("API responding with a non-200 reponse", func(t *testing.T) {
+		response := SearchResponse{TotalResults: 1}
+		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			buf := bytes.NewBuffer(nil)
+			if err := json.NewEncoder(buf).Encode(response); err != nil {
+				return nil, err
+			}
+			return &stdhttp.Response{
+				StatusCode: 401,
+				Body:       io.NopCloser(buf),
+				Header:     make(stdhttp.Header),
+			}, nil
+		}
+		coder := testCoderWithRoundtripFunc(t, rtFn)
+		if coder == nil {
+			t.Fatal("expected a non-nil geocoder")
+		}
+		_, err := coder.Search(t.Context(), cityExpected)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		wantErr := "received non-positive response code from OpenCage API: 401"
+		if !strings.EqualFold(err.Error(), wantErr) {
+			t.Errorf("expected error to be %q, got %q", wantErr, err)
+		}
+	})
+	t.Run("zero results in search results", func(t *testing.T) {
+		response := SearchResponse{TotalResults: 0}
+		rtFn := func(req *stdhttp.Request) (*stdhttp.Response, error) {
+			buf := bytes.NewBuffer(nil)
+			if err := json.NewEncoder(buf).Encode(response); err != nil {
+				return nil, err
+			}
+			return &stdhttp.Response{
+				StatusCode: 200,
+				Body:       io.NopCloser(buf),
+				Header:     make(stdhttp.Header),
+			}, nil
+		}
+		coder := testCoderWithRoundtripFunc(t, rtFn)
+		if coder == nil {
+			t.Fatal("expected a non-nil geocoder")
+		}
+		_, err := coder.Search(t.Context(), cityExpected)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		wantErr := "no coordinates returned for address"
+		if !strings.Contains(err.Error(), wantErr) {
+			t.Errorf("expected error to be %q, got %q", wantErr, err)
+		}
+	})
+}
+
+func TestOpenCage_integration(t *testing.T) {
 	testhelper.PerformIntegrationTests(t)
 	t.Run("reverse geocoding succeeds", func(t *testing.T) {
 		coder := testCoder(t)
@@ -250,6 +368,23 @@ func TestOpenCage_Reverse_integration(t *testing.T) {
 		want := "A.T. Kearney, Charlottenstraße 57, 10117 Berlin, Germany"
 		if !strings.EqualFold(addr.DisplayName, want) {
 			t.Errorf("expected address to be %q, got %q", want, addr.DisplayName)
+		}
+	})
+	t.Run("forward geocoding succeeds", func(t *testing.T) {
+		coder := testCoder(t)
+		coords, err := coder.Search(t.Context(), cityExpected)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !coords.Found {
+			t.Fatal("expected address to be found")
+		}
+		want := geobus.Coordinate{Lat: 52.5126051, Lon: 13.3898616}
+		if coords.Lat != want.Lat {
+			t.Errorf("expected latitude to be %f, got %f", want.Lat, coords.Lat)
+		}
+		if coords.Lon != want.Lon {
+			t.Errorf("expected longitude to be %f, got %f", want.Lon, coords.Lon)
 		}
 	})
 }

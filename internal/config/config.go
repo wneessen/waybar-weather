@@ -69,9 +69,11 @@ type Config struct {
 
 	GeoLocation struct {
 		GeoLocationFile        string `fig:"geolocation_file"`
+		CitynameFile           string `fig:"cityname_file"`
 		DisableGeoIP           bool   `fig:"disable_geoip"`
 		DisableGeoAPI          bool   `fig:"disable_geoapi"`
 		DisableGeolocationFile bool   `fig:"disable_geolocation_file"`
+		DisableCitynameFile    bool   `fig:"disable_cityname_file"`
 		DisableICHNAEA         bool   `fig:"disable_ichnaea"`
 		DisableGPSD            bool   `fig:"disable_gpsd"`
 	} `fig:"geolocation"`
@@ -126,6 +128,10 @@ func (c *Config) Validate() error {
 	if c.GeoLocation.GeoLocationFile == "" {
 		home, _ := os.UserHomeDir()
 		c.GeoLocation.GeoLocationFile = filepath.Join(home, ".config", "waybar-weather", "geolocation")
+	}
+	if c.GeoLocation.CitynameFile == "" {
+		home, _ := os.UserHomeDir()
+		c.GeoLocation.CitynameFile = filepath.Join(home, ".config", "waybar-weather", "cityname")
 	}
 
 	return nil

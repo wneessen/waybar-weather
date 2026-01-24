@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	APIEndpoint = "https://api.opencagedata.com/geocode/v1/json"
+	apiEndpoint = "https://api.opencagedata.com/geocode/v1/json"
 	APITimeout  = time.Second * 10
 	name        = "opencage"
 )
@@ -29,12 +29,21 @@ type OpenCage struct {
 	lang   language.Tag
 }
 
-type Response struct {
-	Results      []Result `json:"results"`
-	TotalResults int      `json:"total_results"`
+type ReverseResponse struct {
+	Results      []ReverseResult `json:"results"`
+	TotalResults int             `json:"total_results"`
 }
 
-type Result struct {
+type SearchResponse struct {
+	Results      []SearchResult `json:"results"`
+	TotalResults int            `json:"total_results"`
+}
+
+type SearchResult struct {
+	Geometry Geometry `json:"geometry"`
+}
+
+type ReverseResult struct {
 	Components  Components `json:"components"`
 	DisplayName string     `json:"formatted"`
 	Geometry    Geometry   `json:"geometry"`
@@ -77,7 +86,7 @@ func (o *OpenCage) Name() string {
 }
 
 func (o *OpenCage) Reverse(ctx context.Context, coords geobus.Coordinate) (geocode.Address, error) {
-	var response Response
+	var response ReverseResponse
 
 	query := url.Values{}
 	query.Set("key", o.apikey)
@@ -86,7 +95,7 @@ func (o *OpenCage) Reverse(ctx context.Context, coords geobus.Coordinate) (geoco
 	query.Set("no_record", "1")
 	query.Set("language", o.lang.String())
 
-	code, err := o.http.GetWithTimeout(ctx, APIEndpoint, &response, query, nil, APITimeout)
+	code, err := o.http.GetWithTimeout(ctx, apiEndpoint, &response, query, nil, APITimeout)
 	if err != nil {
 		return geocode.Address{}, fmt.Errorf("failed to retrieve address details from OpenCage API: %w", err)
 	}
@@ -123,4 +132,36 @@ func (o *OpenCage) Reverse(ctx context.Context, coords geobus.Coordinate) (geoco
 	}
 
 	return address, nil
+}
+
+func (o *OpenCage) Search(ctx context.Context, address string) (geobus.Coordinate, error) {
+	var response SearchResponse
+
+	query := url.Values{}
+	query.Set("key", o.apikey)
+	query.Set("q", address)
+	query.Set("no_annotations", "1")
+	query.Set("no_record", "1")
+	query.Set("language", o.lang.String())
+
+	code, err := o.http.GetWithTimeout(ctx, apiEndpoint, &response, query, nil, APITimeout)
+	if err != nil {
+		return geobus.Coordinate{}, fmt.Errorf("failed to retrieve address details from OpenCage API: %w", err)
+	}
+	if code != 200 {
+		return geobus.Coordinate{}, fmt.Errorf("received non-positive response code from OpenCage API: %d", code)
+	}
+	if response.TotalResults < 1 || len(response.Results) < 1 {
+		return geobus.Coordinate{}, fmt.Errorf("no coordinates returned for address: %q", address)
+	}
+
+	// Fill the geobus.Coordinate struct
+	result := response.Results[0].Geometry
+	coords := geobus.Coordinate{
+		Lat:   result.Lat,
+		Lon:   result.Lon,
+		Found: true,
+	}
+
+	return coords, nil
 }
