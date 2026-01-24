@@ -12,6 +12,7 @@ import (
 
 	"github.com/wneessen/waybar-weather/internal/config"
 	"github.com/wneessen/waybar-weather/internal/geobus"
+	"github.com/wneessen/waybar-weather/internal/geobus/provider/cityname_file"
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/geoapi"
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/geoip"
 	"github.com/wneessen/waybar-weather/internal/geobus/provider/geolocation_file"
@@ -33,6 +34,14 @@ func (s *Service) selectGeobusProviders() ([]geobus.Provider, error) {
 
 	if !s.config.GeoLocation.DisableGeolocationFile {
 		provider = append(provider, geolocation_file.NewGeolocationFileProvider(s.config.GeoLocation.GeoLocationFile))
+	}
+
+	if !s.config.GeoLocation.DisableCitynameFile {
+		cnf, err := cityname_file.NewCitynameFileProvider(s.config.GeoLocation.CitynameFile, s.geocoder)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create cityname file provider: %w", err)
+		}
+		provider = append(provider, cnf)
 	}
 
 	if !s.config.GeoLocation.DisableGPSD {
