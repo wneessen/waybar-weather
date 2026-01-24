@@ -123,7 +123,7 @@ func (n *Nominatim) Search(ctx context.Context, address string) (geobus.Coordina
 
 	query := url.Values{}
 	query.Set("format", "jsonv2")
-	query.Set("q", fmt.Sprintf("%s", address))
+	query.Set("q", address)
 	query.Set("accept-language", n.lang.String())
 
 	if _, err = n.http.GetWithTimeout(ctx, searchAPIEndpoint, &result, query, nil, APITimeout); err != nil {
