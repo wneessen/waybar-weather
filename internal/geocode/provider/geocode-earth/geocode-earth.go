@@ -18,9 +18,10 @@ import (
 )
 
 const (
-	APIEndpoint = "https://api.geocode.earth/v1/reverse"
-	APITimeout  = time.Second * 10
-	name        = "geocode-earth"
+	reverseAPIEndpoint = "https://api.geocode.earth/v1/reverse"
+	searchAPIEndpoint  = "https://api.geocode.earth/v1/search"
+	APITimeout         = time.Second * 10
+	name               = "geocode-earth"
 )
 
 type GeocodeEarth struct {
@@ -29,14 +30,29 @@ type GeocodeEarth struct {
 	lang   language.Tag
 }
 
-type Response struct {
-	Features []Feature `json:"features"`
-	Type     string    `json:"type"`
+type ReverseResponse struct {
+	Features []ReverseFeature `json:"features"`
+	Type     string           `json:"type"`
 }
 
-type Feature struct {
+type SearchResponse struct {
+	Features []SearchFeature `json:"features"`
+	Type     string          `json:"type"`
+}
+
+type ReverseFeature struct {
 	Properties Properties `json:"properties"`
 	Type       string     `json:"type"`
+}
+
+type SearchFeature struct {
+	Geometry Geometry `json:"geometry"`
+	Type     string   `json:"type"`
+}
+
+type Geometry struct {
+	Type        string    `json:"type"`
+	Coordinates []float64 `json:"coordinates"`
 }
 
 type Properties struct {
@@ -68,7 +84,7 @@ func (g *GeocodeEarth) Name() string {
 }
 
 func (g *GeocodeEarth) Reverse(ctx context.Context, coords geobus.Coordinate) (geocode.Address, error) {
-	var response Response
+	var response ReverseResponse
 
 	query := url.Values{}
 	query.Set("api_key", g.apikey)
@@ -76,7 +92,7 @@ func (g *GeocodeEarth) Reverse(ctx context.Context, coords geobus.Coordinate) (g
 	query.Set("point.lon", fmt.Sprintf("%f", coords.Lon))
 	query.Set("lang", g.lang.String())
 
-	code, err := g.http.GetWithTimeout(ctx, APIEndpoint, &response, query, nil, APITimeout)
+	code, err := g.http.GetWithTimeout(ctx, reverseAPIEndpoint, &response, query, nil, APITimeout)
 	if err != nil {
 		return geocode.Address{}, fmt.Errorf("failed to retrieve address details from geocode.earth API: %w", err)
 	}
@@ -108,5 +124,35 @@ func (g *GeocodeEarth) Reverse(ctx context.Context, coords geobus.Coordinate) (g
 }
 
 func (g *GeocodeEarth) Search(ctx context.Context, address string) (geobus.Coordinate, error) {
-	return geobus.Coordinate{}, fmt.Errorf("not implemented")
+	var response SearchResponse
+
+	query := url.Values{}
+	query.Set("api_key", g.apikey)
+	query.Set("text", address)
+	query.Set("lang", g.lang.String())
+
+	code, err := g.http.GetWithTimeout(ctx, searchAPIEndpoint, &response, query, nil, APITimeout)
+	if err != nil {
+		return geobus.Coordinate{}, fmt.Errorf("failed to retrieve address details from geocode.earth API: %w", err)
+	}
+	if code != 200 {
+		return geobus.Coordinate{}, fmt.Errorf("received non-positive response code from geocode.earth API: %d", code)
+	}
+	if len(response.Features) < 1 {
+		return geobus.Coordinate{}, fmt.Errorf("no coordinates found for address %q", address)
+	}
+
+	// Fill the geocode.Address struct
+	result := response.Features[0].Geometry
+	if len(result.Coordinates) != 2 {
+		return geobus.Coordinate{}, fmt.Errorf("unexpected 2 coordinates in response, got: %d",
+			len(result.Coordinates))
+	}
+	coords := geobus.Coordinate{
+		Lat:   result.Coordinates[1],
+		Lon:   result.Coordinates[0],
+		Found: true,
+	}
+
+	return coords, nil
 }
