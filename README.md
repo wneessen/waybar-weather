@@ -155,6 +155,20 @@ Using a static geolocation file is the most privacy-preserving option. No networ
 coordinates and no location data is shared with any third party (geocoding might still require third-party sharing). 
 The coordinates are read locally from disk and used as-is.
 
+### City name file
+A city name file is a simple static file in the format `<city>,<country>` that you can place in your local
+home directory at `~/.config/waybar-weather/cityname`. If the provider is enabled and the file is present,
+waybar-weather will use the city and country from this file and perform a forward geocoding request to
+resolve the corresponding geographic coordinates. For the forward geocoding request it will use the geocoding
+provider configured in the `geocoding` section of the configuration file.
+
+#### Privacy considerations
+Using a city name file requires a network request to a geocoding provider to resolve the provided city and 
+country into geographic coordinates. This means that location data derived from the city name, as well as 
+your IP address and request metadata, may be shared with the configured geocoding provider. The city name itself 
+is read locally from disk and is not shared with any third party beyond what is required to perform the 
+geocoding request.
+
 ### GeoIP lookup
 The GeoIP lookup provider uses [https://reallyfreegeoip.org](https://reallyfreegeoip.org) to look up
 your IP and the resulting location based of that IP address. Depending on your ISP, the result might 
