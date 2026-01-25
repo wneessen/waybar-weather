@@ -263,7 +263,7 @@ func TestService_printWeather(t *testing.T) {
 		if output.Tooltip != "tooltip" {
 			t.Errorf("expected Tooltip to be %q, got %q", "tooltip", output.Tooltip)
 		}
-		wantClasses := 2
+		wantClasses := 3
 		if len(output.Classes) != wantClasses {
 			t.Errorf("expected Classes to have length %d, got %d", wantClasses, len(output.Classes))
 		}
@@ -272,6 +272,9 @@ func TestService_printWeather(t *testing.T) {
 		}
 		if output.Classes[1] != ColdOutputClass {
 			t.Errorf("expected 2nd class to be %q, got %q", ColdOutputClass, output.Classes[1])
+		}
+		if output.Classes[2] != NightOutputClass {
+			t.Errorf("expected 3nd class to be %q, got %q", NightOutputClass, output.Classes[2])
 		}
 	})
 	t.Run("print alt_text to a buffer", func(t *testing.T) {

@@ -28,12 +28,14 @@ import (
 )
 
 const (
-	OutputClass     = "waybar-weather"
-	ColdOutputClass = "cold"
-	HotOutputClass  = "hot"
-	SubID           = "location-update"
-	cacheHitTTL     = 1 * time.Hour
-	cacheMissTTL    = 10 * time.Minute
+	OutputClass      = "waybar-weather"
+	ColdOutputClass  = "cold"
+	HotOutputClass   = "hot"
+	DayOutputClass   = "day"
+	NightOutputClass = "night"
+	SubID            = "location-update"
+	cacheHitTTL      = 1 * time.Hour
+	cacheMissTTL     = 10 * time.Minute
 )
 
 type outputData struct {
@@ -220,10 +222,10 @@ func (s *Service) printWeather(context.Context) {
 			outputClasses = append(outputClasses, tplCtx.Forecast.Category)
 		}
 		if tplCtx.Forecast.IsDay {
-			outputClasses = append(outputClasses, "day")
+			outputClasses = append(outputClasses, DayOutputClass)
 		}
 		if !tplCtx.Forecast.IsDay {
-			outputClasses = append(outputClasses, "night")
+			outputClasses = append(outputClasses, NightOutputClass)
 		}
 	default:
 		if tplCtx.Current.Temperature >= s.config.Weather.HotThreshold {
@@ -236,10 +238,10 @@ func (s *Service) printWeather(context.Context) {
 			outputClasses = append(outputClasses, tplCtx.Current.Category)
 		}
 		if tplCtx.Current.IsDay {
-			outputClasses = append(outputClasses, "day")
+			outputClasses = append(outputClasses, DayOutputClass)
 		}
 		if !tplCtx.Current.IsDay {
-			outputClasses = append(outputClasses, "night")
+			outputClasses = append(outputClasses, NightOutputClass)
 		}
 	}
 
