@@ -1,0 +1,234 @@
+/* Base icon styling */
+.waybar-weather {
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+
+/* =====================
+   WMO Weather Icons
+   ===================== */
+
+/* 0 – Clear sky */
+.waybar-weather.day.wmo-0 {
+    background-image: url("weather-icons/wmo-0-day.svg");
+}
+.waybar-weather.night.wmo-0 {
+    background-image: url("weather-icons/wmo-0-night.svg");
+}
+
+/* 1 – Mainly clear */
+.waybar-weather.day.wmo-1 {
+    background-image: url("weather-icons/wmo-1-day.svg");
+}
+.waybar-weather.night.wmo-1 {
+    background-image: url("weather-icons/wmo-1-night.svg");
+}
+
+/* 2 – Partly cloudy */
+.waybar-weather.day.wmo-2 {
+    background-image: url("weather-icons/wmo-2-day.svg");
+}
+.waybar-weather.night.wmo-2 {
+    background-image: url("weather-icons/wmo-2-night.svg");
+}
+
+/* 3 – Overcast */
+.waybar-weather.day.wmo-3 {
+    background-image: url("weather-icons/wmo-3-day.svg");
+}
+.waybar-weather.night.wmo-3 {
+    background-image: url("weather-icons/wmo-3-night.svg");
+}
+
+/* 45 – Fog */
+.waybar-weather.day.wmo-45 {
+    background-image: url("weather-icons/wmo-45-day.svg");
+}
+.waybar-weather.night.wmo-45 {
+    background-image: url("weather-icons/wmo-45-night.svg");
+}
+
+/* 48 – Depositing rime fog */
+.waybar-weather.day.wmo-48 {
+    background-image: url("weather-icons/wmo-48-day.svg");
+}
+.waybar-weather.night.wmo-48 {
+    background-image: url("weather-icons/wmo-48-night.svg");
+}
+
+/* 51 – Light drizzle */
+.waybar-weather.day.wmo-51 {
+    background-image: url("weather-icons/wmo-51-day.svg");
+}
+.waybar-weather.night.wmo-51 {
+    background-image: url("weather-icons/wmo-51-night.svg");
+}
+
+/* 53 – Drizzle */
+.waybar-weather.day.wmo-53 {
+    background-image: url("weather-icons/wmo-53-day.svg");
+}
+.waybar-weather.night.wmo-53 {
+    background-image: url("weather-icons/wmo-53-night.svg");
+}
+
+/* 55 – Dense drizzle */
+.waybar-weather.day.wmo-55 {
+    background-image: url("weather-icons/wmo-55-day.svg");
+}
+.waybar-weather.night.wmo-55 {
+    background-image: url("weather-icons/wmo-55-night.svg");
+}
+
+/* 56 – Freezing drizzle */
+.waybar-weather.day.wmo-56 {
+    background-image: url("weather-icons/wmo-56-day.svg");
+}
+.waybar-weather.night.wmo-56 {
+    background-image: url("weather-icons/wmo-56-night.svg");
+}
+
+/* 57 – Dense freezing drizzle */
+.waybar-weather.day.wmo-57 {
+    background-image: url("weather-icons/wmo-57-day.svg");
+}
+.waybar-weather.night.wmo-57 {
+    background-image: url("weather-icons/wmo-57-night.svg");
+}
+
+/* 61 – Light rain */
+.waybar-weather.day.wmo-61 {
+    background-image: url("weather-icons/wmo-61-day.svg");
+}
+.waybar-weather.night.wmo-61 {
+    background-image: url("weather-icons/wmo-61-night.svg");
+}
+
+/* 63 – Rain */
+.waybar-weather.day.wmo-63 {
+    background-image: url("weather-icons/wmo-63-day.svg");
+}
+.waybar-weather.night.wmo-63 {
+    background-image: url("weather-icons/wmo-63-night.svg");
+}
+
+/* 65 – Heavy rain */
+.waybar-weather.day.wmo-65 {
+    background-image: url("weather-icons/wmo-65-day.svg");
+}
+.waybar-weather.night.wmo-65 {
+    background-image: url("weather-icons/wmo-65-night.svg");
+}
+
+/* 66 – Freezing rain */
+.waybar-weather.day.wmo-66 {
+    background-image: url("weather-icons/wmo-66-day.svg");
+}
+.waybar-weather.night.wmo-66 {
+    background-image: url("weather-icons/wmo-66-night.svg");
+}
+
+/* 67 – Heavy freezing rain */
+.waybar-weather.day.wmo-67 {
+    background-image: url("weather-icons/wmo-67-day.svg");
+}
+.waybar-weather.night.wmo-67 {
+    background-image: url("weather-icons/wmo-67-night.svg");
+}
+
+/* 71 – Light snow */
+.waybar-weather.day.wmo-71 {
+    background-image: url("weather-icons/wmo-71-day.svg");
+}
+.waybar-weather.night.wmo-71 {
+    background-image: url("weather-icons/wmo-71-night.svg");
+}
+
+/* 73 – Snow */
+.waybar-weather.day.wmo-73 {
+    background-image: url("weather-icons/wmo-73-day.svg");
+}
+.waybar-weather.night.wmo-73 {
+    background-image: url("weather-icons/wmo-73-night.svg");
+}
+
+/* 75 – Heavy snow */
+.waybar-weather.day.wmo-75 {
+    background-image: url("weather-icons/wmo-75-day.svg");
+}
+.waybar-weather.night.wmo-75 {
+    background-image: url("weather-icons/wmo-75-night.svg");
+}
+
+/* 77 – Snow grains */
+.waybar-weather.day.wmo-77 {
+    background-image: url("weather-icons/wmo-77-day.svg");
+}
+.waybar-weather.night.wmo-77 {
+    background-image: url("weather-icons/wmo-77-night.svg");
+}
+
+/* 80 – Rain showers */
+.waybar-weather.day.wmo-80 {
+    background-image: url("weather-icons/wmo-80-day.svg");
+}
+.waybar-weather.night.wmo-80 {
+    background-image: url("weather-icons/wmo-80-night.svg");
+}
+
+/* 81 – Heavy rain showers */
+.waybar-weather.day.wmo-81 {
+    background-image: url("weather-icons/wmo-81-day.svg");
+}
+.waybar-weather.night.wmo-81 {
+    background-image: url("weather-icons/wmo-81-night.svg");
+}
+
+/* 82 – Violent rain showers */
+.waybar-weather.day.wmo-82 {
+    background-image: url("weather-icons/wmo-82-day.svg");
+}
+.waybar-weather.night.wmo-82 {
+    background-image: url("weather-icons/wmo-82-night.svg");
+}
+
+/* 85 – Snow showers */
+.waybar-weather.day.wmo-85 {
+    background-image: url("weather-icons/wmo-85-day.svg");
+}
+.waybar-weather.night.wmo-85 {
+    background-image: url("weather-icons/wmo-85-night.svg");
+}
+
+/* 86 – Heavy snow showers */
+.waybar-weather.day.wmo-86 {
+    background-image: url("weather-icons/wmo-86-day.svg");
+}
+.waybar-weather.night.wmo-86 {
+    background-image: url("weather-icons/wmo-86-night.svg");
+}
+
+/* 95 – Thunderstorm */
+.waybar-weather.day.wmo-95 {
+    background-image: url("weather-icons/wmo-95-day.svg");
+}
+.waybar-weather.night.wmo-95 {
+    background-image: url("weather-icons/wmo-95-night.svg");
+}
+
+/* 96 – Thunderstorm with hail */
+.waybar-weather.day.wmo-96 {
+    background-image: url("weather-icons/wmo-96-day.svg");
+}
+.waybar-weather.night.wmo-96 {
+    background-image: url("weather-icons/wmo-96-night.svg");
+}
+
+/* 99 – Severe thunderstorm */
+.waybar-weather.day.wmo-99 {
+    background-image: url("weather-icons/wmo-99-day.svg");
+}
+.waybar-weather.night.wmo-99 {
+    background-image: url("weather-icons/wmo-99-night.svg");
+}

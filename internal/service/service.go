@@ -231,6 +231,15 @@ func (s *Service) printWeather(context.Context) {
 		}
 	}
 
+	// In CSS Icon mode we add the WMO code to the output class list
+	if s.config.Templates.UseCSSIcon {
+		code := tplCtx.Current.WeatherCode
+		if altMode {
+			code = tplCtx.Forecast.WeatherCode
+		}
+		outputClasses = append(outputClasses, fmt.Sprintf("wmo-%d", code))
+	}
+
 	// Present the rendered weather data
 	output := outputData{
 		Text:    displayText,

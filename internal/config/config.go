@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/kkyr/fig"
@@ -65,6 +66,7 @@ type Config struct {
 		AltText    string `fig:"alt_text"`
 		Tooltip    string `fig:"tooltip"`
 		AltTooltip string `fig:"alt_tooltip"`
+		UseCSSIcon bool   `fig:"use_css_icon"`
 	} `fig:"templates"`
 
 	GeoLocation struct {
@@ -132,6 +134,14 @@ func (c *Config) Validate() error {
 	if c.GeoLocation.CitynameFile == "" {
 		home, _ := os.UserHomeDir()
 		c.GeoLocation.CitynameFile = filepath.Join(home, ".config", "waybar-weather", "cityname")
+	}
+	if c.Templates.UseCSSIcon {
+		if strings.EqualFold(c.Templates.Text, DefaultTextTpl) {
+			c.Templates.Text = `{{hum .Current.Temperature}}{{.Current.Units.Temperature}}`
+		}
+		if strings.EqualFold(c.Templates.AltText, DefaultAltTextTpl) {
+			c.Templates.Text = `{{hum .Forecast.Temperature}}{{.Forecast.Units.Temperature}}`
+		}
 	}
 
 	return nil
