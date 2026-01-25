@@ -137,10 +137,10 @@ func (c *Config) Validate() error {
 	}
 	if c.Templates.UseCSSIcon {
 		if strings.EqualFold(c.Templates.Text, DefaultTextTpl) {
-			c.Templates.Text = `{{hum .Current.Temperature}}{{.Current.Units.Temperature}}`
+			c.Templates.Text = `<span>{{hum .Current.Temperature}}{{.Current.Units.Temperature}}</span>`
 		}
 		if strings.EqualFold(c.Templates.AltText, DefaultAltTextTpl) {
-			c.Templates.Text = `{{hum .Forecast.Temperature}}{{.Forecast.Units.Temperature}}`
+			c.Templates.Text = `<span>{{hum .Forecast.Temperature}}{{.Forecast.Units.Temperature}}</span>`
 		}
 	}
 
