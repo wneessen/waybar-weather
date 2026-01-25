@@ -2,7 +2,8 @@
 .waybar-weather {
     background-repeat: no-repeat;
     background-position: left;
-    background-size: contain;
+    min-width: 70px;
+    background-size: 20px 20px;
 }
 
 /* =====================
