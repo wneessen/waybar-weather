@@ -61,6 +61,12 @@ package() {
     install -Dm644 "etc/cityname" \
         "${pkgdir}/usr/share/${pkgname}/cityname"
 
+    # style and icon files
+    install -Dm644 "contrib/style/waybar-weather.css" \
+        "${pkgdir}/usr/share/${pkgname}/waybar-weather.css"
+    install -d "${pkgdir}/usr/share/${pkgname}/weather-icons"
+    cp -r contrib/icons/meteocons/* "${pkgdir}/usr/share/${pkgname}/weather-icons/"
+
     # documentation
     install -Dm644 "README.md" \
         "${pkgdir}/usr/share/doc/${pkgname}/README.md"
