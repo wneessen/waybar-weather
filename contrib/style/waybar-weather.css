@@ -1,7 +1,7 @@
 /* Base icon styling */
 .waybar-weather {
     background-repeat: no-repeat;
-    background-position: center;
+    background-position: left;
     background-size: contain;
 }
 
