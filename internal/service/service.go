@@ -219,6 +219,12 @@ func (s *Service) printWeather(context.Context) {
 		if tplCtx.Forecast.Category != "" {
 			outputClasses = append(outputClasses, tplCtx.Forecast.Category)
 		}
+		if tplCtx.Forecast.IsDay {
+			outputClasses = append(outputClasses, "day")
+		}
+		if !tplCtx.Forecast.IsDay {
+			outputClasses = append(outputClasses, "night")
+		}
 	default:
 		if tplCtx.Current.Temperature >= s.config.Weather.HotThreshold {
 			outputClasses = append(outputClasses, HotOutputClass)
@@ -228,6 +234,12 @@ func (s *Service) printWeather(context.Context) {
 		}
 		if tplCtx.Current.Category != "" {
 			outputClasses = append(outputClasses, tplCtx.Current.Category)
+		}
+		if tplCtx.Current.IsDay {
+			outputClasses = append(outputClasses, "day")
+		}
+		if !tplCtx.Current.IsDay {
+			outputClasses = append(outputClasses, "night")
 		}
 	}
 
