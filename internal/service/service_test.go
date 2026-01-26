@@ -263,7 +263,7 @@ func TestService_printWeather(t *testing.T) {
 		if output.Tooltip != "tooltip" {
 			t.Errorf("expected Tooltip to be %q, got %q", "tooltip", output.Tooltip)
 		}
-		wantClasses := 2
+		wantClasses := 3
 		if len(output.Classes) != wantClasses {
 			t.Errorf("expected Classes to have length %d, got %d", wantClasses, len(output.Classes))
 		}
@@ -272,6 +272,93 @@ func TestService_printWeather(t *testing.T) {
 		}
 		if output.Classes[1] != ColdOutputClass {
 			t.Errorf("expected 2nd class to be %q, got %q", ColdOutputClass, output.Classes[1])
+		}
+		if output.Classes[2] != NightOutputClass {
+			t.Errorf("expected 3nd class to be %q, got %q", NightOutputClass, output.Classes[2])
+		}
+	})
+	t.Run("print weather to a buffer with corresponding CSS icon classes", func(t *testing.T) {
+		t.Setenv("WAYBARWEATHER_TEMPLATES_TEXT", "text")
+		t.Setenv("WAYBARWEATHER_TEMPLATES_ALT_TEXT", "text")
+		t.Setenv("WAYBARWEATHER_TEMPLATES_TOOLTIP", "tooltip")
+		t.Setenv("WAYBARWEATHER_TEMPLATES_ALT_TOOLTIP", "tooltip")
+
+		serv, err := testService(t, false)
+		if err != nil {
+			t.Fatalf("failed to create service: %s", err)
+		}
+		buf := bytes.NewBuffer(nil)
+		serv.output = buf
+		serv.weatherIsSet = true
+		serv.config.Templates.UseCSSIcon = true
+
+		now := time.Now()
+		serv.weather = &weather.Data{
+			Current: weather.Instant{
+				InstantTime: now,
+				Temperature: 10.0,
+				IsDay:       true,
+				WeatherCode: 23,
+			},
+			Forecast: make(map[weather.DayHour]weather.Instant),
+		}
+		fcastNow := now.Add(time.Hour * time.Duration(serv.config.Weather.ForecastHours))
+		fcast := serv.weather.Current
+		fcast.InstantTime = fcastNow
+		fcast.WeatherCode = 15
+		serv.weather.Forecast[weather.NewDayHour(fcastNow)] = fcast
+
+		serv.printWeather(t.Context())
+		var output outputData
+		if err = json.Unmarshal(buf.Bytes(), &output); err != nil {
+			t.Fatalf("failed to unmarshal JSON: %s", err)
+		}
+		if output.Text != "text" {
+			t.Errorf("expected Text to be %q, got %q", "text", output.Text)
+		}
+		if output.Tooltip != "tooltip" {
+			t.Errorf("expected Tooltip to be %q, got %q", "tooltip", output.Tooltip)
+		}
+		wantClasses := 3
+		if len(output.Classes) != wantClasses {
+			t.Errorf("expected Classes to have length %d, got %d", wantClasses, len(output.Classes))
+		}
+		if output.Classes[0] != OutputClass {
+			t.Errorf("expected first class to be %q, got %q", OutputClass, output.Classes[0])
+		}
+		if output.Classes[1] != DayOutputClass {
+			t.Errorf("expected 2nd class to be %q, got %q", DayOutputClass, output.Classes[1])
+		}
+		wantCSSIcon := "wmo-23"
+		if output.Classes[2] != wantCSSIcon {
+			t.Errorf("expected 2nd class to be %q, got %q", wantCSSIcon, output.Classes[2])
+		}
+
+		buf.Reset()
+		serv.displayAltText = true
+		serv.printWeather(t.Context())
+		if err = json.Unmarshal(buf.Bytes(), &output); err != nil {
+			t.Fatalf("failed to unmarshal JSON: %s", err)
+		}
+		if output.Text != "text" {
+			t.Errorf("expected Text to be %q, got %q", "text", output.Text)
+		}
+		if output.Tooltip != "tooltip" {
+			t.Errorf("expected Tooltip to be %q, got %q", "tooltip", output.Tooltip)
+		}
+		wantClasses = 3
+		if len(output.Classes) != wantClasses {
+			t.Errorf("expected Classes to have length %d, got %d", wantClasses, len(output.Classes))
+		}
+		if output.Classes[0] != OutputClass {
+			t.Errorf("expected first class to be %q, got %q", OutputClass, output.Classes[0])
+		}
+		if output.Classes[1] != DayOutputClass {
+			t.Errorf("expected 2nd class to be %q, got %q", DayOutputClass, output.Classes[1])
+		}
+		wantCSSIcon = "wmo-15"
+		if output.Classes[2] != wantCSSIcon {
+			t.Errorf("expected 2nd class to be %q, got %q", wantCSSIcon, output.Classes[2])
 		}
 	})
 	t.Run("print alt_text to a buffer", func(t *testing.T) {

@@ -28,12 +28,14 @@ import (
 )
 
 const (
-	OutputClass     = "waybar-weather"
-	ColdOutputClass = "cold"
-	HotOutputClass  = "hot"
-	SubID           = "location-update"
-	cacheHitTTL     = 1 * time.Hour
-	cacheMissTTL    = 10 * time.Minute
+	OutputClass      = "waybar-weather"
+	ColdOutputClass  = "cold"
+	HotOutputClass   = "hot"
+	DayOutputClass   = "day"
+	NightOutputClass = "night"
+	SubID            = "location-update"
+	cacheHitTTL      = 1 * time.Hour
+	cacheMissTTL     = 10 * time.Minute
 )
 
 type outputData struct {
@@ -219,6 +221,12 @@ func (s *Service) printWeather(context.Context) {
 		if tplCtx.Forecast.Category != "" {
 			outputClasses = append(outputClasses, tplCtx.Forecast.Category)
 		}
+		if tplCtx.Forecast.IsDay {
+			outputClasses = append(outputClasses, DayOutputClass)
+		}
+		if !tplCtx.Forecast.IsDay {
+			outputClasses = append(outputClasses, NightOutputClass)
+		}
 	default:
 		if tplCtx.Current.Temperature >= s.config.Weather.HotThreshold {
 			outputClasses = append(outputClasses, HotOutputClass)
@@ -229,6 +237,21 @@ func (s *Service) printWeather(context.Context) {
 		if tplCtx.Current.Category != "" {
 			outputClasses = append(outputClasses, tplCtx.Current.Category)
 		}
+		if tplCtx.Current.IsDay {
+			outputClasses = append(outputClasses, DayOutputClass)
+		}
+		if !tplCtx.Current.IsDay {
+			outputClasses = append(outputClasses, NightOutputClass)
+		}
+	}
+
+	// In CSS Icon mode we add the WMO code to the output class list
+	if s.config.Templates.UseCSSIcon {
+		code := tplCtx.Current.WeatherCode
+		if altMode {
+			code = tplCtx.Forecast.WeatherCode
+		}
+		outputClasses = append(outputClasses, fmt.Sprintf("wmo-%d", code))
 	}
 
 	// Present the rendered weather data

@@ -41,6 +41,28 @@ func TestNew(t *testing.T) {
 			t.Errorf("expected output interval to be: %s, got %s", expectIntervalOutput, conf.Intervals.Output)
 		}
 	})
+	t.Run("config in CSS icon mode should change the template texts", func(t *testing.T) {
+		t.Setenv("WAYBARWEATHER_TEMPLATES_USE_CSS_ICON", "true")
+		t.Setenv("WAYBARWEATHER_TEMPLATES_TEXT", "")
+		t.Setenv("WAYBARWEATHER_TEMPLATES_ALT_TEXT", "")
+		conf, err := New()
+		if err != nil {
+			t.Fatalf("failed to load config: %s", err)
+		}
+		if !conf.Templates.UseCSSIcon {
+			t.Error("expected CSS icon mode to be enabled")
+		}
+		wantText := ` {{hum .Current.Temperature}}{{.Current.Units.Temperature}}`
+		wantAltText := ` {{hum .Forecast.Temperature}}{{.Forecast.Units.Temperature}}`
+		if conf.Templates.Text != wantText {
+			t.Errorf("failed to set text template in CSS icon mode: got: %q, want: %q", conf.Templates.Text,
+				wantText)
+		}
+		if conf.Templates.AltText != wantAltText {
+			t.Errorf("failed to set alternative text template in CSS icon mode: got: %q, want: %q",
+				conf.Templates.AltText, wantAltText)
+		}
+	})
 	t.Run("new config with invalid values from env", func(t *testing.T) {
 		t.Setenv("WAYBARWEATHER_LOGLEVEL", "invalid")
 		_, err := New()
