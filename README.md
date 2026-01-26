@@ -171,6 +171,8 @@ You can find the iconset in the [contrib/icons](contrib/icons) directory. Copy t
 cp -a contrib/icons/meteocons ~/.config/waybar/weather-icons
 ```
 
+You can replace the weather icons with your own iconset as long as the naming convention of the icons is the same.
+
 Depending on your waybar style, you might have to adjust the `waybar-weather.css` to your liking. I've tested it
 with the default Omarchy waybar style and it works fine.
 
