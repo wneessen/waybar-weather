@@ -19,6 +19,7 @@ allowing you to always see the weather data for your current location.
 * [Supports different geocoding providers for the reverse location lookup via coordinates](#geocoding-provider)
 * [Supports different weather providers](#weather-providers)
 * Integrates with [Waybar](https://github.com/Alexays/Waybar) as a custom module
+* [Supports the waybar stying system providing custom CSS classes](#styling)
 * Display conditions, temperature and moon phase for your current location
 * [Fully customizable via its integrated template engine](#templating)
 * [Support for multiple languages](#internationalization--localization)
