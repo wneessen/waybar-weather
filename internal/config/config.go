@@ -140,7 +140,7 @@ func (c *Config) Validate() error {
 			c.Templates.Text = ` {{hum .Current.Temperature}}{{.Current.Units.Temperature}}`
 		}
 		if strings.EqualFold(c.Templates.AltText, DefaultAltTextTpl) {
-			c.Templates.Text = ` {{hum .Forecast.Temperature}}{{.Forecast.Units.Temperature}}`
+			c.Templates.AltText = ` {{hum .Forecast.Temperature}}{{.Forecast.Units.Temperature}}`
 		}
 	}
 
