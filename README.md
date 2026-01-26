@@ -96,6 +96,8 @@ Once you added that, add the module to your waybar module of choice, similar to 
 ],
 ```
 
+## Styling
+
 waybar-weather always emits a custom CSS class to waybar, so you can apply your custom style to it. The class is
 always `waybar-weather`. Add the following to your waybar config file (usually `.config/waybar/style.css`) to adjust
 the style:
@@ -105,7 +107,74 @@ the style:
 }
 ```
 
-Once complete, restart Waybar and you should be good to go:
+### Special CSS classes
+Additionally to the `waybar-weather` class, waybar-weather emits additional CSS classes for some special 
+weather conditions. These classes are:
+
+| CSS class | Description                                                                             |
+|-----------|-----------------------------------------------------------------------------------------|
+| `cold`    | This class is emitted when the temperature falls below the configured `cold_threshold`. |
+| `hot`     | This class is emitted when the temperature rises above the configured `hot_threshold`.  |
+| `snow`    | This class is emitted when it is snowing.                                               |
+| `rain`    | This class is emitted when it is raining.                                               |
+| `smoke`   | This class is emitted when it is foggy or hazy.                                         |
+
+You can use these classes to style your waybar-weather to e. g. show the temperature in red when it's hot or
+blue when it's cold or to perform a transition animation when it's snowing.
+
+Here is some example CSS you can add to your waybar `style.css` file:
+
+```css
+.waybar-weather {
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+.waybar-weather.hot {
+    color: #a91313;
+}
+
+.waybar-weather.cold {
+    color: #5fa4ec;
+}
+
+.waybar-weather.rain,
+.waybar-weather.snow,
+.waybar-weather.smoke {
+    animation-name: blink-condition;
+    animation-duration: 1s;
+}
+```
+
+### Custom SVG icons instead of UTF-8
+Since v0.3.0 waybar-weather supports custom SVG icons for the weather condition instead of the default UTF-8
+icons. This is established using the CSS capabilities of waybar. You can enable SVG icons in your configuration
+by setting the `use_css_icon` option to `true` in the `[templates]` section.
+
+Once enabled, waybar-weather will change the default text template to omit the UTF-8 icon and instead emit a CSS
+class for the corresponding weather condition (as WMO code). For SVG icons to work, you also need to update your
+waybar `style.css` file and include the stylesheet that is shipped in the [contrib/style](contrib/style) directory.
+Copy the `waybar-weather.css` file from the contrib directory into your `~/.config/waybar/` directory and add the
+following line to your `style.css` file:
+
+```css
+@import "waybar-weather.css";
+```
+
+Finally, you need to add a matching iconset to your waybar config directory. waybar-weather ships with a default
+iconset - the "[Meteocons](https://basmilius.github.io/weather-icons/)" iconset by [Bas Milius](https://bas.dev/).
+You can find the iconset in the [contrib/icons](contrib/icons) directory. Copy the `meteocons` directory into your
+`~/.config/waybar/` directory as `weather-icons`:
+
+```shell
+cp -a contrib/icons/meteocons ~/.config/waybar/weather-icons
+```
+
+Depending on your waybar style, you might have to adjust the `waybar-weather.css` to your liking. I've tested it
+with the default Omarchy waybar style and it works fine.
+
+Once you completed your waybar styling changes, you need to restart waybar for the changes to take effect:
 ```bash
 killall waybar && waybar
 ```
