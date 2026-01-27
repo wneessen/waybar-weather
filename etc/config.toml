@@ -121,6 +121,14 @@
 #
 # alt_tooltip = ""
 
+## Use CSS-based icons instead of rendering icons directly in the template.
+## When enabled, waybar-weather will emit appropriate CSS classes
+## that can be styled in the waybar stylesheet.
+##
+## Default: false
+#
+# use_css_icon = false
+
 
 ## =============================================================================
 ## Geolocation Configuration
@@ -132,6 +140,11 @@
 #
 # geolocation_file = ""
 
+## Path to a static city name file.
+## If set, this file is used to resolve human-readable location names.
+#
+# cityname_file = ""
+
 ## Disable individual geolocation providers.
 ## All providers are enabled by default - they might not provide data, though (e. g. if no gpsd is running,
 ## the gpsd provider will not be able to provide location data).
@@ -141,6 +154,7 @@
 # disable_geoip = false
 # disable_geoapi = false
 # disable_geolocation_file = false
+# disable_cityname_file = false
 # disable_ichnaea = false
 # disable_gpsd = false
 
