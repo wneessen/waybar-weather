@@ -28,7 +28,6 @@ allowing you to always see the weather data for your current location.
 * Runs a service in the background to automatically update the weather data and does not require constant
   re-execution (like with comparable waybar weather modules).
 * [Sleep/resume detection](#sleepsuspend-and-resume-detection)
-* [Support for waybar CSS-based styling](#styling)
 
 ## Requirements
 * A working Linux installation with Waybar running.
