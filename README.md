@@ -25,12 +25,18 @@ allowing you to always see the weather data for your current location.
 * [Support for multiple languages](#internationalization--localization)
 * [Configurable via TOML, JSON or YAML](#configuration)
 * Lightweight single binary written in Go
+* Runs a service in the background to automatically update the weather data and does not require constant
+  re-execution (like with comparable waybar weather modules).
+* [Sleep/resume detection](#sleepsuspend-and-resume-detection)
+* [Support for waybar CSS-based styling](#styling)
 
 ## Requirements
 * A working Linux installation with Waybar running.
 * Network connectivity for API calls.
-* (Optional) Ideally an active WiFi connectivity for ICHNAEA geolocation service (more precise location lookup).
-* (Optional) For even better location lookup, you can use a GPS device connected to your computer.
+* (Optional) For the ICHNAEA geolocation service, an active WiFi connectivity is required ofr more precise location
+  lookup.
+* (Optional) For even better location lookup, you can use a GPS device connected to your computer. This requires gpsd to
+  be installed and running.
 
 ## Screenshots
 ![waybar-weather in English](assets/waybar-weather_en.png) &nbsp;
@@ -68,10 +74,10 @@ go build -o waybar-weather ./cmd/waybar-weather
 waybar-weather comes with defaults that should work out of the box for most users. 
 You can however override these defaults by providing a configuration file. By default
 waybar-weather will look for a configuration file in the user's home config directory 
-at `~/.config/waybar-weather/`. If that directory holds a config file in either TOML, 
-JSON or YAML format, waybar-weather will use it. Alternatively, you can provide a path 
-to a configuration file via the `-config` flag. A example configuration file can be 
-found in the [etc](etc) directory.
+at `~/.config/waybar-weather/`. If that directory holds a config file (`config.<ext>`) 
+in either TOML, JSON or YAML format, waybar-weather will use it. Alternatively, you can 
+provide a path to a configuration file via the `-config` flag. A example configuration 
+file can be found in the [etc](etc) directory.
 
 ### Integration with Waybar
 waybar-weather integrates effortlessly with Waybar.
@@ -99,7 +105,7 @@ Once you added that, add the module to your waybar module of choice, similar to 
 
 ## Styling
 
-waybar-weather always emits a custom CSS class to waybar, so you can apply your custom style to it. The class is
+waybar-weather emits a custom CSS class to waybar, so you can apply your custom style to it. The class is
 always `waybar-weather`. Add the following to your waybar config file (usually `.config/waybar/style.css`) to adjust
 the style:
 ```css
@@ -107,6 +113,7 @@ the style:
     <your_style_rules>
 }
 ```
+For more details on waybar styling, please refer to the [Waybar documentation](https://github.com/Alexays/Waybar/wiki/Styling).
 
 ### Special CSS classes
 Additionally to the `waybar-weather` class, waybar-weather emits additional CSS classes for some special 
@@ -121,9 +128,9 @@ weather conditions. These classes are:
 | `smoke`   | This class is emitted when it is foggy or hazy.                                         |
 
 You can use these classes to style your waybar-weather to e. g. show the temperature in red when it's hot or
-blue when it's cold or to perform a transition animation when it's snowing.
+blue when it's cold or to perform a transition blinking animation when it's snowing.
 
-Here is some example CSS you can add to your waybar `style.css` file:
+Here is some example CSS you can add to your waybar `style.css` file to accomplish this:
 
 ```css
 .waybar-weather {
@@ -150,14 +157,15 @@ Here is some example CSS you can add to your waybar `style.css` file:
 
 ### Custom SVG icons instead of UTF-8
 Since v0.3.0 waybar-weather supports custom SVG icons for the weather condition instead of the default UTF-8
-icons. This is established using the CSS capabilities of waybar. You can enable SVG icons in your configuration
-by setting the `use_css_icon` option to `true` in the `[templates]` section.
+icons. This is established using the (very limited) CSS capabilities of waybar. You can enable SVG icons in your 
+configuration by setting the `use_css_icon` option to `true` in the `[templates]` section.
 
-Once enabled, waybar-weather will change the default text template to omit the UTF-8 icon and instead emit a CSS
-class for the corresponding weather condition (as WMO code). For SVG icons to work, you also need to update your
-waybar `style.css` file and include the stylesheet that is shipped in the [contrib/style](contrib/style) directory.
-Copy the `waybar-weather.css` file from the contrib directory into your `~/.config/waybar/` directory and add the
-following line to your `style.css` file:
+Once enabled, waybar-weather will change the default text template (if you are using a differnt text template
+than the default one, waybar-weather will not touch it. You have to adjust it accordingly yourself) to omit the 
+UTF-8 icon and instead emit a CSS class for the corresponding weather condition (as WMO code). For SVG icons 
+to work, you also need to update your waybar `style.css` file and include the stylesheet that is shipped in 
+the [contrib/style](contrib/style) directory. Copy the `waybar-weather.css` file from the contrib directory 
+into your `~/.config/waybar/` directory and add the following line to your `style.css` file:
 
 ```css
 @import "waybar-weather.css";
@@ -171,6 +179,8 @@ You can find the iconset in the [contrib/icons](contrib/icons) directory. Copy t
 ```shell
 cp -a contrib/icons/meteocons ~/.config/waybar/weather-icons
 ```
+(When you installed waybar-weather using a package manager, these files are usually located in 
+`/usr/share/waybar-weather/`.
 
 You can replace the weather icons with your own iconset as long as the naming convention of the icons is the same.
 
@@ -388,65 +398,78 @@ waybar-weather will then update the weather data accordingly.
 waybar-weather comes with a templating engine that allows you to customize the output of the module.
 The templating engine is based on [Go's text/template system](https://pkg.go.dev/text/template). You can
 set your own template in the configuration file in the `templates` section. There is a setting for 
-`text`, `alt_text` and `tooltip`. The `text` setting is used to display the weather data in the module. The `alt_text` setting is used to display alternate weather data when the module is clicked. The
-`tooltip` setting is used to display the weather data in the tooltip when hovering over the module.
+`text`, `alt_text`, `tooltip` and `alt_tooltip`. The `text` setting is used to display the weather data in the module. 
+The `alt_text` and `alt_tooltip` setting are used to display alternate weather data when the module 
+is clicked. Both tooltips setting are used to display the weather data in the tooltip when hovering over the module.
 
 ### Variables
 The following variables are available for use in the templates:
 
-#### Location data
-| Variable                   | Type        | Description                                         |
-|----------------------------|-------------|-----------------------------------------------------|
-| `{{.Latitude}}`            | `float64`   | The latitude of your current location.              |
-| `{{.Longitude}}`           | `float64`   | The longitude of your current location.             |
-| `{{.Elevation}}`           | `float64`   | The elevation of your current location.             |
-| `{{.Address.DisplayName}}` | `string`    | The the full display name of your current location. |
-| `{{.Address.Road}}`        | `string`    | The road name of your current location.             |
-| `{{.Address.Suburb}}`      | `string`    | The suburb name of your current location.           |
-| `{{.Address.City}}`        | `string`    | The city name of your current location.             |
-| `{{.Address.County}}`      | `string`    | The county name of your current location.           |
-| `{{.Address.State}}`       | `string`    | The state name of your current location.            |
-| `{{.Address.Postcode}}`    | `string`    | The postcode of your current location.              |
-| `{{.Address.Country}}`     | `string`    | The country name of your current location.          |
-| `{{.Address.CountryCode}}` | `string`    | The country code of your current location.          |
+#### Main data struct
+| Variable             | Type              | Description                                                                   |
+|----------------------|-------------------|-------------------------------------------------------------------------------|
+| `{{.Latitude}}`      | `float64`         | The latitude of your current location.                                        |
+| `{{.Longitude}}`     | `float64`         | The longitude of your current location.                                       |
+| `{{.Address}}`       | `Address data`    | See [Address data](#address-data).                                            |
+| `{{.UpdateTime}}`    | `time.Time`       | The last time the weather data was updated.                                   |
+| `{{.SunsetTime}}`    | `time.Time`       | The time of sunset.                                                           |
+| `{{.SunriseTime}}`   | `time.Time`       | The time of sunrise.                                                          |
+| `{{.Moonphase}}`     | `string`          | The current moon phase.                                                       |
+| `{{.MoonphaseIcon}}` | `string`          | The current moon phase icon.                                                  |
+| `{{.Current}}`       | `Weather instant` | The [weather instant](#weather-instant) for the current weather conditions    |
+| `{{.Forecast}}`      | `Weather instant` | The [weather instant](#weather-instant) for the forecasted weather condition. |
 
-#### General weather and moon phase data
-| Variable                      | Type        | Description                                            |
-|-------------------------------|-------------|--------------------------------------------------------|
-| `{{.UpdateTime}}`             | `time.Time` | The last time the weather data was updated.            |
-| `{{.TempUnit}}`               | `string`    | The temperature unit.                                  |
-| `{{.PressureUnit}}`           | `string`    | The pressure unit.                                     |
-| `{{.SunsetTime}}`             | `time.Time` | The time of sunset.                                    |
-| `{{.SunriseTime}}`            | `time.Time` | The time of sunrise.                                   |
-| `{{.Moonphase}}`              | `string`    | The current moon phase.                                |
-| `{{.MoonphaseIcon}}`          | `string`    | The current moon phase icon.                           |
+#### Address data
+The address data struct holds all the address information of your current location. Please note that
+not every field might be available depending on the geocoding provider and the location you are in.
 
-#### Specific data points for current weather and forecasted weather
-| Variable                               | Type        | Description                                               |
-|----------------------------------------|-------------|-----------------------------------------------------------|
-| `{{.Current.WeatherDateForTime}}`      | `time.Time` | The date for the current weather data.                    |
-| `{{.Current.Temperature}}`             | `float64`   | The current temperature.                                  |
-| `{{.Current.ApparentTemperature}}`     | `float64`   | The current apparent temperature.                         |
-| `{{.Current.Humidity}}`                | `float64`   | The current humidity.                                     |
-| `{{.Current.PressureMSL}}`             | `float64`   | The current pressure at mean sea level.                   |
-| `{{.Current.WeatherCode}}`             | `float64`   | The current WMO weather code.                             |
-| `{{.Current.WindDirection}}`           | `float64`   | The current wind direction.                               |
-| `{{.Current.WindSpeed}}`               | `float64`   | The current wind speed.                                   |
-| `{{.Current.Condition}}`               | `string`    | The current weather condition as text.                    |
-| `{{.Current.ConditionIcon}}`           | `string`    | The current weather condition icon.                       |
-| `{{.Current.IsDaytime}}`               | `bool`      | Is true if it is currently daytime.                       |
-| `{{.Forecast.WeatherDateForTime}}`     | `time.Time` | The date for the current weather data.                    |
-| `{{.Forecast.Temperature}}`            | `float64`   | The forecasted temperature.                               |
-| `{{.Forecast.ApparentTemperature}}`    | `float64`   | The forecasted apparent temperature.                      |
-| `{{.Forecast.Humidity}}`               | `float64`   | The forecasted humidity.                                  |
-| `{{.Forecast.PressureMSL}}`            | `float64`   | The forecasted pressure at mean sea level.                |
-| `{{.Forecast.WeatherCode}}`            | `float64`   | The forecasted WMO weather code.                          |
-| `{{.Forecast.WindDirection}}`          | `float64`   | The forecasted wind direction.                            |
-| `{{.Forecast.WindSpeed}}`              | `float64`   | The forecasted wind speed.                                |
-| `{{.Forecast.Condition}}`              | `string`    | The forecasted weather condition as text.                 |
-| `{{.Forecast.ConditionIcon}}`          | `string`    | The forecasted weather condition icon.                    |
-| `{{.Forecast.IsDaytime}}`              | `bool`      | Is true if it is daytime at the forcasted time.           |
+| Variable                    | Type     | Description                                         |
+|-----------------------------|----------|-----------------------------------------------------|
+| `{{.Address.DisplayName}}`  | `string` | The the full display name of your current location. |
+| `{{.Address.County}}`       | `string` | The county name of your current location.           |
+| `{{.Address.State}}`        | `string` | The state name of your current location.            |
+| `{{.Address.Municipality}}` | `string` | The municipality name of your current location.     |
+| `{{.Address.City}}`         | `string` | The city name of your current location.             |
+| `{{.Address.CityDistrict}}` | `string` | The city district of your current location.         |
+| `{{.Address.Suburb}}`       | `string` | The suburb name of your current location.           |
+| `{{.Address.Street}}`       | `string` | The street name of your current location.           |
+| `{{.Address.HouseNumber}}`  | `string` | The house number of your current location.          |
+| `{{.Address.Postcode}}`     | `string` | The postcode of your current location.              |
 
+#### Weather instant
+A weather instant holds all the weather data for a specific time. The "Current" instant always holds the current
+weather conditions, while the "Forecast" instant holds the forecasted weather conditions (based on the configured
+forecast hours setting). Each instant has the following fields. Please note that not every field might be available
+depending on the weather provider you are using.
+
+| Variable                             | Type        | Description                                                                    |
+|--------------------------------------|-------------|--------------------------------------------------------------------------------|
+| `{{.<Instant>.InstantTime}}`         | `time.Time` | The weather data timestamp for the instant's weather data.                     |
+| `{{.<Instant>.Temperature}}`         | `float64`   | The current/forecasted temperature of the weather instant.                     |
+| `{{.<Instant>.ApparentTemperature}}` | `float64`   | The current/forecasted apparent temperature of the weather instant.            |
+| `{{.<Instant>.WeatherCode}}`         | `int`       | The WMO weather code of the weather instant.                                   |
+| `{{.<Instant>.WindSpeed}}`           | `float64`   | The wind speed of the weather instant.                                         |
+| `{{.<Instant>.WindGusts}}`           | `float64`   | The wind gusts speed of the weather instant.                                   |
+| `{{.<Instant>.WindDirection}}`       | `float64`   | The direction in degrees of the weather instant.                               |
+| `{{.<Instant>.RelativeHumidity}}`    | `float64`   | The relative humidity of the weather instant.                                  |
+| `{{.<Instant>.PressureMSL}}`         | `float64`   | The pressure at mean sea level of the weather instant.                         |
+| `{{.<Instant>.IsDay}}`               | `bool`      | Is set to true if it is daytime at the time of the weather instant.            |
+| `{{.<Instant>.Category}}`            | `string`    | The current/forecasted weather category (based on WMO) of the weather instant. |
+| `{{.<Instant>.Condition}}`           | `string`    | The current/forecasted weather condition of the weather instant.               |
+| `{{.<Instant>.ConditionIcon}}`       | `string`    | The current/forecasted weather condition icon of the weather instant.          |
+| `{{.<Instant>.Units}}`               | `Units`     | See [Weather units](#weather-units) for details.                               |
+
+#### Weather units
+Weather units are represented by the `Units` struct. It holds the units for the temperature, wind speed, pressure,
+relative humidity in the format that is configured.
+
+| Variable                             | Type     | Description                                              |
+|--------------------------------------|----------|----------------------------------------------------------|
+| `{{.<Instant>.Units.Temperature}}`   | `string` | The temperature unit for the weather instant (°C or °F). |
+| `{{.<Instant>.Units.WindSpeed}}`     | `string` | The wind speed unit for the weather instant.             |
+| `{{.<Instant>.Units.Humidity}}`      | `string` | The humidity unit for the weather instant.               |
+| `{{.<Instant>.Units.Pressure}}`      | `string` | The pressure unit for the weather instant.               |
+| `{{.<Instant>.Units.WindDirection}}` | `string` | The wind direction unit for the weather instant.         |
 
 ## Formatting functions
 waybar-weather comes with a set of formatting functions that can be used to manipulate the output of
@@ -457,21 +480,21 @@ waybar-weather comes with the `timeFormat` function as part of its templating sy
 change the default formatting of a `time.Time` value to your liking. It follows the Go [time format
 specifiers](https://pkg.go.dev/time#pkg-constants).
 
-For example the following template value `{{timeFormat .UpdateTime "15:04"}}` will display the time
+For example the following template value `{{timeFormat .<Instant>.UpdateTime "15:04"}}` will display the time
 of the last update in the format `HH:MM`.
 
 ### float64 formatting
 waybar-weather comes with the `floatFormat` function as part of its templating system. It allows to
 output a float64 value with a custom precision. 
 
-For example the following template value `{{floatFormat .Temperature 1}}` will display the current
+For example the following template value `{{floatFormat .<Instant>.Temperature 1}}` will display the current
 temperature with a precision of 1 decimal place (e.g. `23.1` instead of `23.10`).
 
 ## Conditional formatting
 Since waybar-weather uses the Go templating system, you can use the `if` and `else` statements to
 display a value based on a boolean value. Let's assume you want to display a different icon for
 daytime and nighttime. You can do so using the following template: 
-`{{if .IsDaytime}}{{.ConditionIcon}}{{else}}{{.MoonphaseIcon}}{{end}}` (even though this example doesn't make 
+`{{if .<Instant>.IsDay}}{{.ConditionIcon}}{{else}}{{.MoonphaseIcon}}{{end}}` (even though this example doesn't make 
 much sense, it's just an example)
 
 ### Localized time formatting
@@ -479,6 +502,32 @@ waybar-weather comes with the `localizedTime` function as part of its templating
 to output a `time.Time` value in the localized format of your system. For example the following
 template value `{{localizedTime .SunsetTime}}` will display the sunset time as `18:30` in German,
 while it will display `6:30 p.m.` in English.
+
+### Humanized float64 formatting
+Depending on your localization setting, numbers in your country might differ in formatting compared to 
+other countries. For example in Germany `1000.23` would be formatted: `1.000,23` while in the US it would
+be formatted `1,000.23`. This is called humanized formatting. waybar-weather comes with the `hum` 
+function as part of its templating system. It allows to output a float64 value in humanized format.
+
+### Lowercase/uppercase formatting
+waybar-weather comes with the `lc` and `uc` functions as part of its templating system. They allow
+to convert a string to lowercase or uppercase.
+
+### Wind directions
+By default the wind direction in the weather data is provided in degrees. waybar-weather comes with the `windDir`
+function as part of its templating system. It allows to convert the wind direction in degrees to a string 
+representation of the wind direction. For example the following template value `{{windDir .<Instant>.WindDirection}}` 
+will display the wind direction as `NE` (assuming that the wind direction in this example is 60°). We also provide
+a `windDirIcon` function which returns the corresponding wind direction icon based on the wind direction.
+
+### Access to other forecasted data
+While the `.Forecast` instant always provides the forecasted weather data for the configured forecast hours,
+you might want to access other forecasted weather data. waybar-weather provides the `fcastHourOffset` function as part
+of its templating system. It allows to access the weather instant based on the offset from the current instant. 
+For example the following template value `{{fcastHourOffset . 8}}` will return the weather instant for the current
+instant plus 8 hours. The function always returns a new [weather instant](#weather-instant). For ease of use, the 
+function can be used in combination with Go's `with` template function like this: 
+`{{with fcastHourOffset . 8}}{{.Temperature}}{{end}}`.
 
 ### Localized variables
 waybar-weather provides a list of pre-defined localized variables that can be used in the templates.
