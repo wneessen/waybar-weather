@@ -287,6 +287,7 @@ To enable this, you need to run the following command as sudo/root:
 ```shell
 setcap cap_net_admin+ep /usr/bin/waybar-weather
 ```
+(Please note: the AUR package performs this step automatically during installation.)
 
 #### Privacy considerations
 The ICHNAEA provider uses the Mozilla Location Service protocol and relies on nearby WiFi network information to
