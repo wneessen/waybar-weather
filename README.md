@@ -8,11 +8,12 @@ SPDX-License-Identifier: MIT
 ### A simple and elegant Waybar module to display weather data from Open-Meteo.
 
 ## About
-waybar-weather is a simple programm written in Go that fetches weather data from Open-Meteo
-and presents it in a format suitable to be used as custom Waybar module. It uses different
-geolocation providers to determine your current location and fetches weather data for that 
-location. The geolocation is continuously monitored and updated if the location changes, 
-allowing you to always see the weather data for your current location.
+waybar-weather is a simple but versatile programm written in Go to display weather data
+as custom waybar module. It fetches weather data from Open-Meteo (more options in the future)
+and presents it in a format suitable for waybar. It uses different geolocation providers to i
+determine your current location and fetches weather data for that location. The geolocation is 
+continuously monitored and updated if the location changes, allowing you to always see the 
+weather data for your current location, even while you are traveling.
 
 ## Features
 * [Uses different geolocation providers to find your current location](#geolocation-lookup)
