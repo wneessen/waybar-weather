@@ -104,14 +104,14 @@ func TestOpenMeteo_GetWeather(t *testing.T) {
 		}
 		wantCurrent := weather.Instant{
 			InstantTime:         time.Date(2026, 1, 16, 22, 0o0, 0o0, 0o0, time.Local),
-			Temperature:         -5.3,
-			ApparentTemperature: -9.2,
-			WeatherCode:         0,
-			WindSpeed:           4.7,
-			WindGusts:           12.2,
-			WindDirection:       81,
-			RelativeHumidity:    72,
-			PressureMSL:         1034.7,
+			Temperature:         3.2,
+			ApparentTemperature: 1,
+			WeatherCode:         3,
+			WindSpeed:           3.4,
+			WindGusts:           6.5,
+			WindDirection:       32,
+			RelativeHumidity:    93,
+			PressureMSL:         1001.0,
 		}
 		if data.Current.Temperature != wantCurrent.Temperature {
 			t.Errorf("expected current temperature to be %f, got %f", wantCurrent.Temperature,
@@ -146,16 +146,16 @@ func TestOpenMeteo_GetWeather(t *testing.T) {
 				data.Current.PressureMSL)
 		}
 		wantFCast := weather.Instant{
-			Temperature:         -3.0,
-			ApparentTemperature: -6.6,
-			WeatherCode:         3,
-			WindSpeed:           6.4,
-			WindGusts:           16.6,
-			WindDirection:       232,
-			RelativeHumidity:    91,
-			PressureMSL:         1022.2,
+			Temperature:         5.9,
+			ApparentTemperature: 3.2,
+			WeatherCode:         51,
+			WindSpeed:           11.7,
+			WindGusts:           31,
+			WindDirection:       56,
+			RelativeHumidity:    99,
+			PressureMSL:         1002.4,
 		}
-		fcastTime := weather.NewDayHour(time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC))
+		fcastTime := weather.NewDayHour(time.Date(2026, 1, 27, 0, 0, 0, 0, time.UTC))
 		fcast := data.Forecast[fcastTime]
 		if fcast.Temperature != wantFCast.Temperature {
 			t.Errorf("expected forecast temperature to be %f, got %f", wantFCast.Temperature, fcast.Temperature)
@@ -236,14 +236,14 @@ func TestOpenMeteo_GetWeather(t *testing.T) {
 			t.Error("expected generated at to be set")
 		}
 		wantCurrent := weather.Instant{
-			Temperature:         22.5,
-			ApparentTemperature: 15.5,
-			WeatherCode:         0,
-			WindSpeed:           2.9,
-			WindGusts:           7.6,
-			WindDirection:       81,
-			RelativeHumidity:    72,
-			PressureMSL:         1034.7,
+			Temperature:         37.8,
+			ApparentTemperature: 33.7,
+			WeatherCode:         3,
+			WindSpeed:           2.1,
+			WindGusts:           4,
+			WindDirection:       32,
+			RelativeHumidity:    93,
+			PressureMSL:         1001.0,
 		}
 		if data.Current.Temperature != wantCurrent.Temperature {
 			t.Errorf("expected current temperature to be %f, got %f", wantCurrent.Temperature,
@@ -312,13 +312,13 @@ func TestOpenMeteo_GetWeather(t *testing.T) {
 			offset int
 			want   time.Time
 		}{
-			{"UTC", "UTC", 0, time.Date(2026, 1, 16, 22, 15, 0, 0, time.UTC)},
-			{"Local", "Local", 0, time.Date(2026, 1, 16, 22, 15, 0, 0, time.Local)},
+			{"UTC", "UTC", 0, time.Date(2026, 1, 28, 23, 30, 0, 0, time.UTC)},
+			{"Local", "Local", 0, time.Date(2026, 1, 28, 23, 30, 0, 0, time.Local)},
 			{
 				"Europe/Berlin",
 				"Europe/Berlin",
 				3600,
-				time.Date(2026, 1, 16, 22, 15, 0, 0,
+				time.Date(2026, 1, 28, 23, 30, 0, 0,
 					time.FixedZone("Europe/Berlin", 3600)),
 			},
 		}
@@ -476,6 +476,15 @@ func TestResTime_UnmarshalJSON(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestFoo(t *testing.T) {
+	client := testClient(t, "", false)
+	data, err := client.GetWeather(t.Context(), geobus.Coordinate{Lat: testLat, Lon: testLon})
+	if err != nil {
+		t.Fatalf("weather lookup failed: %s", err)
+	}
+	t.Logf("%+v", data.Current)
 }
 
 func testClient(t *testing.T, unit string, nilLogger bool) *OpenMeteo {

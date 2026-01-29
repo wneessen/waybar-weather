@@ -26,17 +26,18 @@ type Data struct {
 }
 
 type Instant struct {
-	InstantTime         time.Time
-	Temperature         float64
-	ApparentTemperature float64
-	WeatherCode         int
-	WindSpeed           float64
-	WindGusts           float64
-	WindDirection       float64
-	RelativeHumidity    float64
-	PressureMSL         float64
-	IsDay               bool
-	Units               Units
+	InstantTime              time.Time
+	Temperature              float64
+	ApparentTemperature      float64
+	WeatherCode              int
+	WindSpeed                float64
+	WindGusts                float64
+	WindDirection            float64
+	RelativeHumidity         float64
+	PrecipitationProbability float64
+	PressureMSL              float64
+	IsDay                    bool
+	Units                    Units
 }
 
 type Units struct {
