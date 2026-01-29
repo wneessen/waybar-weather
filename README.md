@@ -115,6 +115,19 @@ the style:
 ```
 For more details on waybar styling, please refer to the [Waybar documentation](https://github.com/Alexays/Waybar/wiki/Styling).
 
+### Alternative view
+When waybar-weather receives the `USR1` signal via `pkill -USR1 waybar-weather`, it will switch to an alternative view
+than can show alternative weather information. In the default config it will show the forecasted weather data. When
+in "alternative view" waybar-weather will emit an additional CSS class `alt-view` that can be used to style 
+waybar-weather in a way so that you can easily distinguish between the two views.
+
+Here is some example CSS you can add to your waybar `style.css` file to accomplish this:
+```css
+.waybar-weather.alt-view {
+  font-style: italic;
+} 
+```
+
 ### Special CSS classes
 Additionally to the `waybar-weather` class, waybar-weather emits additional CSS classes for some special 
 weather conditions. These classes are:

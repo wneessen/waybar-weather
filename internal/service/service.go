@@ -32,6 +32,7 @@ const (
 	ColdOutputClass  = "cold"
 	HotOutputClass   = "hot"
 	DayOutputClass   = "day"
+	AltViewClass     = "alt-view"
 	NightOutputClass = "night"
 	SubID            = "location-update"
 	cacheHitTTL      = 1 * time.Hour
@@ -212,6 +213,7 @@ func (s *Service) printWeather(context.Context) {
 	outputClasses := []string{OutputClass}
 	switch altMode {
 	case true:
+		outputClasses = append(outputClasses, AltViewClass)
 		if tplCtx.Forecast.Temperature >= s.config.Weather.HotThreshold {
 			outputClasses = append(outputClasses, HotOutputClass)
 		}
