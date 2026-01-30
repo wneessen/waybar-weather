@@ -530,9 +530,10 @@ to convert a string to lowercase or uppercase.
 ### Wind directions
 By default the wind direction in the weather data is provided in degrees. waybar-weather comes with the `windDir`
 function as part of its templating system. It allows to convert the wind direction in degrees to a string 
-representation of the wind direction. For example the following template value `{{windDir .<Instant>.WindDirection}}` 
-will display the wind direction as `NE` (assuming that the wind direction in this example is 60°). We also provide
-a `windDirIcon` function which returns the corresponding wind direction icon based on the wind direction.
+representation of the origin of the wind direction. For example the following template value 
+`{{windDir .<Instant>.WindDirection}}` will display the wind direction as `NE` (assuming that the wind direction 
+in this example is 60°). We also provide a `windDirIcon` function which returns the corresponding wind direction 
+icon based on the wind direction pointing from the origin towards the direction (meaning `NE` would result in `↙`).
 
 ### Access to other forecasted data
 While the `.Forecast` instant always provides the forecasted weather data for the configured forecast hours,

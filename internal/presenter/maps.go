@@ -191,12 +191,12 @@ var i18nVars = map[string]localize.MsgID{
 }
 
 var windDirIcons = map[string]string{
-	"N":  "↑",
-	"NE": "↗",
-	"E":  "→",
-	"SE": "↘",
-	"S":  "↓",
-	"SW": "↙",
-	"W":  "←",
-	"NW": "↖",
+	"N":  "↓",
+	"E":  "←",
+	"S":  "↑",
+	"W":  "→",
+	"SW": "↗",
+	"NW": "↘",
+	"NE": "↙",
+	"SE": "↖",
 }
