@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/vorlif/humanize"
+
+	"github.com/wneessen/waybar-weather/internal/vartype"
 )
 
 func (p *Presenter) templateFuncMap() template.FuncMap {
@@ -37,8 +39,8 @@ func (p *Presenter) loc(val string) string {
 	return val
 }
 
-func (p *Presenter) hum(val float64) string {
-	return p.printer.Sprintf("%.1f", val)
+func (p *Presenter) hum(val vartype.VarFloat64) string {
+	return p.printer.Sprintf("%.1f", val.Value())
 }
 
 func (p *Presenter) localizedTime(val time.Time) string {
@@ -49,9 +51,9 @@ func (p *Presenter) timeFormat(val time.Time, fmt string) string {
 	return val.Format(fmt)
 }
 
-func (p *Presenter) floatFormat(val float64, precision int) string {
+func (p *Presenter) floatFormat(val vartype.VarFloat64, precision int) string {
 	pow := math.Pow(10, float64(precision))
-	return fmt.Sprintf("%.*f", precision, math.Trunc(val*pow)/pow)
+	return fmt.Sprintf("%.*f", precision, math.Trunc(val.Value()*pow)/pow)
 }
 
 // forecast returns the forecast at the given offset (0-based).
@@ -71,23 +73,23 @@ func (p *Presenter) forecastByOffset(ctx TemplateContext, offset int) WeatherVie
 	return WeatherView{}
 }
 
-func (p *Presenter) degToString(deg float64) string {
+func (p *Presenter) degToString(deg vartype.VarFloat64) string {
 	switch {
-	case deg < 22.5:
+	case deg.Value() < 22.5:
 		return "N"
-	case deg < 67.5:
+	case deg.Value() < 67.5:
 		return "NE"
-	case deg < 112.5:
+	case deg.Value() < 112.5:
 		return "E"
-	case deg < 157.5:
+	case deg.Value() < 157.5:
 		return "SE"
-	case deg < 202.5:
+	case deg.Value() < 202.5:
 		return "S"
-	case deg < 247.5:
+	case deg.Value() < 247.5:
 		return "SW"
-	case deg < 292.5:
+	case deg.Value() < 292.5:
 		return "W"
-	case deg < 337.5:
+	case deg.Value() < 337.5:
 		return "NW"
 	default:
 		return "N"

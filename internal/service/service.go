@@ -214,35 +214,35 @@ func (s *Service) printWeather(context.Context) {
 	switch altMode {
 	case true:
 		outputClasses = append(outputClasses, AltViewClass)
-		if tplCtx.Forecast.Temperature >= s.config.Weather.HotThreshold {
+		if tplCtx.Forecast.Temperature.Value() >= s.config.Weather.HotThreshold {
 			outputClasses = append(outputClasses, HotOutputClass)
 		}
-		if tplCtx.Forecast.Temperature <= s.config.Weather.ColdThreshold {
+		if tplCtx.Forecast.Temperature.Value() <= s.config.Weather.ColdThreshold {
 			outputClasses = append(outputClasses, ColdOutputClass)
 		}
 		if tplCtx.Forecast.Category != "" {
 			outputClasses = append(outputClasses, tplCtx.Forecast.Category)
 		}
-		if tplCtx.Forecast.IsDay {
+		if tplCtx.Forecast.IsDay.Value() {
 			outputClasses = append(outputClasses, DayOutputClass)
 		}
-		if !tplCtx.Forecast.IsDay {
+		if !tplCtx.Forecast.IsDay.Value() {
 			outputClasses = append(outputClasses, NightOutputClass)
 		}
 	default:
-		if tplCtx.Current.Temperature >= s.config.Weather.HotThreshold {
+		if tplCtx.Current.Temperature.Value() >= s.config.Weather.HotThreshold {
 			outputClasses = append(outputClasses, HotOutputClass)
 		}
-		if tplCtx.Current.Temperature <= s.config.Weather.ColdThreshold {
+		if tplCtx.Current.Temperature.Value() <= s.config.Weather.ColdThreshold {
 			outputClasses = append(outputClasses, ColdOutputClass)
 		}
 		if tplCtx.Current.Category != "" {
 			outputClasses = append(outputClasses, tplCtx.Current.Category)
 		}
-		if tplCtx.Current.IsDay {
+		if tplCtx.Current.IsDay.Value() {
 			outputClasses = append(outputClasses, DayOutputClass)
 		}
-		if !tplCtx.Current.IsDay {
+		if !tplCtx.Current.IsDay.Value() {
 			outputClasses = append(outputClasses, NightOutputClass)
 		}
 	}

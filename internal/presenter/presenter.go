@@ -200,9 +200,9 @@ func (p *Presenter) viewFromInstant(in weather.Instant) WeatherView {
 	return WeatherView{
 		Instant: in,
 
-		Category:      weatherCategory(in.WeatherCode),
-		Condition:     p.localizer.Get(WMOWeatherCodes[in.WeatherCode]),
-		ConditionIcon: WMOWeatherIcons[in.WeatherCode][in.IsDay],
+		Category:      weatherCategory(in.WeatherCode.Value()),
+		Condition:     p.localizer.Get(WMOWeatherCodes[in.WeatherCode.Value()]),
+		ConditionIcon: WMOWeatherIcons[in.WeatherCode.Value()][in.IsDay.Value()],
 	}
 }
 
