@@ -8,6 +8,9 @@ import (
 	"fmt"
 )
 
+// errUnsupported is a constant error message indicating unsupported functionality by a weather provider.
+const errUnsupported = "unsupported by weather provider"
+
 type (
 	// VarFloat64 is a type alias for Variable[float64], representing a float64 value with initialization tracking.
 	VarFloat64 = Variable[float64]
@@ -56,10 +59,11 @@ func (v *Variable[T]) IsSet() bool {
 	return v.isset
 }
 
-// String returns a string representation of the Variable. If uninitialized, it returns a default placeholder message.
+// String satisfies the fmt.Stringer interface for Variable types. If uninitialized, it returns a default
+// placeholder message.
 func (v Variable[T]) String() string {
 	if !v.isset {
-		return "Unsupported by weather provider"
+		return errUnsupported
 	}
 	return fmt.Sprint(v.value)
 }
