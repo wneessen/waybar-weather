@@ -428,8 +428,8 @@ The following variables are available for use in the templates:
 | `{{.UpdateTime}}`    | `time.Time`       | The last time the weather data was updated.                                   |
 | `{{.SunsetTime}}`    | `time.Time`       | The time of sunset.                                                           |
 | `{{.SunriseTime}}`   | `time.Time`       | The time of sunrise.                                                          |
-| `{{.Moonphase}}`     | `string`          | The current moon phase.                                                       |
-| `{{.MoonphaseIcon}}` | `string`          | The current moon phase icon.                                                  |
+| `{{.MoonPhase}}`     | `string`          | The current moon phase.                                                       |
+| `{{.MoonPhaseIcon}}` | `string`          | The current moon phase icon.                                                  |
 | `{{.Current}}`       | `Weather instant` | The [weather instant](#weather-instant) for the current weather conditions    |
 | `{{.Forecast}}`      | `Weather instant` | The [weather instant](#weather-instant) for the forecasted weather condition. |
 
@@ -508,7 +508,7 @@ temperature with a precision of 1 decimal place (e.g. `23.1` instead of `23.10`)
 Since waybar-weather uses the Go templating system, you can use the `if` and `else` statements to
 display a value based on a boolean value. Let's assume you want to display a different icon for
 daytime and nighttime. You can do so using the following template: 
-`{{if .<Instant>.IsDay}}{{.ConditionIcon}}{{else}}{{.MoonphaseIcon}}{{end}}` (even though this example doesn't make 
+`{{if .<Instant>.IsDay}}{{.ConditionIcon}}{{else}}{{.MoonPhaseIcon}}{{end}}` (even though this example doesn't make
 much sense, it's just an example)
 
 ### Localized time formatting
@@ -530,9 +530,10 @@ to convert a string to lowercase or uppercase.
 ### Wind directions
 By default the wind direction in the weather data is provided in degrees. waybar-weather comes with the `windDir`
 function as part of its templating system. It allows to convert the wind direction in degrees to a string 
-representation of the wind direction. For example the following template value `{{windDir .<Instant>.WindDirection}}` 
-will display the wind direction as `NE` (assuming that the wind direction in this example is 60°). We also provide
-a `windDirIcon` function which returns the corresponding wind direction icon based on the wind direction.
+representation of the origin of the wind direction. For example the following template value 
+`{{windDir .<Instant>.WindDirection}}` will display the wind direction as `NE` (assuming that the wind direction 
+in this example is 60°). We also provide a `windDirIcon` function which returns the corresponding wind direction 
+icon based on the wind direction pointing from the origin towards the direction (meaning `NE` would result in `↙`).
 
 ### Access to other forecasted data
 While the `.Forecast` instant always provides the forecasted weather data for the configured forecast hours,
@@ -570,7 +571,7 @@ value of the corresponding variable at runtime. The following variables are also
 
 | Variable name | Resulting value       | Usage                | 
 |---------------|-----------------------|----------------------|
-| `.Moonphase`  | The current moonphase | `{{loc .Moonphase}}` |
+| `.MoonPhase`  | The current moonphase | `{{loc .MoonPhase}}` |
 
 ## Internationalization / Localization
 waybar-weather has support for internationalization (i18n) of all displayable elements. waybar-weather
