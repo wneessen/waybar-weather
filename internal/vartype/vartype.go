@@ -8,9 +8,16 @@ import (
 	"fmt"
 )
 
-type VarFloat64 = Variable[float64]
-type VarInt = Variable[int]
-type VarBool = Variable[bool]
+type (
+	// VarFloat64 is a type alias for Variable[float64], representing a float64 value with initialization tracking.
+	VarFloat64 = Variable[float64]
+
+	// VarInt is a type alias for Variable[int], representing an integer value with initialization tracking.
+	VarInt = Variable[int]
+
+	// VarBool is a type alias for Variable[bool], representing a boolean value with initialization tracking.
+	VarBool = Variable[bool]
+)
 
 // Variable represents a generic type wrapper that holds a value and tracks its initialization state.
 type Variable[T any] struct {
