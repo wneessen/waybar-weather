@@ -253,7 +253,7 @@ func (s *Service) printWeather(context.Context) {
 		if altMode {
 			code = tplCtx.Forecast.WeatherCode
 		}
-		outputClasses = append(outputClasses, fmt.Sprintf("wmo-%d", code))
+		outputClasses = append(outputClasses, fmt.Sprintf("wmo-%d", code.Value()))
 	}
 
 	// Present the rendered weather data
