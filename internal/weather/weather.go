@@ -43,11 +43,12 @@ type Instant struct {
 }
 
 type Units struct {
-	Temperature   string
-	WindSpeed     string
-	Humidity      string
-	Pressure      string
-	WindDirection string
+	Temperature              string
+	WindSpeed                string
+	Humidity                 string
+	Pressure                 string
+	WindDirection            string
+	PrecipitationProbability string
 }
 
 type DayHour int64
