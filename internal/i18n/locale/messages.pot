@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: github.com/wneessen/waybar-weather\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-22 12:30+0100\n"
+"POT-Creation-Date: 2026-02-22 12:49+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -167,69 +167,77 @@ msgid "PoP"
 msgstr ""
 
 #: ../../presenter/maps.go:176
-msgid "Wind"
+msgid "Min. temperature"
 msgstr ""
 
 #: ../../presenter/maps.go:177
-msgid "Pressure"
+msgid "Max. temperature"
 msgstr ""
 
 #: ../../presenter/maps.go:178
-msgid "Feels like"
+msgid "Wind"
 msgstr ""
 
 #: ../../presenter/maps.go:179
-msgid "Weather code"
+msgid "Pressure"
 msgstr ""
 
 #: ../../presenter/maps.go:180
-msgid "Forecast for"
+msgid "Feels like"
 msgstr ""
 
 #: ../../presenter/maps.go:181
-msgid "Weather data for"
+msgid "Weather code"
 msgstr ""
 
 #: ../../presenter/maps.go:182
-msgid "Sunrise"
+msgid "Forecast for"
 msgstr ""
 
 #: ../../presenter/maps.go:183
-msgid "Sunset"
+msgid "Weather data for"
 msgstr ""
 
 #: ../../presenter/maps.go:184
-msgid "Moonphase"
+msgid "Sunrise"
 msgstr ""
 
 #: ../../presenter/maps.go:185
-msgid "New moon"
+msgid "Sunset"
 msgstr ""
 
 #: ../../presenter/maps.go:186
-msgid "Waxing crescent"
+msgid "Moonphase"
 msgstr ""
 
 #: ../../presenter/maps.go:187
-msgid "First quarter"
+msgid "New moon"
 msgstr ""
 
 #: ../../presenter/maps.go:188
-msgid "Waxing gibbous"
+msgid "Waxing crescent"
 msgstr ""
 
 #: ../../presenter/maps.go:189
-msgid "Full moon"
+msgid "First quarter"
 msgstr ""
 
 #: ../../presenter/maps.go:190
-msgid "Waning gibbous"
+msgid "Waxing gibbous"
 msgstr ""
 
 #: ../../presenter/maps.go:191
-msgid "Third quarter"
+msgid "Full moon"
 msgstr ""
 
 #: ../../presenter/maps.go:192
+msgid "Waning gibbous"
+msgstr ""
+
+#: ../../presenter/maps.go:193
+msgid "Third quarter"
+msgstr ""
+
+#: ../../presenter/maps.go:194
 msgid "Waning crescent"
 msgstr ""

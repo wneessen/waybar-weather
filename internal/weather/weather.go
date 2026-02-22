@@ -24,7 +24,7 @@ type Data struct {
 
 	Current  Instant
 	Forecast map[DayHour]Instant
-	Daily    map[Day]Instant
+	Daily    map[Day]DailyInstant
 }
 
 type Instant struct {
@@ -42,6 +42,12 @@ type Instant struct {
 	Units                    Units
 }
 
+type DailyInstant struct {
+	InstantTime    time.Time
+	TemperatureMin vartype.VarFloat64
+	TemperatureMax vartype.VarFloat64
+}
+
 type Units struct {
 	Temperature              string
 	WindSpeed                string
@@ -57,7 +63,7 @@ type Day int64
 func NewData() *Data {
 	return &Data{
 		Forecast: make(map[DayHour]Instant),
-		Daily:    make(map[Day]Instant),
+		Daily:    make(map[Day]DailyInstant),
 	}
 }
 

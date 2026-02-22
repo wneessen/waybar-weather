@@ -31,6 +31,10 @@ type WeatherView struct {
 	ConditionIcon string
 }
 
+type DailyView struct {
+	weather.DailyInstant
+}
+
 type TemplateContext struct {
 	Latitude  float64
 	Longitude float64
@@ -43,9 +47,12 @@ type TemplateContext struct {
 	MoonPhase     string
 	MoonPhaseIcon string
 
-	Current   WeatherView
-	Forecast  WeatherView
-	Forecasts []WeatherView
+	Current     WeatherView
+	Today       DailyView
+	Forecast    WeatherView
+	ForecastDay DailyView
+	Forecasts   []WeatherView
+	Daily       []DailyView
 }
 
 type Presenter struct {
@@ -110,8 +117,11 @@ func (p *Presenter) BuildContext(addr geocode.Address, data *weather.Data, sunri
 		MoonPhase:     moonPhase,
 		MoonPhaseIcon: MoonPhaseIcon[moonPhase],
 		Current:       p.viewFromInstant(data.Current),
+		Today:         p.viewFromDailyInstant(data.Daily[weather.NewDay(time.Now())]),
 		Forecast:      p.viewFromInstant(data.Forecast[fcastHour]),
+		ForecastDay:   p.viewFromDailyInstant(data.Daily[weather.NewDay(fcastHour.Time())]),
 		Forecasts:     p.viewSliceFromMap(data.Forecast),
+		Daily:         p.viewSliceFromDailyMap(data.Daily),
 	}
 }
 
@@ -206,11 +216,30 @@ func (p *Presenter) viewFromInstant(in weather.Instant) WeatherView {
 	}
 }
 
+// viewFromDailyInstant converts a weather.DailyInstant into a DailyView.
+func (p *Presenter) viewFromDailyInstant(in weather.DailyInstant) DailyView {
+	return DailyView{
+		DailyInstant: in,
+	}
+}
+
 // viewSliceFromMap converts a map of DayHour-Instant pairs into a sorted slice of WeatherView based on InstantTime.
 func (p *Presenter) viewSliceFromMap(m map[weather.DayHour]weather.Instant) []WeatherView {
 	views := make([]WeatherView, 0, len(m))
 	for _, inst := range m {
 		views = append(views, p.viewFromInstant(inst))
+	}
+	sort.Slice(views, func(i, j int) bool {
+		return views[i].InstantTime.Before(views[j].InstantTime)
+	})
+	return views
+}
+
+// viewSliceFromDailyMap converts a map of DayHour-Instant pairs into a sorted slice of WeatherView based on InstantTime.
+func (p *Presenter) viewSliceFromDailyMap(m map[weather.Day]weather.DailyInstant) []DailyView {
+	views := make([]DailyView, 0, len(m))
+	for _, inst := range m {
+		views = append(views, p.viewFromDailyInstant(inst))
 	}
 	sort.Slice(views, func(i, j int) bool {
 		return views[i].InstantTime.Before(views[j].InstantTime)

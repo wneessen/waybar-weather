@@ -173,6 +173,8 @@ var i18nVars = map[string]localize.MsgID{
 	"windspeed":       "Wind speed",
 	"pop":             "Probability of Precipitation",
 	"pop short":       "PoP",
+	"min_temp":        "Min. temperature",
+	"max_temp":        "Max. temperature",
 	"wind":            "Wind",
 	"pressure":        "Pressure",
 	"apparent":        "Feels like",

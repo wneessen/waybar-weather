@@ -220,6 +220,14 @@ func (o *OpenMeteo) GetWeather(ctx context.Context, coords geobus.Coordinate) (*
 		}
 		data.Forecast[timePos] = instant
 	}
+	for i := range res.Daily.Time {
+		timePos := weather.NewDay(res.Daily.Time[i].Time)
+		instant := weather.DailyInstant{
+			TemperatureMin: vartype.NewVariable(res.Daily.TemperatureMin[i]),
+			TemperatureMax: vartype.NewVariable(res.Daily.TemperatureMax[i]),
+		}
+		data.Daily[timePos] = instant
+	}
 
 	return data, nil
 }

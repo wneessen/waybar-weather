@@ -25,6 +25,8 @@ const (
 		"{{loc \"humidity\"}}: {{.Current.RelativeHumidity}}%\n" +
 		"{{loc \"pressure\"}}: {{hum .Current.PressureMSL}} {{.Current.Units.Pressure}}\n" +
 		"{{loc \"wind\"}}: {{hum .Current.WindSpeed}} → {{hum .Current.WindGusts}} {{.Current.Units.WindSpeed}} ({{windDir .Current.WindDirection}})\n" +
+		"{{loc \"min_temp\"}}: {{hum .Today.TemperatureMin}}{{.Current.Units.Temperature}}\n" +
+		"{{loc \"max_temp\"}}: {{hum .Today.TemperatureMax}}{{.Current.Units.Temperature}}\n" +
 		"\n" +
 		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
 	DefaultAltTooltipTpl = "{{.Address.City}}, {{.Address.Country}}\n" +
@@ -33,6 +35,8 @@ const (
 		"{{loc \"humidity\"}}: {{.Forecast.RelativeHumidity}}%\n" +
 		"{{loc \"pressure\"}}: {{hum .Forecast.PressureMSL}} {{.Forecast.Units.Pressure}}\n" +
 		"{{loc \"wind\"}}: {{hum .Forecast.WindSpeed}} → {{hum .Forecast.WindGusts}} {{.Forecast.Units.WindSpeed}} ({{windDir .Forecast.WindDirection}})\n" +
+		"{{loc \"min_temp\"}}: {{hum .ForecastDay.TemperatureMin}}{{.Forecast.Units.Temperature}}\n" +
+		"{{loc \"max_temp\"}}: {{hum .ForecastDay.TemperatureMax}}{{.Forecast.Units.Temperature}}\n" +
 		"{{loc \"pop short\"}}: {{.Forecast.PrecipitationProbability}}{{.Forecast.Units.PrecipitationProbability}}\n" +
 		"\n" +
 		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
