@@ -33,6 +33,7 @@ const (
 		"{{loc \"humidity\"}}: {{.Forecast.RelativeHumidity}}%\n" +
 		"{{loc \"pressure\"}}: {{hum .Forecast.PressureMSL}} {{.Forecast.Units.Pressure}}\n" +
 		"{{loc \"wind\"}}: {{hum .Forecast.WindSpeed}} → {{hum .Forecast.WindGusts}} {{.Forecast.Units.WindSpeed}} ({{windDir .Forecast.WindDirection}})\n" +
+		"{{loc \"prec probability\"}}: {{.Forecast.PrecipitationProbability}}{{.Forecast.Units.PrecipitationProbability}}\n" +
 		"\n" +
 		`🌅 {{localizedTime .SunriseTime}} • 🌇 {{localizedTime .SunsetTime}}`
 )
