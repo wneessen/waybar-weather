@@ -89,15 +89,16 @@ type response struct {
 		PressureMSL         float64 `json:"pressure_msl"`
 	} `json:"current"`
 	HourlyUnits struct {
-		Time                string `json:"time"`
-		Temperature         string `json:"temperature_2m"`
-		ApparentTemperature string `json:"apparent_temperature"`
-		WeatherCode         string `json:"weather_code"`
-		WindSpeed           string `json:"wind_speed_10m"`
-		IsDay               string `json:"is_day"`
-		WindDirection       string `json:"wind_direction_10m"`
-		RelativeHumidity    string `json:"relative_humidity_2m"`
-		PressureMsl         string `json:"pressure_msl"`
+		Time                     string `json:"time"`
+		Temperature              string `json:"temperature_2m"`
+		ApparentTemperature      string `json:"apparent_temperature"`
+		WeatherCode              string `json:"weather_code"`
+		WindSpeed                string `json:"wind_speed_10m"`
+		IsDay                    string `json:"is_day"`
+		WindDirection            string `json:"wind_direction_10m"`
+		RelativeHumidity         string `json:"relative_humidity_2m"`
+		PressureMsl              string `json:"pressure_msl"`
+		PrecipitationProbability string `json:"precipitation_probability"`
 	} `json:"hourly_units"`
 	Hourly struct {
 		Time                     []resTime `json:"time"`
@@ -209,11 +210,12 @@ func (o *OpenMeteo) GetWeather(ctx context.Context, coords geobus.Coordinate) (*
 			PrecipitationProbability: vartype.NewVariable(res.Hourly.PrecipitationProbability[i]),
 			IsDay:                    vartype.NewVariable(res.Hourly.IsDay[i].bool),
 			Units: weather.Units{
-				Temperature:   res.HourlyUnits.Temperature,
-				WindSpeed:     res.HourlyUnits.WindSpeed,
-				Humidity:      res.HourlyUnits.RelativeHumidity,
-				Pressure:      res.HourlyUnits.PressureMsl,
-				WindDirection: res.HourlyUnits.WindDirection,
+				Temperature:              res.HourlyUnits.Temperature,
+				WindSpeed:                res.HourlyUnits.WindSpeed,
+				Humidity:                 res.HourlyUnits.RelativeHumidity,
+				Pressure:                 res.HourlyUnits.PressureMsl,
+				PrecipitationProbability: res.HourlyUnits.PrecipitationProbability,
+				WindDirection:            res.HourlyUnits.WindDirection,
 			},
 		}
 		data.Forecast[timePos] = instant

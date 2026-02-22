@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: github.com/wneessen/waybar-weather\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-14 13:50+0000\n"
-"PO-Revision-Date: 2026-01-14 14:51+0100\n"
+"POT-Creation-Date: 2026-02-22 12:19+0100\n"
+"PO-Revision-Date: 2026-02-22 12:21+0100\n"
 "Last-Translator: Winni Neessen <wn@neessen.dev>\n"
 "Language-Team: \n"
 "Language: de\n"
@@ -160,70 +160,74 @@ msgid "Wind speed"
 msgstr "Windgeschwindigkeit"
 
 #: ../../presenter/maps.go:174
+msgid "Precipitation probability"
+msgstr "Niederschlagswahrscheinlichkeit"
+
+#: ../../presenter/maps.go:175
 msgid "Wind"
 msgstr "Wind"
 
-#: ../../presenter/maps.go:175
+#: ../../presenter/maps.go:176
 msgid "Pressure"
 msgstr "Luftdruck"
 
-#: ../../presenter/maps.go:176
+#: ../../presenter/maps.go:177
 msgid "Feels like"
 msgstr "Gefühlt"
 
-#: ../../presenter/maps.go:177
+#: ../../presenter/maps.go:178
 msgid "Weather code"
 msgstr "Wettercode"
 
-#: ../../presenter/maps.go:178
+#: ../../presenter/maps.go:179
 msgid "Forecast for"
 msgstr "Vorhersage für"
 
-#: ../../presenter/maps.go:179
+#: ../../presenter/maps.go:180
 msgid "Weather data for"
 msgstr "Wetterdaten für"
 
-#: ../../presenter/maps.go:180
+#: ../../presenter/maps.go:181
 msgid "Sunrise"
 msgstr "Sonnenaufgang"
 
-#: ../../presenter/maps.go:181
+#: ../../presenter/maps.go:182
 msgid "Sunset"
 msgstr "Sonnenuntergang"
 
-#: ../../presenter/maps.go:182
+#: ../../presenter/maps.go:183
 msgid "Moonphase"
 msgstr "Mondphase"
 
-#: ../../presenter/maps.go:183
+#: ../../presenter/maps.go:184
 msgid "New moon"
 msgstr "Neumond"
 
-#: ../../presenter/maps.go:184
+#: ../../presenter/maps.go:185
 msgid "Waxing crescent"
 msgstr "Zunehmender Halbmond"
 
-#: ../../presenter/maps.go:185
+#: ../../presenter/maps.go:186
 msgid "First quarter"
 msgstr "Erstes Quartal"
 
-#: ../../presenter/maps.go:186
+#: ../../presenter/maps.go:187
 msgid "Waxing gibbous"
 msgstr "Zunehmender Mond"
 
-#: ../../presenter/maps.go:187
+#: ../../presenter/maps.go:188
 msgid "Full moon"
 msgstr "Vollmond"
 
-#: ../../presenter/maps.go:188
+#: ../../presenter/maps.go:189
 msgid "Waning gibbous"
 msgstr "Abnehmender Mond"
 
-#: ../../presenter/maps.go:189
+#: ../../presenter/maps.go:190
 msgid "Third quarter"
 msgstr "Drittes Quartal"
 
-#: ../../presenter/maps.go:190
+#: ../../presenter/maps.go:191
 msgid "Waning crescent"
 msgstr "Abnehmender Halbmond"
 
