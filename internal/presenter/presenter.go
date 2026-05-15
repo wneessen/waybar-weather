@@ -13,6 +13,7 @@ import (
 
 	"github.com/vorlif/humanize"
 	"github.com/vorlif/humanize/locale/de"
+	"github.com/vorlif/humanize/locale/ptBR"
 	"github.com/vorlif/humanize/locale/tr"
 	"github.com/vorlif/spreak"
 	"golang.org/x/text/message"
@@ -61,7 +62,7 @@ type Presenter struct {
 }
 
 // Supported languages for humanize
-var supportedHumanizers = []*humanize.LocaleData{de.New(), tr.New()}
+var supportedHumanizers = []*humanize.LocaleData{de.New(), ptBR.New(), tr.New()}
 
 // New initializes and returns a new Presenter instance with the provided configuration and localizer.
 // It parses templates, creates a humanizer, and validates the templates for rendering.
