@@ -8,10 +8,10 @@ i18n:
 
 .PHONY: run-ichnaea
 run-ichnaea:
+	@rm tmp/waybar-weather-ichnaea
 	@go build -o tmp/waybar-weather-ichnaea cmd/waybar-weather/main.go
 	@sudo setcap cap_net_admin+ep tmp/waybar-weather-ichnaea
 	@./tmp/waybar-weather-ichnaea
-	@rm tmp/waybar-weather-ichnaea
 
 .PHONY: release
 release:

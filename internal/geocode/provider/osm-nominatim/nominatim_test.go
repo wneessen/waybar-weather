@@ -354,14 +354,14 @@ func TestNominatim_integration(t *testing.T) {
 		if !addr.AddressFound {
 			t.Fatal("expected address to be found")
 		}
-		want := "A.T. Kearney, 57, Charlottenstraße, Friedrichstadt, Mitte, Berlin, 10117, Germany"
+		want := "A.T. Kearney, 57, Charlottenstraße, Friedrichswerder, Friedrichstadt, Mitte, Berlin, 10117, Germany"
 		if !strings.EqualFold(addr.DisplayName, want) {
 			t.Errorf("expected address to be %q, got %q", want, addr.DisplayName)
 		}
 	})
 	t.Run("geocoding forward-search succeeds", func(t *testing.T) {
 		coder := testCoder(t)
-		addr := "A.T. Kearney, 57, Charlottenstraße, Friedrichstadt, Mitte, Berlin, 10117, Germany"
+		addr := "A.T. Kearney, 57, Charlottenstraße, Friedrichswerder, Friedrichstadt, Mitte, Berlin, 10117, Germany"
 		coords, err := coder.Search(t.Context(), addr)
 		if err != nil {
 			t.Fatal(err)

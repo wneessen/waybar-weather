@@ -7,8 +7,10 @@ package ichnaea
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -20,12 +22,15 @@ import (
 )
 
 const (
-	apiEndpoint   = "https://api.beacondb.net/v1/geolocate"
-	lookupTimeout = time.Second * 5
-	wifiScanTime  = time.Second * 5
-	name          = "ichnaea"
-	ttlTime       = time.Hour * 1
-	pollTime      = time.Second * 30
+	apiEndpoint        = "https://api.beacondb.net/v1/geolocate"
+	lookupTimeout      = time.Second * 5
+	wifiScanTime       = time.Second * 5
+	wifiMaxPollTime    = time.Minute * 10
+	wifiClearCacheTime = time.Hour * 12
+	name               = "ichnaea"
+	ttlTime            = time.Hour * 1
+	pollTime           = time.Second * 30
+	fallbackCacheTime  = time.Minute * 30
 )
 
 type GeolocationICHNAEAProvider struct {
@@ -36,8 +41,13 @@ type GeolocationICHNAEAProvider struct {
 	ttl      time.Duration
 	locateFn func(ctx context.Context) (lat, lon, acc float64, err error)
 
-	apLock sync.RWMutex
-	aps    []WirelessNetwork
+	apLock    sync.RWMutex
+	aps       []WirelessNetwork
+	apHash    string
+	ipfLock   sync.RWMutex
+	ipfcache  *ipFallbackCache
+	wifiLock  sync.RWMutex
+	wifiCache map[string]geobus.Coordinate
 }
 
 type APIResult struct {
@@ -45,13 +55,19 @@ type APIResult struct {
 		Latitude  float64 `json:"lat"`
 		Longitude float64 `json:"lng"`
 	} `json:"location"`
-	Accuracy float64 `json:"accuracy"`
+	Accuracy   float64 `json:"accuracy"`
+	IsFallback string  `json:"fallback"`
 }
 
 type WirelessNetwork struct {
 	LastSeen       int64  `json:"age"`
 	MACAddress     string `json:"macAddress"`
 	SignalStrength int32  `json:"signalStrength"`
+}
+
+type ipFallbackCache struct {
+	expires time.Time
+	coords  geobus.Coordinate
 }
 
 func NewGeolocationICHNAEAProvider(http *http.Client) (*GeolocationICHNAEAProvider, error) {
@@ -64,11 +80,13 @@ func NewGeolocationICHNAEAProvider(http *http.Client) (*GeolocationICHNAEAProvid
 	}
 
 	provider := &GeolocationICHNAEAProvider{
-		name:   name,
-		http:   http,
-		wlan:   wlan,
-		period: pollTime,
-		ttl:    ttlTime,
+		name:      name,
+		http:      http,
+		wlan:      wlan,
+		period:    pollTime,
+		ttl:       ttlTime,
+		ipfcache:  &ipFallbackCache{},
+		wifiCache: make(map[string]geobus.Coordinate),
 	}
 	provider.locateFn = provider.locate
 	return provider, nil
@@ -82,6 +100,7 @@ func (p *GeolocationICHNAEAProvider) Name() string {
 func (p *GeolocationICHNAEAProvider) LookupStream(ctx context.Context, key string) <-chan geobus.Result {
 	out := make(chan geobus.Result)
 	go p.monitorWifiAccessPoints(ctx)
+	go p.clearWifiCache(ctx)
 	go func() {
 		defer close(out)
 		state := geobus.GeolocationState{}
@@ -128,14 +147,30 @@ func (p *GeolocationICHNAEAProvider) createResult(key string, coord geobus.Coord
 	}
 }
 
+func (p *GeolocationICHNAEAProvider) clearWifiCache(ctx context.Context) {
+	ticker := time.NewTicker(wifiClearCacheTime)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			p.wifiLock.Lock()
+			p.wifiCache = make(map[string]geobus.Coordinate)
+			p.wifiLock.Unlock()
+		}
+	}
+}
+
 func (p *GeolocationICHNAEAProvider) monitorWifiAccessPoints(ctx context.Context) {
 	firstRun := true
+	nextScanTime := time.Second * 2
+	hasher := sha256.New()
 	for {
 		if !firstRun {
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(wifiScanTime):
+			case <-time.After(nextScanTime):
 			}
 		}
 		firstRun = false
@@ -144,9 +179,28 @@ func (p *GeolocationICHNAEAProvider) monitorWifiAccessPoints(ctx context.Context
 		if err != nil {
 			continue
 		}
+		slices.SortFunc(list, func(a, b WirelessNetwork) int {
+			return int(b.SignalStrength - a.SignalStrength)
+		})
+		for _, ap := range list {
+			hasher.Write([]byte(ap.MACAddress))
+		}
 		p.apLock.Lock()
+		p.apHash = fmt.Sprintf("%x", hasher.Sum(nil))
 		p.aps = list
 		p.apLock.Unlock()
+		hasher.Reset()
+
+		if len(list) == 0 {
+			if nextScanTime < wifiMaxPollTime {
+				nextScanTime = nextScanTime * 2
+			}
+			continue
+		}
+		p.ipfLock.Lock()
+		p.ipfcache.expires = time.Time{}
+		p.ipfLock.Unlock()
+		nextScanTime = wifiMaxPollTime
 	}
 }
 
@@ -197,7 +251,24 @@ func (p *GeolocationICHNAEAProvider) wifiAccessPoints(ctx context.Context) ([]Wi
 func (p *GeolocationICHNAEAProvider) locate(ctx context.Context) (lat, lon, acc float64, err error) {
 	p.apLock.RLock()
 	wifiList := p.aps
+	wifiHash := p.apHash
 	p.apLock.RUnlock()
+
+	// If WiFi cache is valid, return cached coordinates
+	p.wifiLock.RLock()
+	if coords, ok := p.wifiCache[wifiHash]; ok {
+		p.wifiLock.RUnlock()
+		return coords.Lat, coords.Lon, coords.Acc, nil
+	}
+	p.wifiLock.RUnlock()
+
+	// If IP fallback cache is still valid, return cached coordinates
+	p.ipfLock.RLock()
+	if p.ipfcache.expires.After(time.Now()) {
+		p.ipfLock.RUnlock()
+		return p.ipfcache.coords.Lat, p.ipfcache.coords.Lon, p.ipfcache.coords.Acc, nil
+	}
+	p.ipfLock.RUnlock()
 
 	type request struct {
 		ConsiderIP   bool              `json:"considerIp"`
@@ -220,7 +291,22 @@ func (p *GeolocationICHNAEAProvider) locate(ctx context.Context) (lat, lon, acc 
 		return 0, 0, 0, fmt.Errorf("failed to get geolocation data from API: %w", err)
 	}
 
-	return geobus.Truncate(result.Location.Latitude, geobus.TruncPrecision),
-		geobus.Truncate(result.Location.Longitude, geobus.TruncPrecision),
-		geobus.Truncate(result.Accuracy, geobus.TruncPrecision), nil
+	coords := geobus.Coordinate{
+		Lat: geobus.Truncate(result.Location.Latitude, geobus.TruncPrecision),
+		Lon: geobus.Truncate(result.Location.Longitude, geobus.TruncPrecision),
+		Acc: geobus.Truncate(result.Accuracy, geobus.TruncPrecision),
+	}
+
+	if result.IsFallback != "" {
+		p.ipfLock.Lock()
+		p.ipfcache.expires = time.Now().Add(fallbackCacheTime)
+		p.ipfcache.coords = coords
+		p.ipfLock.Unlock()
+		return coords.Lat, coords.Lon, coords.Acc, nil
+	}
+
+	p.wifiLock.Lock()
+	p.wifiCache[wifiHash] = coords
+	p.wifiLock.Unlock()
+	return coords.Lat, coords.Lon, coords.Acc, nil
 }
