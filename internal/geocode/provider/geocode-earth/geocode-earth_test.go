@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	cityExpected    = "A.T. Kearney, Berlin, Germany"
+	cityExpected    = "Charlottenstraße 57, Berlin, Germany"
 	forwardAddress  = "Quartier 205, Friedrichstrasse 67, 10117 Berlin, Germany"
 	cityFile        = "../../../../testdata/geocodeearth_berlin.json"
 	cityForwardFile = "../../../../testdata/geocodeearth_berlin_forward.json"
