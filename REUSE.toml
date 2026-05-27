@@ -11,6 +11,16 @@ SPDX-FileCopyrightText = "Winni Neessen <wn@neessen.dev>"
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
+path = "*.nix"
+SPDX-FileCopyrightText = "Winni Neessen <wn@neessen.dev>"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "*.lock"
+SPDX-FileCopyrightText = "Winni Neessen <wn@neessen.dev>"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
 path = "assets/*"
 SPDX-FileCopyrightText = "Winni Neessen <wn@neessen.dev>"
 SPDX-License-Identifier = "MIT"

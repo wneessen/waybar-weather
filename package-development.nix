@@ -1,19 +1,14 @@
 {
   lib,
   buildGoModule,
-  fetchFromGitHub,
+  source,
 }:
 
 buildGoModule rec {
   pname = "waybar-weather";
   version = "development";
 
-  src = fetchFromGitHub {
-    owner = "wneessen";
-    repo = "waybar-weather";
-    rev = "main";
-    hash = "sha256-dZb+Mn3suZFTZdK7WIZM84sg1q0Z4UFF89ZAPAkAD2g=";
-  };
+  src = source;
 
   vendorHash = "sha256-abTh3uR0kC7BIFw2cw3iHenSLIR/76Df4LSJBB2uwn0=";
 
@@ -68,8 +63,7 @@ buildGoModule rec {
   '';
 
   meta = with lib; {
-    description =
-      "A waybar weather module with automatic geolocation lookup";
+    description = "A waybar weather module with automatic geolocation lookup";
     homepage = "https://github.com/wneessen/waybar-weather";
     license = licenses.mit;
     mainProgram = "waybar-weather";

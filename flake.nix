@@ -21,29 +21,28 @@
     in {
       packages = forAllSystems (system:
         let
-          pkgs = import nixpkgs { inherit system; };
+          pkgs = import nixpkgs {
+            inherit system;
+          };
         in {
-          # Stable release package
           stable = pkgs.callPackage ./package-stable.nix { };
 
-          # Development/main branch package
-          development = pkgs.callPackage ./package-development.nix { };
+          development = pkgs.callPackage ./package-development.nix {
+            source = self;
+          };
 
-          # Default package
           default = self.packages.${system}.stable;
         });
 
       apps = forAllSystems (system: {
         stable = {
           type = "app";
-          program =
-            "${self.packages.${system}.stable}/bin/waybar-weather";
+          program = "${self.packages.${system}.stable}/bin/waybar-weather";
         };
 
         development = {
           type = "app";
-          program =
-            "${self.packages.${system}.development}/bin/waybar-weather";
+          program = "${self.packages.${system}.development}/bin/waybar-weather";
         };
 
         default = self.apps.${system}.stable;
@@ -51,10 +50,12 @@
 
       devShells = forAllSystems (system:
         let
-          pkgs = import nixpkgs { inherit system; };
+          pkgs = import nixpkgs {
+            inherit system;
+          };
         in {
           default = pkgs.mkShell {
-            buildInputs = with pkgs; [
+            packages = with pkgs; [
               go
               gopls
               golangci-lint
