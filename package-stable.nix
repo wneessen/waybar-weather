@@ -51,8 +51,7 @@ buildGoModule rec {
   '';
 
   meta = with lib; {
-    description =
-      "A waybar weather module with automatic geolocation lookup";
+    description = "A waybar weather module with automatic geolocation lookup";
     homepage = "https://github.com/wneessen/waybar-weather";
     license = licenses.mit;
     mainProgram = "waybar-weather";
