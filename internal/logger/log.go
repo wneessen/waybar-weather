@@ -5,21 +5,32 @@
 package logger
 
 import (
-	"io"
 	"log/slog"
 	"os"
 )
+
+var defaultLogOutput = os.Stderr
 
 type Logger struct {
 	*slog.Logger
 }
 
 func New(level slog.Level) *Logger {
-	return NewLogger(level, os.Stderr)
+	return NewLogger(level, nil)
 }
 
-func NewLogger(level slog.Level, output io.Writer) *Logger {
-	return &Logger{slog.New(slog.NewTextHandler(output, &slog.HandlerOptions{Level: level}))}
+func NewLogger(level slog.Level, logFile *os.File) *Logger {
+	multiLogger := make([]slog.Handler, 0)
+	defaultLogger := slog.NewTextHandler(defaultLogOutput, &slog.HandlerOptions{Level: level})
+	multiLogger = append(multiLogger, defaultLogger)
+
+	if logFile != nil {
+		fileLogger := slog.NewJSONHandler(logFile, &slog.HandlerOptions{Level: level})
+		multiLogger = append(multiLogger, fileLogger)
+	}
+
+	logger := slog.New(slog.NewMultiHandler(multiLogger...))
+	return &Logger{Logger: logger}
 }
 
 func Err(err error) slog.Attr {
