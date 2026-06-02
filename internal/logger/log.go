@@ -5,6 +5,7 @@
 package logger
 
 import (
+	"io"
 	"log/slog"
 	"os"
 )
@@ -19,7 +20,7 @@ func New(level slog.Level) *Logger {
 	return NewLogger(level, nil)
 }
 
-func NewLogger(level slog.Level, logFile *os.File) *Logger {
+func NewLogger(level slog.Level, logFile io.Writer) *Logger {
 	multiLogger := make([]slog.Handler, 0)
 	defaultLogger := slog.NewTextHandler(defaultLogOutput, &slog.HandlerOptions{Level: level})
 	multiLogger = append(multiLogger, defaultLogger)
