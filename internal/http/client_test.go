@@ -125,7 +125,7 @@ func TestClient_Get(t *testing.T) {
 			}, nil
 		}
 
-		client := New(logger.NewLogger(slog.LevelInfo, io.Discard))
+		client := New(logger.NewLogger(slog.LevelInfo, io.Discard, nil))
 		client.Transport = testhelper.MockRoundTripper{Fn: rtFn}
 
 		target := new(testType)
