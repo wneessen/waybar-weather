@@ -17,16 +17,20 @@ type Logger struct {
 }
 
 func New(level slog.Level) *Logger {
-	return NewLogger(level, nil)
+	return NewLogger(level, nil, nil)
 }
 
-func NewLogger(level slog.Level, logFile io.Writer) *Logger {
+func NewLogger(level slog.Level, textTarget io.Writer, jsonTarget io.Writer) *Logger {
 	multiLogger := make([]slog.Handler, 0)
-	defaultLogger := slog.NewTextHandler(defaultLogOutput, &slog.HandlerOptions{Level: level})
+
+	if textTarget == nil {
+		textTarget = defaultLogOutput
+	}
+	defaultLogger := slog.NewTextHandler(textTarget, &slog.HandlerOptions{Level: level})
 	multiLogger = append(multiLogger, defaultLogger)
 
-	if logFile != nil {
-		fileLogger := slog.NewJSONHandler(logFile, &slog.HandlerOptions{Level: level})
+	if jsonTarget != nil {
+		fileLogger := slog.NewJSONHandler(jsonTarget, &slog.HandlerOptions{Level: level})
 		multiLogger = append(multiLogger, fileLogger)
 	}
 
