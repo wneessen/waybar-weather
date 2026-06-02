@@ -10,16 +10,32 @@ import (
 	"os"
 )
 
+var defaultLogOutput = os.Stderr
+
 type Logger struct {
 	*slog.Logger
 }
 
 func New(level slog.Level) *Logger {
-	return NewLogger(level, os.Stderr)
+	return NewLogger(level, nil, nil)
 }
 
-func NewLogger(level slog.Level, output io.Writer) *Logger {
-	return &Logger{slog.New(slog.NewTextHandler(output, &slog.HandlerOptions{Level: level}))}
+func NewLogger(level slog.Level, textTarget io.Writer, jsonTarget io.Writer) *Logger {
+	multiLogger := make([]slog.Handler, 0)
+
+	if textTarget == nil {
+		textTarget = defaultLogOutput
+	}
+	defaultLogger := slog.NewTextHandler(textTarget, &slog.HandlerOptions{Level: level})
+	multiLogger = append(multiLogger, defaultLogger)
+
+	if jsonTarget != nil {
+		fileLogger := slog.NewJSONHandler(jsonTarget, &slog.HandlerOptions{Level: level})
+		multiLogger = append(multiLogger, fileLogger)
+	}
+
+	logger := slog.New(slog.NewMultiHandler(multiLogger...))
+	return &Logger{Logger: logger}
 }
 
 func Err(err error) slog.Attr {

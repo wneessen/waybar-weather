@@ -39,7 +39,7 @@ func TestMockRoundTripper(t *testing.T) {
 
 		type testType struct{}
 		target := new(testType)
-		client := http.New(logger.NewLogger(slog.LevelInfo, io.Discard))
+		client := http.New(logger.NewLogger(slog.LevelInfo, io.Discard, nil))
 		client.Transport = MockRoundTripper{Fn: rtFn}
 		_, err := client.Get(t.Context(), TestOnlineAPIURL, target, nil, nil)
 		if err != nil {

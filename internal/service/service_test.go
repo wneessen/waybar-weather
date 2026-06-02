@@ -488,7 +488,7 @@ func TestService_printWeather(t *testing.T) {
 			serv.weatherIsSet = true
 
 			logBuf := bytes.NewBuffer(nil)
-			serv.logger = logger.NewLogger(slog.LevelError, logBuf)
+			serv.logger = logger.NewLogger(slog.LevelError, logBuf, nil)
 
 			buf := bytes.NewBuffer(nil)
 			serv.output = buf
@@ -611,7 +611,7 @@ func TestService_fetchWeather(t *testing.T) {
 			t.Fatalf("failed to create service: %s", err)
 		}
 		buf := bytes.NewBuffer(nil)
-		serv.logger = logger.NewLogger(slog.LevelError, buf)
+		serv.logger = logger.NewLogger(slog.LevelError, buf, nil)
 		serv.weatherProv = &weatherProv{shouldFail: true}
 		serv.fetchWeather(t.Context())
 		if serv.weather != nil {
@@ -744,7 +744,7 @@ func testService(_ *testing.T, nilLogger bool) (*Service, error) {
 
 	var log *logger.Logger
 	if !nilLogger {
-		log = logger.NewLogger(conf.LogLevel, io.Discard)
+		log = logger.NewLogger(conf.LogLevel, io.Discard, nil)
 	}
 
 	lang, err := i18n.New(conf.Locale)
@@ -952,7 +952,7 @@ func TestService_HandleSignals(t *testing.T) {
 			t.Fatalf("failed to create service: %s", err)
 		}
 		buf := &syncBuffer{buf: bytes.NewBuffer(nil)}
-		serv.logger = logger.NewLogger(slog.LevelInfo, buf)
+		serv.logger = logger.NewLogger(slog.LevelInfo, buf, nil)
 		sigChan := make(chan os.Signal, 1)
 		serv.SignalSrc.Notify(sigChan, syscall.SIGUSR1, syscall.SIGUSR2)
 		go func() {
