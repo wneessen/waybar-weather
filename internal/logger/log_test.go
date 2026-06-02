@@ -39,7 +39,7 @@ func TestNewLogger(t *testing.T) {
 		for _, tc := range tests {
 			buf := bytes.NewBuffer(nil)
 			t.Run(tc.name, func(t *testing.T) {
-				l := NewLogger(tc.level, buf)
+				l := NewLogger(tc.level, buf, nil)
 				l.Debug("debug")
 				l.Info("info")
 				l.Warn("warn")
@@ -77,7 +77,7 @@ func TestNewLogger(t *testing.T) {
 func TestErr(t *testing.T) {
 	t.Run("error attributes should be logged", func(t *testing.T) {
 		buf := bytes.NewBuffer(nil)
-		l := NewLogger(slog.LevelDebug, buf)
+		l := NewLogger(slog.LevelDebug, buf, nil)
 		want := "intentionally failing"
 		err := errors.New(want)
 		l.Error("this is a test", Err(err))
