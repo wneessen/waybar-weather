@@ -43,7 +43,7 @@ func main() {
 	defer func() {
 		_ = logFile.Close()
 	}()
-	log := logger.NewLogger(slog.LevelError, logFile)
+	log := logger.NewLogger(slog.LevelError, nil, logFile)
 
 	// Read config
 	confRead := false
@@ -78,7 +78,7 @@ func main() {
 		}
 	}
 
-	log = logger.NewLogger(conf.LogLevel, logFile)
+	log = logger.NewLogger(conf.LogLevel, nil, logFile)
 	log.Info("logger initialized", slog.String("json_file_output", logFile.Name()),
 		slog.String("text_output", os.Stderr.Name()))
 	t, err := i18n.New(conf.Locale)
