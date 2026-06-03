@@ -12,18 +12,18 @@
 
       owner = "wneessen";
       repo = "waybar-weather";
-      version = "0.3.0";
+      version = "0.3.1";
 
       # Pre-built binary release (goreleaser tar.gz)
       binSrc = pkgs.fetchurl {
         url = "https://github.com/${owner}/${repo}/releases/download/v${version}/waybar-weather_${version}_linux_amd64.tar.gz";
-        hash = "sha256-iK8llFf9LE+NiOeaJBizI66anx2F2l1g5JYMSRR5mlk=";
+        hash = "sha256-UgpEXNqAWuaxOtEldrnQas5rv3oFJCLnrtm2/9qz7Vc=";
       };
 
       # Source tarball for config, icons, docs, and license
       sourceSrc = pkgs.fetchurl {
         url = "https://github.com/${owner}/${repo}/archive/refs/tags/v${version}.tar.gz";
-        hash = "sha256-sXzquW/bQkefiawZZDPSDAzSXZfN8GxDHRIjGTxBpdk=";
+        hash = "sha256-MXQ6LY/9F2CJJh6PsvbMsAsxtaQHxr0dX17zlM9PEr8=";
       };
     in
     {
