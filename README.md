@@ -33,6 +33,7 @@ weather data for your current location, even while you are traveling.
 ## Requirements
 * A working Linux installation with Waybar running.
 * Network connectivity for API calls.
+* [An Emoji font that supports weather icons like Google's Noto-Emoji](https://github.com/googlefonts/noto-emoji)
 * (Optional) For the ICHNAEA geolocation service, an active WiFi connectivity is required ofr more precise location
   lookup.
 * (Optional) For even better location lookup, you can use a GPS device connected to your computer. This requires gpsd to
@@ -46,7 +47,114 @@ weather data for your current location, even while you are traveling.
 
 ### Linux distribution package manager
 waybar-weather can be found on the following linux distributions:
-- Arch Linux AUR: [https://aur.archlinux.org/packages/waybar-weather](https://aur.archlinux.org/packages/waybar-weather)
+
+#### Arch Linux
+Waybar-weather has a PKGBUILD file in the Arch Linux AUR: [https://aur.archlinux.org/packages/waybar-weather](https://aur.archlinux.org/packages/waybar-weather)
+
+#### NixOS
+waybar-weather can be installed on NixOS using flakes. Two installation methods are supported: system-wide and 
+via Home Manager.
+
+##### Prerequisites
+Make sure your NixOS configuration uses flakes. If not yet enabled, add to your `configuration.nix`:
+```nix
+nix.settings.experimental-features = [ "nix-command" "flakes" ];
+```
+
+##### System-wide Installation
+
+Add the flake as an input in your NixOS `flake.nix`:
+```nix
+{
+  inputs = {
+    ## Replace with the NixOS channel you are following
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+
+    waybar-weather = {
+      url = "github:wneessen/waybar-weather";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs = { self, nixpkgs, waybar-weather, ... }@inputs: {
+    nixosConfigurations.my-host = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ({ pkgs, ... }: {
+          environment.systemPackages = [
+            waybar-weather.packages.x86_64-linux.default
+          ];
+        })
+      ];
+    };
+  };
+}
+```
+Then rebuild your system:
+```shell
+nixos-rebuild switch --flake .#my-host
+```
+
+##### Home Manager Installation
+
+Add the flake as an input in your Home Manager `flake.nix`:
+```nix
+{
+  inputs = {
+    ## Replace with the NixOS channel you are following
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    waybar-weather = {
+      url = "github:wneessen/waybar-weather";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs = { self, nixpkgs, home-manager, waybar-weather, ... }@inputs: {
+    homeConfigurations.myuser = home-manager.lib.homeManagerConfiguration {
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+
+      modules = [
+        ({ pkgs, ... }: {
+          home.packages = [
+            waybar-weather.packages.x86_64-linux.default
+          ];
+
+          home.username = "myuser";
+          home.homeDirectory = "/home/myuser";
+          
+          ## Replace with the state of your home manager installation
+          home.stateVersion = "25.05";
+        })
+      ];
+    };
+  };
+}
+```
+Then apply your Home Manager configuration:
+```shell
+home-manager switch --flake .#myuser
+```
+
+##### Updating
+
+When a new version of waybar-weather is released, update the flake input:
+
+```shell
+# Update only waybar-weather
+nix flake lock --update-input waybar-weather
+
+# Then rebuild (system-wide)
+nixos-rebuild switch --flake .#my-host
+
+# Or rebuild (Home Manager standalone)
+home-manager switch --flake .#myuser
+```
 
 ### Using Pre-Built Binary
 Pre-Built binaries are automatically built whenever a new release is created. Each release
@@ -583,11 +691,12 @@ setting in your configuration file.
 ### Supported languages
 Currently the following languages are supported by waybar-weather:
 
-| Language | PO file                  | Percent translated | Contributor                               |
-|----------|--------------------------|--------------------|-------------------------------------------|
-| English  | `message.pot` (Template) | 100%               | Winni Neessen                             |
-| German   | `de.po`                  | 100%               | Winni Neessen                             |
-| Turkish  | `tr.po`                  | 100%               | [beucismis](https://github.com/beucismis) |
+| Language             | PO file                  | Percent translated | Contributor                                      |
+|----------------------|--------------------------|--------------------|--------------------------------------------------|
+| English              | `message.pot` (Template) | 100%               | Winni Neessen                                    |
+| German               | `de.po`                  | 100%               | Winni Neessen                                    |
+| Turkish              | `tr.po`                  | 100%               | [beucismis](https://github.com/beucismis)        |
+| Brazilian Portuguese | `pt_BR.po`               | 100%               | [Tomás Barros](https://github.com/tomas-barros1) |
 
 ### Contributing new languages
 If you want to contribute a new language, please do so by adding a new translation file to the 
