@@ -165,7 +165,7 @@ corresponding signature file and verify that the checksums and signatures match.
 The public GPG key is: ["Winni Neessen" (Software signing key) <wn@neessen.dev>](https://keys.openpgp.org/vks/v1/by-fingerprint/10B5700F5ECCB06532CEC873C3D38948DA536E89)
 
 ### From Source
-To build from source, you require a working Go environment. Go 1.25+ is required.
+To build from source, you require a working Go environment. Go 1.26+ is required.
 Run the following commands to build the binary:
 ```bash
 git clone https://github.com/wneessen/waybar-weather.git
