@@ -92,21 +92,6 @@
         };
       };
 
-      # To set the "cap_net_admin" capability on NixOS, we need to use NixOS
-      # security.wrappers mechanism. It will wrap the binary into
-      # /run/wrappers/bin/waybar-weather, which has the "cap_net_admin" capability
-      # set.
-      nixosModules.default =
-        { pkgs, ... }:
-        {
-          security.wrappers.waybar-weather = {
-            source = "${self.packages.${pkgs.system}.waybar-weather}/bin/waybar-weather";
-            capabilities = "cap_net_admin+ep";
-            owner = "root";
-            group = "root";
-          };
-        };
-
       devShells.${system}.default = pkgs.mkShell {
         packages = [ self.packages.${system}.waybar-weather ];
       };
