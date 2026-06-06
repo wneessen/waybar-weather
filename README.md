@@ -52,8 +52,9 @@ waybar-weather can be found on the following linux distributions:
 Waybar-weather has a PKGBUILD file in the Arch Linux AUR: [https://aur.archlinux.org/packages/waybar-weather](https://aur.archlinux.org/packages/waybar-weather)
 
 #### NixOS
-waybar-weather can be installed on NixOS using flakes. Two installation methods are supported: system-wide and 
-via Home Manager.
+waybar-weather can be installed on NixOS using flakes.
+
+waybar-weather performs an automatic geolocation lookup that requires the `cap_net_admin` capability. On NixOS, capabilities cannot be set directly on a binary in the Nix store, so the package is exposed through the [`security.wrappers`](https://nixos.org/manual/nixos/stable/options#opt-security.wrappers) mechanism. This creates a wrapped binary at `/run/wrappers/bin/waybar-weather` that carries the capability. Since setting capabilities requires root privileges, the flake must be installed as a system-wide package.
 
 ##### Prerequisites
 Make sure your NixOS configuration uses flakes. If not yet enabled, add to your `configuration.nix`:
@@ -61,14 +62,14 @@ Make sure your NixOS configuration uses flakes. If not yet enabled, add to your 
 nix.settings.experimental-features = [ "nix-command" "flakes" ];
 ```
 
-##### System-wide Installation
+##### Installation
 
 Add the flake as an input in your NixOS `flake.nix`:
 ```nix
 {
   inputs = {
     ## Replace with the NixOS channel you are following
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     waybar-weather = {
       url = "github:wneessen/waybar-weather";
@@ -80,70 +81,39 @@ Add the flake as an input in your NixOS `flake.nix`:
     nixosConfigurations.my-host = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
-        ({ pkgs, ... }: {
-          environment.systemPackages = [
-            waybar-weather.packages.x86_64-linux.default
-          ];
-        })
+        ({ pkgs, ... }:
+          let
+            waybar-weather-pkg =
+              waybar-weather.packages.x86_64-linux.default;
+          in
+          {
+            environment.systemPackages = [ waybar-weather-pkg ];
+
+            # Wrap the binary so it gains the cap_net_admin capability
+            # required for the automatic geolocation lookup.
+            security.wrappers.waybar-weather = {
+              source       = "${waybar-weather-pkg}/bin/waybar-weather";
+              capabilities = "cap_net_admin+ep";
+              owner        = "root";
+              group        = "root";
+            };
+          }
+        )
       ];
     };
   };
 }
 ```
+
 Then rebuild your system:
 ```shell
 nixos-rebuild switch --flake .#my-host
 ```
-
-##### Home Manager Installation
-
-Add the flake as an input in your Home Manager `flake.nix`:
-```nix
-{
-  inputs = {
-    ## Replace with the NixOS channel you are following
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
-
-    home-manager = {
-      url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    waybar-weather = {
-      url = "github:wneessen/waybar-weather";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-  };
-
-  outputs = { self, nixpkgs, home-manager, waybar-weather, ... }@inputs: {
-    homeConfigurations.myuser = home-manager.lib.homeManagerConfiguration {
-      pkgs = nixpkgs.legacyPackages.x86_64-linux;
-
-      modules = [
-        ({ pkgs, ... }: {
-          home.packages = [
-            waybar-weather.packages.x86_64-linux.default
-          ];
-
-          home.username = "myuser";
-          home.homeDirectory = "/home/myuser";
-          
-          ## Replace with the state of your home manager installation
-          home.stateVersion = "25.05";
-        })
-      ];
-    };
-  };
-}
-```
-Then apply your Home Manager configuration:
-```shell
-home-manager switch --flake .#myuser
-```
+_Important: Make sure that the wrapper is invoked. By default, NixOS should automatically use `/run/wrappers/bin/waybar-weather`. If not, make sure to configure waybar to use the wrapper binary located at that path._
 
 ##### Updating
 
-When a new version of waybar-weather is released, update the flake input:
+When a new version of waybar-weather is released, update the flake input and rebuild your system:
 
 ```shell
 # Update only waybar-weather
@@ -151,9 +121,6 @@ nix flake lock --update-input waybar-weather
 
 # Then rebuild (system-wide)
 nixos-rebuild switch --flake .#my-host
-
-# Or rebuild (Home Manager standalone)
-home-manager switch --flake .#myuser
 ```
 
 ### Using Pre-Built Binary
