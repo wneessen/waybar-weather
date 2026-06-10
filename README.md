@@ -33,6 +33,7 @@ weather data for your current location, even while you are traveling.
 ## Requirements
 * A working Linux installation with Waybar running.
 * Network connectivity for API calls.
+* [An Emoji font that supports weather icons like Google's Noto-Emoji](https://github.com/googlefonts/noto-emoji)
 * (Optional) For the ICHNAEA geolocation service, an active WiFi connectivity is required ofr more precise location
   lookup.
 * (Optional) For even better location lookup, you can use a GPS device connected to your computer. This requires gpsd to
@@ -46,7 +47,81 @@ weather data for your current location, even while you are traveling.
 
 ### Linux distribution package manager
 waybar-weather can be found on the following linux distributions:
-- Arch Linux AUR: [https://aur.archlinux.org/packages/waybar-weather](https://aur.archlinux.org/packages/waybar-weather)
+
+#### Arch Linux
+Waybar-weather has a PKGBUILD file in the Arch Linux AUR: [https://aur.archlinux.org/packages/waybar-weather](https://aur.archlinux.org/packages/waybar-weather)
+
+#### NixOS
+waybar-weather can be installed on NixOS using flakes.
+
+waybar-weather performs an automatic geolocation lookup that requires the `cap_net_admin` capability. On NixOS, capabilities cannot be set directly on a binary in the Nix store, so the package is exposed through the [`security.wrappers`](https://nixos.org/manual/nixos/stable/options#opt-security.wrappers) mechanism. This creates a wrapped binary at `/run/wrappers/bin/waybar-weather` that carries the capability. Since setting capabilities requires root privileges, the flake must be installed as a system-wide package.
+
+##### Prerequisites
+Make sure your NixOS configuration uses flakes. If not yet enabled, add to your `configuration.nix`:
+```nix
+nix.settings.experimental-features = [ "nix-command" "flakes" ];
+```
+
+##### Installation
+
+Add the flake as an input in your NixOS `flake.nix`:
+```nix
+{
+  inputs = {
+    ## Replace with the NixOS channel you are following
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+
+    waybar-weather = {
+      url = "github:wneessen/waybar-weather";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs = { self, nixpkgs, waybar-weather, ... }@inputs: {
+    nixosConfigurations.my-host = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ({ pkgs, ... }:
+          let
+            waybar-weather-pkg =
+              waybar-weather.packages.x86_64-linux.default;
+          in
+          {
+            environment.systemPackages = [ waybar-weather-pkg ];
+
+            # Wrap the binary so it gains the cap_net_admin capability
+            # required for the automatic geolocation lookup.
+            security.wrappers.waybar-weather = {
+              source       = "${waybar-weather-pkg}/bin/waybar-weather";
+              capabilities = "cap_net_admin+ep";
+              owner        = "root";
+              group        = "root";
+            };
+          }
+        )
+      ];
+    };
+  };
+}
+```
+
+Then rebuild your system:
+```shell
+nixos-rebuild switch --flake .#my-host
+```
+_Important: Make sure that the wrapper is invoked. By default, NixOS should automatically use `/run/wrappers/bin/waybar-weather`. If not, make sure to configure waybar to use the wrapper binary located at that path._
+
+##### Updating
+
+When a new version of waybar-weather is released, update the flake input and rebuild your system:
+
+```shell
+# Update only waybar-weather
+nix flake lock --update-input waybar-weather
+
+# Then rebuild (system-wide)
+nixos-rebuild switch --flake .#my-host
+```
 
 ### Using Pre-Built Binary
 Pre-Built binaries are automatically built whenever a new release is created. Each release
@@ -57,7 +132,7 @@ corresponding signature file and verify that the checksums and signatures match.
 The public GPG key is: ["Winni Neessen" (Software signing key) <wn@neessen.dev>](https://keys.openpgp.org/vks/v1/by-fingerprint/10B5700F5ECCB06532CEC873C3D38948DA536E89)
 
 ### From Source
-To build from source, you require a working Go environment. Go 1.25+ is required.
+To build from source, you require a working Go environment. Go 1.26+ is required.
 Run the following commands to build the binary:
 ```bash
 git clone https://github.com/wneessen/waybar-weather.git
@@ -583,11 +658,13 @@ setting in your configuration file.
 ### Supported languages
 Currently the following languages are supported by waybar-weather:
 
-| Language | PO file                  | Percent translated | Contributor                               |
-|----------|--------------------------|--------------------|-------------------------------------------|
-| English  | `message.pot` (Template) | 100%               | Winni Neessen                             |
-| German   | `de.po`                  | 100%               | Winni Neessen                             |
-| Turkish  | `tr.po`                  | 100%               | [beucismis](https://github.com/beucismis) |
+| Language             | PO file                  | Percent translated | Contributor                                      |
+|----------------------|--------------------------|--------------------|--------------------------------------------------|
+| English              | `message.pot` (Template) | 100%               | Winni Neessen                                    |
+| German               | `de.po`                  | 100%               | Winni Neessen                                    |
+| Turkish              | `tr.po`                  | 100%               | [beucismis](https://github.com/beucismis)        |
+| Brazilian Portuguese | `pt_BR.po`               | 100%               | [Tomás Barros](https://github.com/tomas-barros1) |
+| Danish               | `da.po`                  | 100%               | [m-kudahl](https://github.com/m-kudahl)          |
 
 ### Contributing new languages
 If you want to contribute a new language, please do so by adding a new translation file to the 

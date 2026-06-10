@@ -34,7 +34,16 @@ func main() {
 	defer cancel()
 
 	// Initialize Logger
-	log := logger.New(slog.LevelError)
+	logFile, err := os.CreateTemp("", "waybar-weather_*")
+	if err != nil {
+		errLog := logger.New(slog.LevelError)
+		errLog.Error("failed to create temporary logfile", logger.Err(err))
+		os.Exit(1)
+	}
+	defer func() {
+		_ = logFile.Close()
+	}()
+	log := logger.NewLogger(slog.LevelError, nil, logFile)
 
 	// Read config
 	confRead := false
@@ -69,7 +78,9 @@ func main() {
 		}
 	}
 
-	log = logger.New(conf.LogLevel)
+	log = logger.NewLogger(conf.LogLevel, nil, logFile)
+	log.Info("logger initialized", slog.String("json_file_output", logFile.Name()),
+		slog.String("text_output", os.Stderr.Name()))
 	t, err := i18n.New(conf.Locale)
 	if err != nil {
 		log.Error("failed to initialize localizer", logger.Err(err))

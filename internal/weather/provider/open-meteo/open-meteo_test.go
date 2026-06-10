@@ -58,7 +58,7 @@ func TestNew(t *testing.T) {
 	})
 	t.Run("creating a provider without logger fails", func(t *testing.T) {
 		unit := "metric"
-		log := logger.NewLogger(slog.LevelDebug, io.Discard)
+		log := logger.NewLogger(slog.LevelDebug, io.Discard, nil)
 		httpClient := http.New(log)
 		client, err := New(httpClient, nil, unit)
 		if err == nil {
@@ -495,7 +495,7 @@ func testClient(t *testing.T, unit string, nilLogger bool) *OpenMeteo {
 	if unit == "" {
 		unit = "metric"
 	}
-	log := logger.NewLogger(slog.LevelDebug, output)
+	log := logger.NewLogger(slog.LevelDebug, output, nil)
 	httpClient := http.New(log)
 	client, err := New(httpClient, log, unit)
 	if err != nil {
