@@ -664,6 +664,7 @@ Currently the following languages are supported by waybar-weather:
 | German               | `de.po`                  | 100%               | Winni Neessen                                    |
 | Turkish              | `tr.po`                  | 100%               | [beucismis](https://github.com/beucismis)        |
 | Brazilian Portuguese | `pt_BR.po`               | 100%               | [Tomás Barros](https://github.com/tomas-barros1) |
+| Danish               | `da.po`                  | 100%               | [m-kudahl](https://github.com/m-kudahl)          |
 
 ### Contributing new languages
 If you want to contribute a new language, please do so by adding a new translation file to the 
