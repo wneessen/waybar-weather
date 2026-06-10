@@ -42,10 +42,6 @@ tmp/
 # Distribution files
 dist/
 
-## Devenv
-.devenv
-devenv.lock
-
 # Nix build results
 result
 result-*
