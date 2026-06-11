@@ -19,6 +19,7 @@ import (
 	"github.com/wneessen/waybar-weather/internal/http"
 	"github.com/wneessen/waybar-weather/internal/logger"
 	"github.com/wneessen/waybar-weather/internal/testhelper"
+	"github.com/wneessen/waybar-weather/internal/vartype"
 	"github.com/wneessen/waybar-weather/internal/weather"
 )
 
@@ -104,85 +105,85 @@ func TestOpenMeteo_GetWeather(t *testing.T) {
 		}
 		wantCurrent := weather.Instant{
 			InstantTime:         time.Date(2026, 1, 16, 22, 0o0, 0o0, 0o0, time.Local),
-			Temperature:         3.2,
-			ApparentTemperature: 1,
-			WeatherCode:         3,
-			WindSpeed:           3.4,
-			WindGusts:           6.5,
-			WindDirection:       32,
-			RelativeHumidity:    93,
-			PressureMSL:         1001.0,
+			Temperature:         vartype.NewVariable(3.2),
+			ApparentTemperature: vartype.NewVariable(1.0),
+			WeatherCode:         vartype.NewVariable(3),
+			WindSpeed:           vartype.NewVariable(3.4),
+			WindGusts:           vartype.NewVariable(6.5),
+			WindDirection:       vartype.NewVariable(32.0),
+			RelativeHumidity:    vartype.NewVariable(93.0),
+			PressureMSL:         vartype.NewVariable(1001.0),
 		}
 		if data.Current.Temperature != wantCurrent.Temperature {
-			t.Errorf("expected current temperature to be %f, got %f", wantCurrent.Temperature,
-				data.Current.Temperature)
+			t.Errorf("expected current temperature to be %f, got %f", wantCurrent.Temperature.Value(),
+				data.Current.Temperature.Value())
 		}
 		if data.Current.ApparentTemperature != wantCurrent.ApparentTemperature {
-			t.Errorf("expected current apparent temperature to be %f, got %f", wantCurrent.ApparentTemperature,
-				data.Current.ApparentTemperature)
+			t.Errorf("expected current apparent temperature to be %f, got %f", wantCurrent.ApparentTemperature.Value(),
+				data.Current.ApparentTemperature.Value())
 		}
 		if data.Current.WeatherCode != wantCurrent.WeatherCode {
-			t.Errorf("expected current weather code to be %d, got %d", wantCurrent.WeatherCode,
-				data.Current.WeatherCode)
+			t.Errorf("expected current weather code to be %d, got %d", wantCurrent.WeatherCode.Value(),
+				data.Current.WeatherCode.Value())
 		}
 		if data.Current.WindSpeed != wantCurrent.WindSpeed {
-			t.Errorf("expected current wind speed to be %f, got %f", wantCurrent.WindSpeed,
-				data.Current.WindSpeed)
+			t.Errorf("expected current wind speed to be %f, got %f", wantCurrent.WindSpeed.Value(),
+				data.Current.WindSpeed.Value())
 		}
 		if data.Current.WindGusts != wantCurrent.WindGusts {
-			t.Errorf("expected current wind gusts to be %f, got %f", wantCurrent.WindGusts,
-				data.Current.WindGusts)
+			t.Errorf("expected current wind gusts to be %f, got %f", wantCurrent.WindGusts.Value(),
+				data.Current.WindGusts.Value())
 		}
 		if data.Current.WindDirection != wantCurrent.WindDirection {
-			t.Errorf("expected current wind direction to be %f, got %f", wantCurrent.WindDirection,
-				data.Current.WindDirection)
+			t.Errorf("expected current wind direction to be %f, got %f", wantCurrent.WindDirection.Value(),
+				data.Current.WindDirection.Value())
 		}
 		if data.Current.RelativeHumidity != wantCurrent.RelativeHumidity {
-			t.Errorf("expected current relative humidity to be %f, got %f", wantCurrent.RelativeHumidity,
-				data.Current.RelativeHumidity)
+			t.Errorf("expected current relative humidity to be %f, got %f", wantCurrent.RelativeHumidity.Value(),
+				data.Current.RelativeHumidity.Value())
 		}
 		if data.Current.PressureMSL != wantCurrent.PressureMSL {
-			t.Errorf("expected current pressure MSL to be %f, got %f", wantCurrent.PressureMSL,
-				data.Current.PressureMSL)
+			t.Errorf("expected current pressure MSL to be %f, got %f", wantCurrent.PressureMSL.Value(),
+				data.Current.PressureMSL.Value())
 		}
 		wantFCast := weather.Instant{
-			Temperature:         5.9,
-			ApparentTemperature: 3.2,
-			WeatherCode:         51,
-			WindSpeed:           11.7,
-			WindGusts:           31,
-			WindDirection:       56,
-			RelativeHumidity:    99,
-			PressureMSL:         1002.4,
+			Temperature:         vartype.NewVariable(5.9),
+			ApparentTemperature: vartype.NewVariable(3.2),
+			WeatherCode:         vartype.NewVariable(51),
+			WindSpeed:           vartype.NewVariable(11.7),
+			WindGusts:           vartype.NewVariable(31.0),
+			WindDirection:       vartype.NewVariable(56.0),
+			RelativeHumidity:    vartype.NewVariable(99.0),
+			PressureMSL:         vartype.NewVariable(1002.4),
 		}
 		fcastTime := weather.NewDayHour(time.Date(2026, 1, 27, 0, 0, 0, 0, time.UTC))
 		fcast := data.Forecast[fcastTime]
 		if fcast.Temperature != wantFCast.Temperature {
-			t.Errorf("expected forecast temperature to be %f, got %f", wantFCast.Temperature, fcast.Temperature)
+			t.Errorf("expected forecast temperature to be %f, got %f", wantFCast.Temperature.Value(), fcast.Temperature.Value())
 		}
 		if fcast.ApparentTemperature != wantFCast.ApparentTemperature {
-			t.Errorf("expected forecast apparent temperature to be %f, got %f", wantFCast.ApparentTemperature,
-				fcast.ApparentTemperature)
+			t.Errorf("expected forecast apparent temperature to be %f, got %f", wantFCast.ApparentTemperature.Value(),
+				fcast.ApparentTemperature.Value())
 		}
 		if fcast.WeatherCode != wantFCast.WeatherCode {
-			t.Errorf("expected forecast weather code to be %d, got %d", wantFCast.WeatherCode, fcast.WeatherCode)
+			t.Errorf("expected forecast weather code to be %d, got %d", wantFCast.WeatherCode.Value(), fcast.WeatherCode.Value())
 		}
 		if fcast.WindSpeed != wantFCast.WindSpeed {
-			t.Errorf("expected forecast wind speed to be %f, got %f", wantFCast.WindSpeed, fcast.WindSpeed)
+			t.Errorf("expected forecast wind speed to be %f, got %f", wantFCast.WindSpeed.Value(), fcast.WindSpeed.Value())
 		}
 		if fcast.WindGusts != wantFCast.WindGusts {
-			t.Errorf("expected forecast wind gusts to be %f, got %f", wantFCast.WindGusts, fcast.WindGusts)
+			t.Errorf("expected forecast wind gusts to be %f, got %f", wantFCast.WindGusts.Value(), fcast.WindGusts.Value())
 		}
 		if fcast.WindDirection != wantFCast.WindDirection {
-			t.Errorf("expected forecast wind direction to be %f, got %f", wantFCast.WindDirection,
-				fcast.WindDirection)
+			t.Errorf("expected forecast wind direction to be %f, got %f", wantFCast.WindDirection.Value(),
+				fcast.WindDirection.Value())
 		}
 		if fcast.RelativeHumidity != wantFCast.RelativeHumidity {
-			t.Errorf("expected forecast relative humidity to be %f, got %f", wantFCast.RelativeHumidity,
-				fcast.RelativeHumidity)
+			t.Errorf("expected forecast relative humidity to be %f, got %f", wantFCast.RelativeHumidity.Value(),
+				fcast.RelativeHumidity.Value())
 		}
 		if fcast.PressureMSL != wantFCast.PressureMSL {
-			t.Errorf("expected forecast pressure MSL to be %f, got %f", wantFCast.PressureMSL, fcast.PressureMSL)
+			t.Errorf("expected forecast pressure MSL to be %f, got %f", wantFCast.PressureMSL.Value(), fcast.PressureMSL.Value())
 		}
 		wantUnits := map[string]string{
 			"temperature": "°C",
@@ -236,46 +237,46 @@ func TestOpenMeteo_GetWeather(t *testing.T) {
 			t.Error("expected generated at to be set")
 		}
 		wantCurrent := weather.Instant{
-			Temperature:         37.8,
-			ApparentTemperature: 33.7,
-			WeatherCode:         3,
-			WindSpeed:           2.1,
-			WindGusts:           4,
-			WindDirection:       32,
-			RelativeHumidity:    93,
-			PressureMSL:         1001.0,
+			Temperature:         vartype.NewVariable(37.8),
+			ApparentTemperature: vartype.NewVariable(33.7),
+			WeatherCode:         vartype.NewVariable(3),
+			WindSpeed:           vartype.NewVariable(2.1),
+			WindGusts:           vartype.NewVariable(4.0),
+			WindDirection:       vartype.NewVariable(32.0),
+			RelativeHumidity:    vartype.NewVariable(93.0),
+			PressureMSL:         vartype.NewVariable(1001.0),
 		}
 		if data.Current.Temperature != wantCurrent.Temperature {
-			t.Errorf("expected current temperature to be %f, got %f", wantCurrent.Temperature,
-				data.Current.Temperature)
+			t.Errorf("expected current temperature to be %f, got %f", wantCurrent.Temperature.Value(),
+				data.Current.Temperature.Value())
 		}
 		if data.Current.ApparentTemperature != wantCurrent.ApparentTemperature {
-			t.Errorf("expected current apparent temperature to be %f, got %f", wantCurrent.ApparentTemperature,
-				data.Current.ApparentTemperature)
+			t.Errorf("expected current apparent temperature to be %f, got %f", wantCurrent.ApparentTemperature.Value(),
+				data.Current.ApparentTemperature.Value())
 		}
 		if data.Current.WeatherCode != wantCurrent.WeatherCode {
-			t.Errorf("expected current weather code to be %d, got %d", wantCurrent.WeatherCode,
-				data.Current.WeatherCode)
+			t.Errorf("expected current weather code to be %d, got %d", wantCurrent.WeatherCode.Value(),
+				data.Current.WeatherCode.Value())
 		}
 		if data.Current.WindSpeed != wantCurrent.WindSpeed {
-			t.Errorf("expected current wind speed to be %f, got %f", wantCurrent.WindSpeed,
-				data.Current.WindSpeed)
+			t.Errorf("expected current wind speed to be %f, got %f", wantCurrent.WindSpeed.Value(),
+				data.Current.WindSpeed.Value())
 		}
 		if data.Current.WindGusts != wantCurrent.WindGusts {
-			t.Errorf("expected current wind gusts to be %f, got %f", wantCurrent.WindGusts,
-				data.Current.WindGusts)
+			t.Errorf("expected current wind gusts to be %f, got %f", wantCurrent.WindGusts.Value(),
+				data.Current.WindGusts.Value())
 		}
 		if data.Current.WindDirection != wantCurrent.WindDirection {
-			t.Errorf("expected current wind direction to be %f, got %f", wantCurrent.WindDirection,
-				data.Current.WindDirection)
+			t.Errorf("expected current wind direction to be %f, got %f", wantCurrent.WindDirection.Value(),
+				data.Current.WindDirection.Value())
 		}
 		if data.Current.RelativeHumidity != wantCurrent.RelativeHumidity {
-			t.Errorf("expected current relative humidity to be %f, got %f", wantCurrent.RelativeHumidity,
-				data.Current.RelativeHumidity)
+			t.Errorf("expected current relative humidity to be %f, got %f", wantCurrent.RelativeHumidity.Value(),
+				data.Current.RelativeHumidity.Value())
 		}
 		if data.Current.PressureMSL != wantCurrent.PressureMSL {
-			t.Errorf("expected current pressure MSL to be %f, got %f", wantCurrent.PressureMSL,
-				data.Current.PressureMSL)
+			t.Errorf("expected current pressure MSL to be %f, got %f", wantCurrent.PressureMSL.Value(),
+				data.Current.PressureMSL.Value())
 		}
 		wantUnits := map[string]string{
 			"temperature": "°F",
