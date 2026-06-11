@@ -17,6 +17,7 @@ import (
 	"github.com/wneessen/waybar-weather/internal/geobus"
 	"github.com/wneessen/waybar-weather/internal/geocode"
 	"github.com/wneessen/waybar-weather/internal/i18n"
+	"github.com/wneessen/waybar-weather/internal/vartype"
 	"github.com/wneessen/waybar-weather/internal/weather"
 )
 
@@ -36,16 +37,17 @@ var (
 	fcastHour      = weather.NewDayHour(now.Add(time.Hour * 3))
 	fcastHourFirst = weather.NewDayHour(now.Add(time.Hour))
 	wthr           = weather.Instant{
-		InstantTime:         now,
-		Temperature:         20.0,
-		ApparentTemperature: 25.0,
-		WeatherCode:         45,
-		WindDirection:       67,
-		WindSpeed:           10.0,
-		WindGusts:           30.0,
-		RelativeHumidity:    87,
-		PressureMSL:         1013.2,
-		IsDay:               true,
+		InstantTime:              now,
+		Temperature:              vartype.NewVariable(20.0),
+		ApparentTemperature:      vartype.NewVariable(25.0),
+		WeatherCode:              vartype.NewVariable(45),
+		WindDirection:            vartype.NewVariable(67.0),
+		WindSpeed:                vartype.NewVariable(10.0),
+		WindGusts:                vartype.NewVariable(30.0),
+		RelativeHumidity:         vartype.NewVariable(87.0),
+		PressureMSL:              vartype.NewVariable(1013.2),
+		PrecipitationProbability: vartype.NewVariable(77),
+		IsDay:                    vartype.NewVariable(true),
 		Units: weather.Units{
 			Temperature:   "°C",
 			WindSpeed:     "km/h",
@@ -55,16 +57,17 @@ var (
 		},
 	}
 	wthrAlt = weather.Instant{
-		InstantTime:         fcastHour.Time(),
-		Temperature:         25.0,
-		ApparentTemperature: 30.0,
-		WeatherCode:         1,
-		WindDirection:       185,
-		WindSpeed:           3.0,
-		WindGusts:           19.0,
-		RelativeHumidity:    43,
-		PressureMSL:         1083.4,
-		IsDay:               false,
+		InstantTime:              fcastHour.Time(),
+		Temperature:              vartype.NewVariable(25.0),
+		ApparentTemperature:      vartype.NewVariable(30.0),
+		WeatherCode:              vartype.NewVariable(1),
+		WindDirection:            vartype.NewVariable(185.0),
+		WindSpeed:                vartype.NewVariable(3.0),
+		WindGusts:                vartype.NewVariable(19.0),
+		RelativeHumidity:         vartype.NewVariable(43.0),
+		PressureMSL:              vartype.NewVariable(1083.4),
+		PrecipitationProbability: vartype.NewVariable(28),
+		IsDay:                    vartype.NewVariable(false),
 		Units: weather.Units{
 			Temperature:   "°F",
 			WindSpeed:     "m/h",
@@ -72,6 +75,16 @@ var (
 			Pressure:      "hPa",
 			WindDirection: "°",
 		},
+	}
+	wthrDaily = weather.DailyInstant{
+		InstantTime:    now,
+		TemperatureMin: vartype.NewVariable(8.0),
+		TemperatureMax: vartype.NewVariable(38.0),
+	}
+	wthrDailyAlt = weather.DailyInstant{
+		InstantTime:    fcastHour.Time(),
+		TemperatureMin: vartype.NewVariable(10.0),
+		TemperatureMax: vartype.NewVariable(32.0),
 	}
 )
 
@@ -167,41 +180,41 @@ func TestPresenter_BuildContext(t *testing.T) {
 			t.Errorf("expected address country to be %q, got %q", addr.Country, tplCtx.Address.Country)
 		}
 		if tplCtx.Current.Temperature != wthr.Temperature {
-			t.Errorf("expected current temperature to be %f, got %f", wthr.Temperature,
-				tplCtx.Current.Temperature)
+			t.Errorf("expected current temperature to be %f, got %f", wthr.Temperature.Value(),
+				tplCtx.Current.Temperature.Value())
 		}
 		if tplCtx.Current.ApparentTemperature != wthr.ApparentTemperature {
-			t.Errorf("expected current apparent temperature to be %f, got %f", wthr.ApparentTemperature,
-				tplCtx.Current.ApparentTemperature)
+			t.Errorf("expected current apparent temperature to be %f, got %f", wthr.ApparentTemperature.Value(),
+				tplCtx.Current.ApparentTemperature.Value())
 		}
 		if tplCtx.Current.WeatherCode != wthr.WeatherCode {
-			t.Errorf("expected current weather code to be %d, got %d", wthr.WeatherCode,
-				tplCtx.Current.WeatherCode)
+			t.Errorf("expected current weather code to be %d, got %d", wthr.WeatherCode.Value(),
+				tplCtx.Current.WeatherCode.Value())
 		}
 		if tplCtx.Current.WindSpeed != wthr.WindSpeed {
-			t.Errorf("expected current wind speed to be %f, got %f", wthr.WindSpeed, tplCtx.Current.WindSpeed)
+			t.Errorf("expected current wind speed to be %f, got %f", wthr.WindSpeed.Value(), tplCtx.Current.WindSpeed.Value())
 		}
 		if tplCtx.Current.WindGusts != wthr.WindGusts {
-			t.Errorf("expected current wind gusts to be %f, got %f", wthr.WindGusts, tplCtx.Current.WindGusts)
+			t.Errorf("expected current wind gusts to be %f, got %f", wthr.WindGusts.Value(), tplCtx.Current.WindGusts.Value())
 		}
 		if tplCtx.Current.WindDirection != wthr.WindDirection {
-			t.Errorf("expected current wind direction to be %f, got %f", wthr.WindDirection,
-				tplCtx.Current.WindDirection)
+			t.Errorf("expected current wind direction to be %f, got %f", wthr.WindDirection.Value(),
+				tplCtx.Current.WindDirection.Value())
 		}
 		if tplCtx.Current.RelativeHumidity != wthr.RelativeHumidity {
-			t.Errorf("expected current humidity to be %f, got %f", wthr.RelativeHumidity,
-				tplCtx.Current.RelativeHumidity)
+			t.Errorf("expected current humidity to be %f, got %f", wthr.RelativeHumidity.Value(),
+				tplCtx.Current.RelativeHumidity.Value())
 		}
 		if tplCtx.Forecast.Temperature != wthrAlt.Temperature {
-			t.Errorf("expected forecast temperature to be %f, got %f", wthrAlt.Temperature,
-				tplCtx.Forecast.Temperature)
+			t.Errorf("expected forecast temperature to be %f, got %f", wthrAlt.Temperature.Value(),
+				tplCtx.Forecast.Temperature.Value())
 		}
 		if len(tplCtx.Forecasts) != 2 {
 			t.Fatalf("expected forecasts to have length 1, got %d", len(tplCtx.Forecasts))
 		}
 		if tplCtx.Forecasts[0].Temperature != wthrAlt.Temperature {
-			t.Errorf("expected forecast temperature to be %f, got %f", wthrAlt.Temperature,
-				tplCtx.Forecasts[0].Temperature)
+			t.Errorf("expected forecast temperature to be %f, got %f", wthrAlt.Temperature.Value(),
+				tplCtx.Forecasts[0].Temperature.Value())
 		}
 		wantCategory := "fog"
 		if tplCtx.Current.Category != wantCategory {
@@ -267,7 +280,11 @@ func TestPresenter_Render(t *testing.T) {
 			Coordinates: geobus.Coordinate{Lat: addr.Latitude, Lon: addr.Longitude},
 			Current:     wthr,
 			Forecast:    fcasts,
+			Daily:       make(map[weather.Day]weather.DailyInstant),
 		}
+		data.Daily[weather.NewDay(now)] = wthrDaily
+		data.Daily[weather.NewDay(fcastHour.Time())] = wthrDailyAlt
+
 		tplCtx := pres.BuildContext(addr, data, sunrise, sunset, moonphase)
 		outMap, err := pres.Render(tplCtx)
 		if err != nil {
@@ -284,6 +301,9 @@ Feels like: 30.0°F
 Humidity: 43%
 Pressure: 1,083.4 hPa
 Wind: 3.0 → 19.0 m/h (S)
+Min. temperature: 10.0°F
+Max. temperature: 32.0°F
+PoP: 28
 
 🌅 7:01 a.m. • 🌇 5:39 p.m.`
 		wantTooltip := `Test City, Test Country
@@ -292,6 +312,8 @@ Feels like: 25.0°C
 Humidity: 87%
 Pressure: 1,013.2 hPa
 Wind: 10.0 → 30.0 km/h (NE)
+Min. temperature: 10.0°C
+Max. temperature: 32.0°C
 
 🌅 7:01 a.m. • 🌇 5:39 p.m.`
 		if outMap["text"] != wantText {
@@ -444,7 +466,7 @@ func TestPresenter_degToString(t *testing.T) {
 	pres := new(Presenter)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := pres.degToString(tt.deg)
+			got := pres.degToString(vartype.NewVariable(tt.deg))
 			if got != tt.want {
 				t.Errorf("failed to get direction: got %s, want %s", got, tt.want)
 			}
@@ -524,7 +546,7 @@ func TestPresenter_floatFormat(t *testing.T) {
 	pres := new(Presenter)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := pres.floatFormat(tt.val, tt.prec); got != tt.want {
+			if got := pres.floatFormat(vartype.NewVariable(tt.val), tt.prec); got != tt.want {
 				t.Errorf("failed to get float format: got %s, want %s", got, tt.want)
 			}
 		})
@@ -591,8 +613,8 @@ func TestPresenter_forecastByOffset(t *testing.T) {
 
 		got := pres.forecastByOffset(tplCtx, 3)
 		if got.Temperature != wthr.Temperature {
-			t.Errorf("failed to get forecast by offset: got %f, want %f", got.Temperature,
-				wthr.Temperature)
+			t.Errorf("failed to get forecast by offset: got %f, want %f", got.Temperature.Value(),
+				wthr.Temperature.Value())
 		}
 	})
 	t.Run("forecast is not found", func(t *testing.T) {
@@ -611,8 +633,8 @@ func TestPresenter_forecastByOffset(t *testing.T) {
 		tplCtx := pres.BuildContext(addr, data, sunrise, sunset, moonphase)
 
 		got := pres.forecastByOffset(tplCtx, 3)
-		if got.Temperature != 0 {
-			t.Errorf("failed to get forecast by offset: got %f, want 0", got.Temperature)
+		if got.Temperature.Value() != 0 {
+			t.Errorf("failed to get forecast by offset: got %f, want 0", got.Temperature.Value())
 		}
 	})
 }
