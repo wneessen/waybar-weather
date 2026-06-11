@@ -30,6 +30,7 @@ import (
 	"github.com/wneessen/waybar-weather/internal/logger"
 	"github.com/wneessen/waybar-weather/internal/presenter"
 	"github.com/wneessen/waybar-weather/internal/testhelper"
+	"github.com/wneessen/waybar-weather/internal/vartype"
 	"github.com/wneessen/waybar-weather/internal/weather"
 	openmeteo "github.com/wneessen/waybar-weather/internal/weather/provider/open-meteo"
 )
@@ -296,16 +297,16 @@ func TestService_printWeather(t *testing.T) {
 		serv.weather = &weather.Data{
 			Current: weather.Instant{
 				InstantTime: now,
-				Temperature: 10.0,
-				IsDay:       true,
-				WeatherCode: 23,
+				Temperature: vartype.NewVariable(10.0),
+				IsDay:       vartype.NewVariable(true),
+				WeatherCode: vartype.NewVariable(23),
 			},
 			Forecast: make(map[weather.DayHour]weather.Instant),
 		}
 		fcastNow := now.Add(time.Hour * time.Duration(serv.config.Weather.ForecastHours))
 		fcast := serv.weather.Current
 		fcast.InstantTime = fcastNow
-		fcast.WeatherCode = 15
+		fcast.WeatherCode = vartype.NewVariable(15)
 		serv.weather.Forecast[weather.NewDayHour(fcastNow)] = fcast
 
 		serv.printWeather(t.Context())
@@ -510,7 +511,7 @@ func TestService_printWeather(t *testing.T) {
 			{
 				name: "it is hot",
 				weatherData: &weather.Data{
-					Current:  weather.Instant{Temperature: 25},
+					Current:  weather.Instant{Temperature: vartype.NewVariable(25.0)},
 					Forecast: make(map[weather.DayHour]weather.Instant),
 				},
 				altMode:   false,
@@ -519,7 +520,7 @@ func TestService_printWeather(t *testing.T) {
 			{
 				name: "it is cold",
 				weatherData: &weather.Data{
-					Current:  weather.Instant{Temperature: -25},
+					Current:  weather.Instant{Temperature: vartype.NewVariable(-25.0)},
 					Forecast: make(map[weather.DayHour]weather.Instant),
 				},
 				altMode:   false,
@@ -528,7 +529,7 @@ func TestService_printWeather(t *testing.T) {
 			{
 				name: "it is hot (alt)",
 				weatherData: &weather.Data{
-					Current:  weather.Instant{Temperature: 25},
+					Current:  weather.Instant{Temperature: vartype.NewVariable(25.0)},
 					Forecast: make(map[weather.DayHour]weather.Instant),
 				},
 				altMode:   true,
@@ -537,7 +538,7 @@ func TestService_printWeather(t *testing.T) {
 			{
 				name: "it is cold (alt)",
 				weatherData: &weather.Data{
-					Current:  weather.Instant{Temperature: -25},
+					Current:  weather.Instant{Temperature: vartype.NewVariable(-25.0)},
 					Forecast: make(map[weather.DayHour]weather.Instant),
 				},
 				altMode:   true,
@@ -601,8 +602,8 @@ func TestService_fetchWeather(t *testing.T) {
 			t.Errorf("expected weather generated at to be set, got %s", serv.weather.GeneratedAt)
 		}
 		wantTemp := 20.0
-		if serv.weather.Current.Temperature != wantTemp {
-			t.Errorf("expected weather temperature to be %f, got %f", wantTemp, serv.weather.Current.Temperature)
+		if serv.weather.Current.Temperature.Value() != wantTemp {
+			t.Errorf("expected weather temperature to be %f, got %f", wantTemp, serv.weather.Current.Temperature.Value())
 		}
 	})
 	t.Run("fetching weather with mock providers fails", func(t *testing.T) {
@@ -1016,7 +1017,7 @@ func (w *weatherProv) GetWeather(_ context.Context, coords geobus.Coordinate) (*
 		Coordinates: coords,
 		Current: weather.Instant{
 			InstantTime: time.Now(),
-			Temperature: 20.0,
+			Temperature: vartype.NewVariable(20.0),
 		},
 	}, nil
 }
