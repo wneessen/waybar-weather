@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/Xuanwo/go-locale v1.1.3
-	github.com/godbus/dbus/v5 v5.2.2
+	github.com/godbus/dbus/v5 v5.2.4
 	github.com/kkyr/fig v0.5.0
 	github.com/mdlayher/wifi v0.8.0
 	github.com/nathan-osman/go-sunrise v1.1.0
